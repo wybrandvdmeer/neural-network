@@ -32,13 +32,10 @@ public class Network {
     }
 
     public void learn(double input1, double input2, double target1, double target2, double errorLimit) {
-        inputLayer[0].setInput(input1);
-        inputLayer[1].setInput(input2);
-
         int iterations=0;
         double error;
         while(true) {
-            passForward();
+            passForward(input1, input2);
 
             error = error(target1, target2);
 
@@ -115,7 +112,10 @@ public class Network {
         neuron.setBiasWeight(oldWeight - learningConstant * partialDerivative);
     }
 
-    private void passForward() {
+    public void passForward(double input1, double input2) {
+        inputLayer[0].setInput(input1);
+        inputLayer[1].setInput(input2);
+
         Arrays.stream(inputLayer).forEach(n -> n.fire());
         Arrays.stream(hiddenLayer).forEach(n -> n.fire());
         Arrays.stream(outputLayer).forEach(n -> n.fire());
@@ -125,5 +125,9 @@ public class Network {
         double o1 = outputLayer[0].getOutput();
         double o2 = outputLayer[1].getOutput();
         return 0.5 * (target1 - o1) * (target1 - o1) + 0.5 * (target2 - o2) * (target2 - o2);
+    }
+
+    public double getOutput(int output) {
+        return outputLayer[output].getOutput();
     }
 }
