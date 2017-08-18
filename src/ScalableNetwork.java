@@ -23,11 +23,11 @@ public class ScalableNetwork {
             inputLayer[idx] = new Neuron(1).isInputNeuron();
         }
 
-        for(int idx=0; idx < inputLayer.length; idx++) {
+        for(int idx=0; idx < hiddenLayer.length; idx++) {
             hiddenLayer[idx] = new Neuron(sizeOfInputLayer);
         }
 
-        for(int idx=0; idx < inputLayer.length; idx++) {
+        for(int idx=0; idx < outputLayer.length; idx++) {
             outputLayer[idx] = new Neuron(sizeOfHiddenLayer);
         }
 
