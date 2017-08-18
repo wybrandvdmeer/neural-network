@@ -8,6 +8,11 @@ public class ScalableNetwork {
     private Neuron [] hiddenLayer = new Neuron[2];
     private Neuron [] outputLayer = new Neuron[2];
 
+    private double [][][] weightDerivatives = new double [2][][];
+    private double [][] biasWeightDerivatives = new double[2][];
+
+    private static final int HIDDEN_INDEX=0, OUTPUT_INDEX=1;
+
     public ScalableNetwork(int sizeOfInputLayer, int sizeOfHiddenLayer, int  sizeOfOutputLayer) {
 
         inputLayer = new Neuron[sizeOfInputLayer];
@@ -26,6 +31,29 @@ public class ScalableNetwork {
             outputLayer[idx] = new Neuron(sizeOfHiddenLayer);
         }
 
+        weightDerivatives[HIDDEN_INDEX] = new double[sizeOfHiddenLayer][sizeOfInputLayer];
+        weightDerivatives[OUTPUT_INDEX] = new double[sizeOfOutputLayer][sizeOfHiddenLayer];
+
+        biasWeightDerivatives[HIDDEN_INDEX] = new double[sizeOfHiddenLayer];
+        biasWeightDerivatives[OUTPUT_INDEX] = new double[sizeOfOutputLayer];
+
+        /*
+for(int idx=0; idx < outputLayer.length; idx++) {
+    outputLayer[idx].setBiasWeight(1);
+
+    for(int idx1=0; idx1 < 2; idx1++) {
+        outputLayer[idx].setWeight(idx1, 0.1 * (1 + idx1));
+    }
+}
+
+for(int idx=0; idx < hiddenLayer.length; idx++) {
+    hiddenLayer[idx].setBiasWeight(1);
+
+    for(int idx1=0; idx1 < 2; idx1++) {
+        hiddenLayer[idx].setWeight(idx1, 0.2 * (1+idx1));
+    }
+}
+*/
         connectLayer(inputLayer, hiddenLayer);
         connectLayer(hiddenLayer, outputLayer);
     }
@@ -62,7 +90,7 @@ public class ScalableNetwork {
             for(int idx1=0; idx1 < outputLayer.length; idx1++) {
                 for(int idx2=0; idx2 < hiddenLayer.length; idx2++) {
                     double pd = thetas[idx1] * hiddenLayer[idx2].getOutput();
-                    adjustWeight(outputLayer[idx1], idx2, pd);
+                    weightDerivatives[OUTPUT_INDEX][idx1][idx2] = pd;
                 }
             }
 
@@ -78,12 +106,12 @@ public class ScalableNetwork {
                         pd += thetas[idx3] * outputLayer[idx3].getWeight(idx1);
                     }
 
-                    adjustWeight(hiddenLayer[idx1], idx2, pd);
+                    weightDerivatives[HIDDEN_INDEX][idx1][idx2] = pd;
                 }
             }
 
             for(int idx=0; idx < outputLayer.length; idx++) {
-                adjustBiasWeight(outputLayer[idx], thetas[idx]);
+                biasWeightDerivatives[OUTPUT_INDEX][idx] = thetas[idx];
             }
 
             for(int idx1=0; idx1 < hiddenLayer.length; idx1++) {
@@ -96,7 +124,27 @@ public class ScalableNetwork {
                     pd += thetas[idx2] * outputLayer[idx2].getWeight(idx1);
                 }
 
-                adjustBiasWeight(hiddenLayer[idx1], pd);
+                biasWeightDerivatives[HIDDEN_INDEX][idx1] = pd;
+            }
+
+            for(int idx1=0; idx1 < outputLayer.length; idx1++) {
+                for(int idx2=0; idx2 < hiddenLayer.length; idx2++) {
+                    adjustWeight(outputLayer[idx1], idx2, weightDerivatives[OUTPUT_INDEX][idx1][idx2]);
+                }
+            }
+
+            for(int idx1=0; idx1 < hiddenLayer.length; idx1++) {
+                for(int idx2=0; idx2 < inputLayer.length; idx2++) {
+                    adjustWeight(hiddenLayer[idx1], idx2, weightDerivatives[HIDDEN_INDEX][idx1][idx2]);
+                }
+            }
+
+            for(int idx=0; idx < outputLayer.length; idx++) {
+                adjustBiasWeight(outputLayer[idx], biasWeightDerivatives[OUTPUT_INDEX][idx]);
+            }
+
+            for(int idx=0; idx < hiddenLayer.length; idx++) {
+                adjustBiasWeight(hiddenLayer[idx], biasWeightDerivatives[HIDDEN_INDEX][idx]);
             }
         }
     }
