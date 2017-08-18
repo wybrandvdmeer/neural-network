@@ -37,23 +37,6 @@ public class ScalableNetwork {
         biasWeightDerivatives[HIDDEN_INDEX] = new double[sizeOfHiddenLayer];
         biasWeightDerivatives[OUTPUT_INDEX] = new double[sizeOfOutputLayer];
 
-        /*
-for(int idx=0; idx < outputLayer.length; idx++) {
-    outputLayer[idx].setBiasWeight(1);
-
-    for(int idx1=0; idx1 < 2; idx1++) {
-        outputLayer[idx].setWeight(idx1, 0.1 * (1 + idx1));
-    }
-}
-
-for(int idx=0; idx < hiddenLayer.length; idx++) {
-    hiddenLayer[idx].setBiasWeight(1);
-
-    for(int idx1=0; idx1 < 2; idx1++) {
-        hiddenLayer[idx].setWeight(idx1, 0.2 * (1+idx1));
-    }
-}
-*/
         connectLayer(inputLayer, hiddenLayer);
         connectLayer(hiddenLayer, outputLayer);
     }
@@ -102,9 +85,12 @@ for(int idx=0; idx < hiddenLayer.length; idx++) {
 
                     double pd = hiddenOutput * (1 - hiddenOutput) * inputOutput;
 
+                    double summedTerm = 0;
                     for(int idx3=0; idx3 < thetas.length; idx3++) {
-                        pd += thetas[idx3] * outputLayer[idx3].getWeight(idx1);
+                        summedTerm += (thetas[idx3] * outputLayer[idx3].getWeight(idx1));
                     }
+
+                    pd *= summedTerm;
 
                     weightDerivatives[HIDDEN_INDEX][idx1][idx2] = pd;
                 }
@@ -120,9 +106,12 @@ for(int idx=0; idx < hiddenLayer.length; idx++) {
 
                 double pd = hiddenOutput * (1 - hiddenOutput);
 
+                double summedTerm=0;
                 for(int idx2=0; idx2 < thetas.length; idx2++) {
-                    pd += thetas[idx2] * outputLayer[idx2].getWeight(idx1);
+                    summedTerm += thetas[idx2] * outputLayer[idx2].getWeight(idx1);
                 }
+
+                pd *= summedTerm;
 
                 biasWeightDerivatives[HIDDEN_INDEX][idx1] = pd;
             }
@@ -173,7 +162,7 @@ for(int idx=0; idx < hiddenLayer.length; idx++) {
         double summedError = 0;
 
         for(int idx=0; idx < targets.length; idx++) {
-            summedError += 0.5 * (targets[idx] - outputLayer[idx].getOutput());
+            summedError += 0.5 * (targets[idx] - outputLayer[idx].getOutput()) * (targets[idx] - outputLayer[idx].getOutput());
         }
 
         return summedError;
