@@ -75,4 +75,8 @@ public class Neuron {
     public void setBiasWeight(double weight) {
         this.biasWeight = weight;
     }
+
+    public int getNoOfWeights() {
+        return weights.length;
+    }
 }

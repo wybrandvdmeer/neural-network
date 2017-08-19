@@ -1,5 +1,7 @@
 import org.junit.Test;
 
+import static junit.framework.TestCase.assertEquals;
+
 public class TestNetwork {
     public void testNetwork() {
         Network network = new Network();
@@ -22,7 +24,14 @@ public class TestNetwork {
 
     @Test
     public void testScalableLengthNetwork() {
-        ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork(new int []{2,2,2});
-        scalableLengthNetwork.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.001);
+        ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork(new int []{2, 2, 2});
+        scalableLengthNetwork.initWeights();
+
+        scalableLengthNetwork.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 10);
+        double derivatives [][][] = scalableLengthNetwork.getPartialDerivatives();
+        assertEquals(0.000967927, derivatives[1][0][0], 0.000000001);
+        assertEquals(0.000995353, derivatives[1][0][1], 0.000000001);
+        assertEquals(0.000001881, derivatives[1][1][0], 0.000000001);
+        assertEquals(0.000001934, derivatives[1][1][1], 0.000000001);
     }
 }

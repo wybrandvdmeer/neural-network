@@ -6,8 +6,11 @@ public class ScalableLengthNetwork {
 
     private Neuron [][] layers; // 0 -> input layer.
 
+    private double [][][] weightDerivatives;
+
     public ScalableLengthNetwork(int [] layerSizes) {
         layers = new Neuron[layerSizes.length][];
+        weightDerivatives = new double[layerSizes.length - 1][][];
 
         for(int idx1=0; idx1 < layerSizes.length; idx1++) {
             layers[idx1] = new Neuron[layerSizes[idx1]];
@@ -23,6 +26,25 @@ public class ScalableLengthNetwork {
         for(int idx=0; idx < layerSizes.length - 1; idx++) {
             connectLayer(layers[idx], layers[idx + 1]);
         }
+
+        for(int idx1=1; idx1 < layerSizes.length; idx1++) {
+            weightDerivatives[idx1 - 1] = new double[layerSizes[idx1]][layerSizes[idx1-1]];
+        }
+    }
+
+    public void initWeights() {
+        for(int layerIdx=0; layerIdx < layers.length; layerIdx++) {
+            for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+                for(int weightIdx=0; weightIdx < layers[layerIdx][neuronIdx].getNoOfWeights(); weightIdx++) {
+                    layers[layerIdx][neuronIdx].setWeight(weightIdx, layerIdx + 1 + neuronIdx + weightIdx);
+                }
+                layers[layerIdx][neuronIdx].setBiasWeight(1);
+            }
+        }
+    }
+
+    public double [][][] getPartialDerivatives() {
+        return weightDerivatives;
     }
 
     private void connectLayer(Neuron [] left, Neuron [] right) {
@@ -39,6 +61,21 @@ public class ScalableLengthNetwork {
         passForward(inputs);
 
         error = error(targets);
+
+        // Propagating backwards.
+        for(int layerIdx=layers.length - 1; layerIdx > 0; layerIdx--) {
+            for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+                Neuron neuron = layers[layerIdx][neuronIdx];
+                for (int weightIdx = 0; weightIdx < layers[layerIdx].length; weightIdx++) {
+                    double pd = calculateSigmoidDerivativeTimesInputPreviousLayer(neuron.getOutput(), layerIdx, weightIdx);
+                    if(layerIdx == layers.length - 1) {
+                        pd *= (neuron.getOutput() - targets[neuronIdx]);
+                    }
+
+                    weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = pd;
+                }
+            }
+        }
 
         System.out.println(String.format("It: %d. Error: %f", iterations++, error));
     }
