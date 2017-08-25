@@ -70,7 +70,14 @@ public class ScalableLengthNetwork {
             for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
                 Neuron neuron = layers[layerIdx][neuronIdx];
                 for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
+
+                    // Output previous Neuron.
                     double pd = layers[layerIdx - 1][weightIdx].getOutput();
+
+                    // Sigmoid derivative if neuron is not in the output layer.
+                    if(layerIdx < layers.length - 1) {
+                        pd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
+                    }
 
                     List<Double> summationTerms = new ArrayList<>();
                     calculateSummationTerm(layerIdx, neuronIdx, thetas, summationTerms, 1);
@@ -78,6 +85,15 @@ public class ScalableLengthNetwork {
                     pd *= summationTerms.stream().mapToDouble(d->d).sum();
 
                     weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = pd;
+                }
+            }
+        }
+
+        for(int layerIdx=1; layerIdx < layers.length; layerIdx++) {
+            for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+                Neuron neuron = layers[layerIdx][neuronIdx];
+                for(int weightIdx=0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
+                    adjustWeight(neuron, weightIdx, weightDerivatives[layerIdx - 1][neuronIdx][weightIdx]);
                 }
             }
         }
@@ -117,7 +133,7 @@ public class ScalableLengthNetwork {
         return thetas;
     }
 
-    private double calculateSigmoidDerivative(int neuronIdx, int layerIdx) {
+    private double calculateSigmoidDerivative(int layerIdx, int neuronIdx) {
         Neuron neuron = layers[layerIdx][neuronIdx];
         return neuron.getOutput() * (1 - neuron.getOutput());
     }
