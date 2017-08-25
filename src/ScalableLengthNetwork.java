@@ -62,12 +62,17 @@ public class ScalableLengthNetwork {
 
         error = error(targets);
 
+        // Calculate all theta's: theta1 = (O1out - T1) * O11out (1 - O1out)
+        //                        theta1 = (O1out - T1) * sigmoid-deriv(O1)
+
+        double [] theta = calculateThetas();
+
         // Propagating backwards.
         for(int layerIdx=layers.length - 1; layerIdx > 0; layerIdx--) {
             for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
                 Neuron neuron = layers[layerIdx][neuronIdx];
                 for (int weightIdx = 0; weightIdx < layers[layerIdx].length; weightIdx++) {
-                    double pd = calculateSigmoidDerivativeTimesInputPreviousLayer(neuron.getOutput(), layerIdx, weightIdx);
+                    double pd = calculateSigmoidDerivativeTimesInputPreviousLayer(neuronIdx, layerIdx, weightIdx);
                     if(layerIdx == layers.length - 1) {
                         pd *= (neuron.getOutput() - targets[neuronIdx]);
                     }
@@ -80,6 +85,14 @@ public class ScalableLengthNetwork {
         System.out.println(String.format("It: %d. Error: %f", iterations++, error));
     }
 
+    /*
+    Calculate all theta's: theta1 = (O1out - T1) * O11out (1 - O1out)
+                           theta1 = (O1out - T1) * sigmoid-deriv(O1)
+    */
+    private double [] calculateThetas() {
+        return null;
+    }
+
     /**
      * Method calculates the following formula:
      *
@@ -88,8 +101,9 @@ public class ScalableLengthNetwork {
      * In math: output(1-out) is the Sigmoid derivative.
      *
      */
-    private double calculateSigmoidDerivativeTimesInputPreviousLayer(double neuronOutput, int layerIndex, int neuronIndex) {
-      return neuronOutput * (1 - neuronOutput) * layers[layerIndex - 1][neuronIndex].getOutput();
+    private double calculateSigmoidDerivativeTimesInputPreviousLayer(int neuronIdx, int layerIdx, int neuronPrevLayerIdx) {
+        Neuron neuron = layers[layerIdx][neuronIdx];
+        return neuron.getOutput() * (1 - neuron.getOutput()) * layers[layerIdx - 1][neuronPrevLayerIdx].getOutput();
     }
 
     private void adjustWeight(Neuron neuron, int index, double partialDerivative) {
