@@ -62,17 +62,14 @@ public class ScalableLengthNetwork {
 
         error = error(targets);
 
-        // Calculate all theta's: theta1 = (O1out - T1) * O11out (1 - O1out)
-        //                        theta1 = (O1out - T1) * sigmoid-deriv(O1)
-
-        double [] theta = calculateThetas();
+        double [] thetas = calculateThetas(targets);
 
         // Propagating backwards.
         for(int layerIdx=layers.length - 1; layerIdx > 0; layerIdx--) {
             for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
                 Neuron neuron = layers[layerIdx][neuronIdx];
                 for (int weightIdx = 0; weightIdx < layers[layerIdx].length; weightIdx++) {
-                    double pd = calculateSigmoidDerivativeTimesInputPreviousLayer(neuronIdx, layerIdx, weightIdx);
+                    double pd = calculateSigmoidDerivativeTimesOutputPrevLayer(neuronIdx, layerIdx, weightIdx);
                     if(layerIdx == layers.length - 1) {
                         pd *= (neuron.getOutput() - targets[neuronIdx]);
                     }
@@ -86,24 +83,29 @@ public class ScalableLengthNetwork {
     }
 
     /*
-    Calculate all theta's: theta1 = (O1out - T1) * O11out (1 - O1out)
-                           theta1 = (O1out - T1) * sigmoid-deriv(O1)
+    theta1 = (O1out - T1) * O11out (1 - O1out)
+    theta1 = (O1out - T1) * sigmoid-deriv(O1)
     */
-    private double [] calculateThetas() {
-        return null;
+    private double [] calculateThetas(double [] targets) {
+        int outputLayerIdx = layers.length - 1;
+        int widthOuputLayer = layers[outputLayerIdx].length;
+        double [] thetas = new double[widthOuputLayer];
+
+        for(int idx=0; idx < widthOuputLayer; idx++) {
+            Neuron neuron = layers[outputLayerIdx][idx];
+            thetas[idx] = (neuron.getOutput() - targets[idx]) * neuron.getOutput() * (1 - neuron.getOutput());
+        }
+
+        return thetas;
     }
 
-    /**
-     * Method calculates the following formula:
-     *
-     * output = outputNeuron (1 - outputNeuron) * output-corresponding-neuron-prev-layer.
-     *
-     * In math: output(1-out) is the Sigmoid derivative.
-     *
-     */
-    private double calculateSigmoidDerivativeTimesInputPreviousLayer(int neuronIdx, int layerIdx, int neuronPrevLayerIdx) {
+    private double calculateSigmoidDerivativeTimesOutputPrevLayer(int neuronIdx, int layerIdx, int neuronPrevLayerIdx) {
+        return calculateSigmoidDerivative(neuronIdx, layerIdx) * layers[layerIdx - 1][neuronPrevLayerIdx].getOutput();
+    }
+
+    private double calculateSigmoidDerivative(int neuronIdx, int layerIdx) {
         Neuron neuron = layers[layerIdx][neuronIdx];
-        return neuron.getOutput() * (1 - neuron.getOutput()) * layers[layerIdx - 1][neuronPrevLayerIdx].getOutput();
+        return neuron.getOutput() * (1 - neuron.getOutput());
     }
 
     private void adjustWeight(Neuron neuron, int index, double partialDerivative) {
