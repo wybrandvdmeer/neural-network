@@ -38,8 +38,8 @@ public class TestNetwork {
 
     @Test
     public void testScalableLengthNetwork() {
-        ScalableLengthNetwork network = new ScalableLengthNetwork(new int []{2, 2, 2});
-        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.001);
+        ScalableLengthNetwork network = new ScalableLengthNetwork(new int []{2, 100, 100,  2});
+        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.000001);
 
         network.passForward(new double[] { 0.01, 0.01});
         System.out.println(String.format("Output1: %f, output2: %f",

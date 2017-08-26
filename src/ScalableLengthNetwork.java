@@ -33,7 +33,7 @@ public class ScalableLengthNetwork {
 
         for(int idx1=1; idx1 < layerSizes.length; idx1++) {
             weightDerivatives[idx1 - 1] = new double[layerSizes[idx1]][layerSizes[idx1-1]];
-            biasDerivatives[idx1 - 1] = new double[layerSizes[idx1 - 1]];
+            biasDerivatives[idx1 - 1] = new double[layerSizes[idx1]];
         }
     }
 
