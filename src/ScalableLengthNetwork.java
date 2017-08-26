@@ -9,10 +9,12 @@ public class ScalableLengthNetwork {
     private Neuron [][] layers; // 0 -> input layer.
 
     private double [][][] weightDerivatives;
+    private double [][] biasDerivatives;
 
     public ScalableLengthNetwork(int [] layerSizes) {
         layers = new Neuron[layerSizes.length][];
         weightDerivatives = new double[layerSizes.length - 1][][];
+        biasDerivatives = new double[layerSizes.length - 1][];
 
         for(int idx1=0; idx1 < layerSizes.length; idx1++) {
             layers[idx1] = new Neuron[layerSizes[idx1]];
@@ -31,6 +33,7 @@ public class ScalableLengthNetwork {
 
         for(int idx1=1; idx1 < layerSizes.length; idx1++) {
             weightDerivatives[idx1 - 1] = new double[layerSizes[idx1]][layerSizes[idx1-1]];
+            biasDerivatives[idx1 - 1] = new double[layerSizes[idx1 - 1]];
         }
     }
 
@@ -79,20 +82,19 @@ public class ScalableLengthNetwork {
             for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
                 for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
                     Neuron neuron = layers[layerIdx][neuronIdx];
+
+                    List<Double> summationTerms = new ArrayList<>();
+                    calculateSummationTerm(layerIdx, neuronIdx, targets, summationTerms, 1);
+                    double neuronPd = summationTerms.stream().mapToDouble(d -> d).sum();
+
+                    neuronPd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
+
                     for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
-
-                        // Output previous Neuron.
-                        double pd = layers[layerIdx - 1][weightIdx].getOutput();
-
-                        pd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
-
-                        List<Double> summationTerms = new ArrayList<>();
-                        calculateSummationTerm(layerIdx, neuronIdx, targets, summationTerms, 1);
-
-                        pd *= summationTerms.stream().mapToDouble(d -> d).sum();
-
-                        weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = pd;
+                        // Times output previous Neuron.
+                        weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = neuronPd * layers[layerIdx - 1][weightIdx].getOutput();
                     }
+
+                    biasDerivatives[layerIdx - 1][neuronIdx] = neuronPd;
                 }
             }
 
@@ -102,6 +104,8 @@ public class ScalableLengthNetwork {
                     for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
                         adjustWeight(neuron, weightIdx, weightDerivatives[layerIdx - 1][neuronIdx][weightIdx]);
                     }
+
+                    adjustBiasWeight(neuron, biasDerivatives[layerIdx - 1][neuronIdx]);
                 }
             }
 
