@@ -114,39 +114,19 @@ public class ScalableLengthNetwork {
     }
 
     private void calculateSummationTerm(int layerIdx, int neuronIdx, double [] targets, List<Double> summationTerms, double pd) {
-
         if(layerIdx < layers.length - 1) {
             for(int neuronInNextLayerIdx=0; neuronInNextLayerIdx < layers[layerIdx + 1].length; neuronInNextLayerIdx++) {
-
                 Neuron neuronInNextLayer = layers[layerIdx + 1][neuronInNextLayerIdx];
                 pd *= neuronInNextLayer.getWeight(neuronIdx);
                 pd *= calculateSigmoidDerivative(layerIdx + 1, neuronInNextLayerIdx);
                 calculateSummationTerm(layerIdx + 1, neuronInNextLayerIdx, targets, summationTerms, pd);
             }
         } else {
-
             // When arriving at the output, calculate dE/dOoutput
             Neuron outputNeuron = layers[layers.length - 1][neuronIdx];
             pd *= (outputNeuron.getOutput() - targets[neuronIdx]);
             summationTerms.add(pd);
         }
-    }
-
-    /*
-    theta1 = (O1out - T1) * O11out (1 - O1out)
-    theta1 = (O1out - T1) * sigmoid-deriv(O1)
-    */
-    private double [] calculateThetas(double [] targets) {
-        int outputLayerIdx = layers.length - 1;
-        int widthOuputLayer = layers[outputLayerIdx].length;
-        double [] thetas = new double[widthOuputLayer];
-
-        for(int idx=0; idx < widthOuputLayer; idx++) {
-            Neuron neuron = layers[outputLayerIdx][idx];
-            thetas[idx] = (neuron.getOutput() - targets[idx]) * neuron.getOutput() * (1 - neuron.getOutput());
-        }
-
-        return thetas;
     }
 
     private double calculateSigmoidDerivative(int layerIdx, int neuronIdx) {
