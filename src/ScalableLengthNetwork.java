@@ -58,42 +58,55 @@ public class ScalableLengthNetwork {
     }
 
     public void learn(double [] inputs, double [] targets, double errorLimit) {
+        learn(inputs, targets, errorLimit, 0);
+    }
+
+    public void learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) {
         int iterations=0;
         double error;
-        passForward(inputs);
 
-        error = error(targets);
+        while(true) {
+            passForward(inputs);
 
-        for(int layerIdx=1; layerIdx < layers.length; layerIdx++) {
-            for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
-                Neuron neuron = layers[layerIdx][neuronIdx];
-                for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
+            error = error(targets);
 
-                    // Output previous Neuron.
-                    double pd = layers[layerIdx - 1][weightIdx].getOutput();
+            System.out.println(String.format("It: %d. Error: %f", iterations, error));
 
-                    pd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
+            if(error < errorLimit || (maxIterations > 0 && iterations >= maxIterations)) {
+                break;
+            }
 
-                    List<Double> summationTerms = new ArrayList<>();
-                    calculateSummationTerm(layerIdx, neuronIdx, targets, summationTerms, 1);
+            for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
+                for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+                    Neuron neuron = layers[layerIdx][neuronIdx];
+                    for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
 
-                    pd *= summationTerms.stream().mapToDouble(d->d).sum();
+                        // Output previous Neuron.
+                        double pd = layers[layerIdx - 1][weightIdx].getOutput();
 
-                    weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = pd;
+                        pd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
+
+                        List<Double> summationTerms = new ArrayList<>();
+                        calculateSummationTerm(layerIdx, neuronIdx, targets, summationTerms, 1);
+
+                        pd *= summationTerms.stream().mapToDouble(d -> d).sum();
+
+                        weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = pd;
+                    }
                 }
             }
-        }
 
-        for(int layerIdx=1; layerIdx < layers.length; layerIdx++) {
-            for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
-                Neuron neuron = layers[layerIdx][neuronIdx];
-                for(int weightIdx=0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
-                    adjustWeight(neuron, weightIdx, weightDerivatives[layerIdx - 1][neuronIdx][weightIdx]);
+            for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
+                for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+                    Neuron neuron = layers[layerIdx][neuronIdx];
+                    for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
+                        adjustWeight(neuron, weightIdx, weightDerivatives[layerIdx - 1][neuronIdx][weightIdx]);
+                    }
                 }
             }
-        }
 
-        System.out.println(String.format("It: %d. Error: %f", iterations++, error));
+            iterations++;
+        }
     }
 
     private void calculateSummationTerm(int layerIdx, int neuronIdx, double [] targets, List<Double> summationTerms, double pd) {

@@ -11,6 +11,7 @@ public class TestNetwork {
         System.out.println(String.format("Output1: %f, output2: %f", network.getOutput(0), network.getOutput(1)));
     }
 
+    @Test
     public void testScalableNetwork() {
         ScalableNetwork network = new ScalableNetwork(2,10,3);
         network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99, 0.01}, 0.001);
@@ -27,7 +28,7 @@ public class TestNetwork {
         ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork(new int []{2, 2, 2});
         scalableLengthNetwork.initWeights();
 
-        scalableLengthNetwork.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 10);
+        scalableLengthNetwork.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.00001, 1);
         double derivatives [][][] = scalableLengthNetwork.getPartialDerivatives();
         assertEquals(0.000967927, derivatives[1][0][0], 0.000000001);
         assertEquals(0.000995353, derivatives[1][0][1], 0.000000001);
