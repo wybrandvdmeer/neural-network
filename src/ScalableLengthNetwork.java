@@ -48,6 +48,10 @@ public class ScalableLengthNetwork {
         }
     }
 
+    public Neuron [][] getLayers() {
+        return layers;
+    }
+
     public double [][][] getPartialDerivatives() {
         return weightDerivatives;
     }
@@ -117,9 +121,11 @@ public class ScalableLengthNetwork {
         if(layerIdx < layers.length - 1) {
             for(int neuronInNextLayerIdx=0; neuronInNextLayerIdx < layers[layerIdx + 1].length; neuronInNextLayerIdx++) {
                 Neuron neuronInNextLayer = layers[layerIdx + 1][neuronInNextLayerIdx];
-                pd *= neuronInNextLayer.getWeight(neuronIdx);
-                pd *= calculateSigmoidDerivative(layerIdx + 1, neuronInNextLayerIdx);
-                calculateSummationTerm(layerIdx + 1, neuronInNextLayerIdx, targets, summationTerms, pd);
+
+                double pdDelta = pd;
+                pdDelta *= neuronInNextLayer.getWeight(neuronIdx);
+                pdDelta *= calculateSigmoidDerivative(layerIdx + 1, neuronInNextLayerIdx);
+                calculateSummationTerm(layerIdx + 1, neuronInNextLayerIdx, targets, summationTerms, pdDelta);
             }
         } else {
             // When arriving at the output, calculate dE/dOoutput
