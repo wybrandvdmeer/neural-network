@@ -41,6 +41,16 @@ public class ScalableNetwork {
         connectLayer(hiddenLayer, outputLayer);
     }
 
+    public Neuron [][] getLayers() {
+
+        Neuron layers [][] = new Neuron[3][];
+        layers[0] = inputLayer;
+        layers[1] = hiddenLayer;
+        layers[2] = outputLayer;
+
+        return layers;
+    }
+
     private void connectLayer(Neuron [] left, Neuron [] right) {
         for(int idx1=0; idx1 < right.length; idx1++) {
             for(int idx2=0; idx2 < left.length; idx2++) {
@@ -129,7 +139,7 @@ public class ScalableNetwork {
             }
 
             for(int idx=0; idx < outputLayer.length; idx++) {
-                adjustBiasWeight(outputLayer[idx], biasWeightDerivatives[OUTPUT_INDEX][idx]);
+                //adjustBiasWeight(outputLayer[idx], biasWeightDerivatives[OUTPUT_INDEX][idx]);
             }
 
             for(int idx=0; idx < hiddenLayer.length; idx++) {
