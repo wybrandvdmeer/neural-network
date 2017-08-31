@@ -1,9 +1,5 @@
 package neuralnetwork;
 
-import neuralnetwork.Network;
-import neuralnetwork.Neuron;
-import neuralnetwork.ScalableLengthNetwork;
-import neuralnetwork.ScalableNetwork;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -52,7 +48,15 @@ public class TestNetwork {
     @Test
     public void testScalableLengthNetworkFirstPass() {
         ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork(new int []{2, 2, 2});
-        scalableLengthNetwork.initWeights();
+
+        for(int layerIdx=0; layerIdx < scalableLengthNetwork.getLayers().length; layerIdx++) {
+            for(int neuronIdx=0; neuronIdx < scalableLengthNetwork.getLayers()[layerIdx].length; neuronIdx++) {
+                for(int weightIdx=0; weightIdx < scalableLengthNetwork.getLayers()[layerIdx][neuronIdx].getNoOfWeights(); weightIdx++) {
+                    scalableLengthNetwork.getLayers()[layerIdx][neuronIdx].setWeight(weightIdx, layerIdx + 1 + neuronIdx + weightIdx);
+                }
+                scalableLengthNetwork.getLayers()[layerIdx][neuronIdx].setBiasWeight(1);
+            }
+        }
 
         scalableLengthNetwork.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.00001, 1);
         double derivatives [][][] = scalableLengthNetwork.getPartialDerivatives();
@@ -91,8 +95,8 @@ public class TestNetwork {
 
     @Test
     public void testScalableLengthNetwork() {
-        ScalableLengthNetwork network = new ScalableLengthNetwork(new int []{2, 100, 100,  2});
-        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.000001);
+        ScalableLengthNetwork network = new ScalableLengthNetwork(new int []{5, 100, 100,  2});
+        network.learn(new double[]{ 200, 10, 30, 900, 10 }, new double[] {0.01, 0.99}, 0.000001);
 
         network.passForward(new double[] { 0.01, 0.01});
         System.out.println(String.format("Output1: %f, output2: %f",

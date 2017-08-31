@@ -39,17 +39,6 @@ public class ScalableLengthNetwork {
         }
     }
 
-    public void initWeights() {
-        for(int layerIdx=0; layerIdx < layers.length; layerIdx++) {
-            for(int neuronIdx=0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
-                for(int weightIdx=0; weightIdx < layers[layerIdx][neuronIdx].getNoOfWeights(); weightIdx++) {
-                    layers[layerIdx][neuronIdx].setWeight(weightIdx, layerIdx + 1 + neuronIdx + weightIdx);
-                }
-                layers[layerIdx][neuronIdx].setBiasWeight(1);
-            }
-        }
-    }
-
     public Neuron [][] getLayers() {
         return layers;
     }
