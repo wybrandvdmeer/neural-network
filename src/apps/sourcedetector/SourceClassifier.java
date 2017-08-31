@@ -1,9 +1,15 @@
 package apps.sourcedetector;
 
+import neuralnetwork.ScalableLengthNetwork;
+
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 
 public class SourceClassifier {
+
+    private static ScalableLengthNetwork network = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 20, 2});
+
     public static void main(String [] args) throws Exception {
 
         Arrays.stream(args).forEach( arg -> {
@@ -19,6 +25,9 @@ public class SourceClassifier {
                 throw new RuntimeException(e);
             }
         });
+
+        File weights = new File("weights");
+        network.write(new FileOutputStream(weights));
     }
 
     private static void processFiles(File root) throws Exception {
@@ -34,6 +43,13 @@ public class SourceClassifier {
                 System.out.println(String.format("File: %s", file.getName()));
 
                 KeywordCounter keywordCounter = new KeywordCounter(file);
+
+                double [] inputs = new double[keywordCounter.keywordOccurrences.length];
+                for(int idx=0; idx < keywordCounter.keywordOccurrences.length; idx++) {
+                    inputs[idx] = (double)keywordCounter.keywordOccurrences[idx];
+                }
+
+                network.learn(inputs, isJava ? new double[] {0.99, 0.01} : new double[] {0.01, 0.99}, 0.0001);
             }
         }
     }

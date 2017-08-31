@@ -1,5 +1,6 @@
 package neuralnetwork;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -166,5 +167,29 @@ public class ScalableLengthNetwork {
     public double getOutput(int output) {
         Neuron [] outputLayer = layers[layers.length - 1];
         return outputLayer[output].getOutput();
+    }
+
+    public void write(FileOutputStream weights) throws Exception {
+        for(int idx1=0; idx1 < layers.length; idx1++) {
+            for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
+                for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
+                    weights.write(new Double(layers[idx1][idx2].getWeights()[idx3]).toString().getBytes());
+                }
+                weights.write(new Double(layers[idx1][idx2].getBiasWeight()).toString().getBytes());
+            }
+        }
+    }
+
+    public void read(FileInputStream weights) throws Exception {
+        BufferedReader weightReader = new BufferedReader(new InputStreamReader(weights));
+
+        for(int idx1=0; idx1 < layers.length; idx1++) {
+            for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
+                for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
+                    layers[idx1][idx2].setWeight(idx3, Double.parseDouble(weightReader.readLine()));
+                }
+                layers[idx1][idx2].setBiasWeight(Double.parseDouble(weightReader.readLine()));
+            }
+        }
     }
 }
