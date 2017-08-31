@@ -1,3 +1,5 @@
+package neuralnetwork;
+
 import java.util.Random;
 
 public class Neuron {

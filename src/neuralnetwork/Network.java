@@ -1,3 +1,5 @@
+package neuralnetwork;
+
 import java.util.Arrays;
 
 public class Network {

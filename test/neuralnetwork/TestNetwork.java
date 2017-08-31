@@ -1,3 +1,9 @@
+package neuralnetwork;
+
+import neuralnetwork.Network;
+import neuralnetwork.Neuron;
+import neuralnetwork.ScalableLengthNetwork;
+import neuralnetwork.ScalableNetwork;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -59,7 +65,7 @@ public class TestNetwork {
     public void testScalableLengthNetwork2() {
         ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork(new int []{2, 2, 2});
 
-        Neuron [][] layers = scalableLengthNetwork.getLayers();
+        Neuron[][] layers = scalableLengthNetwork.getLayers();
 
         layers[1][0].setBiasWeight(0.35);
         layers[1][1].setBiasWeight(0.35);

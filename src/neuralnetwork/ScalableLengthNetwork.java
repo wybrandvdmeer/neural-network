@@ -1,3 +1,5 @@
+package neuralnetwork;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -94,7 +96,7 @@ public class ScalableLengthNetwork {
                     neuronPd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
 
                     for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
-                        // Times output previous Neuron.
+                        // Times output previous neuralnetwork.Neuron.
                         weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = neuronPd * layers[layerIdx - 1][weightIdx].getOutput();
                     }
 
