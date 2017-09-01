@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class KeywordCounter {
 
-    public static String [] keywords = { "package", "import", "class", "java", "false", "False", "true", "True", "def ", "{", "(", ":" };
+    public static String [] keywords = { "public", "protected", "private", "package", "import", "class", "java", "false", "False", "true", "True", "def ", "{", "(", ":" };
     public int [] keywordOccurrences = new int[keywords.length];
 
     public static int getNoOfKeywords() {
@@ -30,8 +30,6 @@ public class KeywordCounter {
         while((token = inputStream.read()) != -1) {
 
             fifo.put(token);
-
-            String a = "a";
 
             for (int idx = 0; idx < keywords.length; idx++) {
                 int length = keywords[idx].length() < fifo.getLength() ? keywords[idx].length() : fifo.getLength();

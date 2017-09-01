@@ -62,11 +62,11 @@ public class ScalableLengthNetwork {
         }
     }
 
-    public void learn(double [] inputs, double [] targets, double errorLimit) {
+    public void learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
         learn(inputs, targets, errorLimit, 0);
     }
 
-    public void learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) {
+    public void learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
         int iterations=0;
         double error;
 
@@ -77,8 +77,14 @@ public class ScalableLengthNetwork {
 
             System.out.println(String.format("%s: it: %d. Error: %f", name != null ? name : "network", iterations, error));
 
-            if(error < errorLimit || (maxIterations > 0 && iterations >= maxIterations)) {
+            if(error < errorLimit) {
                 break;
+            }
+
+            if(maxIterations > 0 && iterations >= maxIterations) {
+                String s = String.format("Max iterations exceeded for classifier %s.", name);
+                System.out.println(s);
+                throw new Exception(String.format("Max iterations exceeded for classifier %s.", name));
             }
 
             for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
