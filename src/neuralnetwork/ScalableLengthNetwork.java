@@ -14,6 +14,8 @@ public class ScalableLengthNetwork {
     private double [][][] weightDerivatives;
     private double [][] biasDerivatives;
 
+    private String name;
+
     public ScalableLengthNetwork(int [] layerSizes) {
         layers = new Neuron[layerSizes.length][];
         weightDerivatives = new double[layerSizes.length - 1][][];
@@ -38,6 +40,10 @@ public class ScalableLengthNetwork {
             weightDerivatives[idx1 - 1] = new double[layerSizes[idx1]][layerSizes[idx1-1]];
             biasDerivatives[idx1 - 1] = new double[layerSizes[idx1]];
         }
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Neuron [][] getLayers() {
@@ -69,7 +75,7 @@ public class ScalableLengthNetwork {
 
             error = error(targets);
 
-            System.out.println(String.format("It: %d. Error: %f", iterations, error));
+            System.out.println(String.format("%s: it: %d. Error: %f", name != null ? name : "network", iterations, error));
 
             if(error < errorLimit || (maxIterations > 0 && iterations >= maxIterations)) {
                 break;
@@ -173,9 +179,9 @@ public class ScalableLengthNetwork {
         for(int idx1=0; idx1 < layers.length; idx1++) {
             for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
                 for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
-                    weights.write(new Double(layers[idx1][idx2].getWeights()[idx3]).toString().getBytes());
+                    weights.write((new Double(layers[idx1][idx2].getWeights()[idx3]).toString() + "\n").getBytes());
                 }
-                weights.write(new Double(layers[idx1][idx2].getBiasWeight()).toString().getBytes());
+                weights.write((new Double(layers[idx1][idx2].getBiasWeight()).toString() + "\n").getBytes());
             }
         }
     }
