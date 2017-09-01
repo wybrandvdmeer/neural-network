@@ -66,7 +66,7 @@ public class ScalableLengthNetwork {
         learn(inputs, targets, errorLimit, 0);
     }
 
-    public void learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
+    public int learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
         int iterations=0;
         double error;
 
@@ -74,8 +74,6 @@ public class ScalableLengthNetwork {
             passForward(inputs);
 
             error = error(targets);
-
-            System.out.println(String.format("%s: it: %d. Error: %f", name != null ? name : "network", iterations, error));
 
             if(error < errorLimit) {
                 break;
@@ -119,6 +117,8 @@ public class ScalableLengthNetwork {
 
             iterations++;
         }
+
+        return iterations;
     }
 
     private void calculateSummationTerm(int layerIdx, int neuronIdx, double [] targets, List<Double> summationTerms, double pd) {
@@ -203,5 +203,9 @@ public class ScalableLengthNetwork {
                 layers[idx1][idx2].setBiasWeight(Double.parseDouble(weightReader.readLine()));
             }
         }
+    }
+
+    public String toString() {
+        return name;
     }
 }

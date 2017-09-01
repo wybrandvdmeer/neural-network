@@ -12,9 +12,9 @@ import java.util.List;
 
 public class SourceClassifier {
 
-    private static ScalableLengthNetwork javaClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 10, 5, 1});
-    private static ScalableLengthNetwork pythonClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 10, 5, 1});
-    private static ScalableLengthNetwork cClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 10, 5, 1});
+    private static ScalableLengthNetwork javaClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 20, 10, 1});
+    private static ScalableLengthNetwork pythonClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 20, 10,  1});
+    private static ScalableLengthNetwork cClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 20, 10, 1});
 
     public static void main(String [] args) throws Exception {
 
@@ -36,7 +36,7 @@ public class SourceClassifier {
 
             double [] inputs = new double[keywordCounter.keywordOccurrences.length];
             for(int idx=0; idx < keywordCounter.keywordOccurrences.length; idx++) {
-                inputs[idx] = (double)keywordCounter.keywordOccurrences[idx];
+               inputs[idx] = scaleInput(keywordCounter.keywordOccurrences[idx]);
             }
 
             javaClassifier.passForward(inputs);
@@ -92,6 +92,18 @@ public class SourceClassifier {
         cClassifier.write(new FileOutputStream(weights));
     }
 
+    private static double scaleInput(int input) {
+        if(input >= 10) {
+            return 0.99;
+        }
+
+        if(input == 0) {
+            return 0.01;
+        }
+
+        return (double)input / 10;
+    }
+
     private static void processFiles(File root) throws Exception {
         List<File> files = Arrays.asList(root.listFiles());
         Collections.shuffle(files);
@@ -111,15 +123,20 @@ public class SourceClassifier {
 
                 double[] inputs = new double[keywordCounter.keywordOccurrences.length];
                 for (int idx = 0; idx < keywordCounter.keywordOccurrences.length; idx++) {
-                    inputs[idx] = (double) keywordCounter.keywordOccurrences[idx];
+                    inputs[idx] = scaleInput(keywordCounter.keywordOccurrences[idx]);
                 }
 
                 int maxIterations = 50000;
-
+                int iterations;
+                double error = 0.0001;
                 try {
-                    pythonClassifier.learn(inputs, isPython ? new double[]{0.99} : new double[]{0.01}, 0.0001, maxIterations);
-                    cClassifier.learn(inputs, isC ? new double[]{0.99} : new double[]{0.01}, 0.0001, maxIterations);
-                    javaClassifier.learn(inputs, isJava ? new double[]{0.99} : new double[]{0.01}, 0.0001, maxIterations);
+                    iterations = pythonClassifier.learn(inputs, isPython ? new double[]{0.99} : new double[]{0.01}, error, maxIterations);
+                    iterations += cClassifier.learn(inputs, isC ? new double[]{0.99} : new double[]{0.01}, error, maxIterations);
+                    iterations += javaClassifier.learn(inputs, isJava ? new double[]{0.99} : new double[]{0.01}, error, maxIterations);
+
+                    System.out.println(String.format("Iterations: %d.", iterations));
+                    System.out.println();
+
                 } catch(Exception e) {
                     throw new RuntimeException(String.format("Max iterations exceeded for file %s.", file.getName(), e));
                 }

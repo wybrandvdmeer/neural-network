@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class KeywordCounter {
 
-    public static String [] keywords = { "public", "protected", "private", "package", "import", "class", "java", "false", "False", "true", "True", "def ", "{", "(", ":" };
+    public static String [] keywords = { "protected", "include", "private", "package", "extern", "public" , "import", "class", "false", "False", "java", "true", "True", "def ", "{", "(", ":", "#", "<" };
     public int [] keywordOccurrences = new int[keywords.length];
 
     public static int getNoOfKeywords() {
