@@ -34,5 +34,9 @@ public class Fifo {
 
         return position;
     }
+
+    public boolean isFilled() {
+        return !(position < bytes.length);
+    }
 }
 

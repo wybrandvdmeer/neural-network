@@ -62,8 +62,8 @@ public class ScalableLengthNetwork {
         }
     }
 
-    public void learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
-        learn(inputs, targets, errorLimit, 0);
+    public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
+        return learn(inputs, targets, errorLimit, 0);
     }
 
     public int learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
