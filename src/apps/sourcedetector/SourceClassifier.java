@@ -36,7 +36,8 @@ public class SourceClassifier {
 
     public void learn(File root) throws Exception {
 
-        int summedIterations=0;
+        int [] summedIterations = new int[networks.size()];
+
         int fileIterations=0;
 
         for(File file : shuffle(root.listFiles())) {
@@ -77,15 +78,20 @@ public class SourceClassifier {
                 throw new RuntimeException("Unknown source.");
             }
 
+            fileIterations++;
+
+            int networkNo = 0;
+
             for(ScalableLengthNetwork network : networks) {
                 try {
                     iterations = network.learn(inputs, targets, error, maxIterations);
-                    summedIterations += iterations;
+                    summedIterations[networkNo] += iterations;
 
-                    System.out.println(String.format("Files: %d, iterations: %d, avg: %d",
+                    System.out.println(String.format("Network: %s, files: %d, iterations: %d, avg: %d",
+                            network,
                             fileIterations,
                             iterations,
-                            summedIterations / ++fileIterations));
+                            summedIterations[networkNo++]/fileIterations));
                     System.out.println();
 
                 } catch (Exception e) {
