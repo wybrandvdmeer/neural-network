@@ -5,7 +5,7 @@ import neuralnetwork.ScalableLengthNetwork;
 import java.io.File;
 import java.util.*;
 
-public class SourceClassifier {
+public abstract class SourceClassifier {
 
     List<ScalableLengthNetwork> networks = new ArrayList<>();
 
@@ -46,7 +46,7 @@ public class SourceClassifier {
 
             boolean isJava = "java".equals(extenstion);
             boolean isPython = "py".equals(extenstion);
-            boolean isC = "c".equals(extenstion);
+            boolean isC = "c".equals(extenstion) || "h".equals(extenstion);
 
             System.out.println(String.format("File: %s", file.getName()));
 
@@ -61,28 +61,14 @@ public class SourceClassifier {
             int iterations;
             double error = 0.000001;
 
-            double [] targets = new double[3];
-            if(isJava) {
-                targets[0] = 0.99;
-                targets[1] = 0.01;
-                targets[2] = 0.01;
-            } else if(isPython) {
-                targets[0] = 0.01;
-                targets[1] = 0.99;
-                targets[2] = 0.01;
-            } else if(isC) {
-                targets[0] = 0.01;
-                targets[1] = 0.01;
-                targets[2] = 0.99;
-            } else {
-                throw new RuntimeException("Unknown source.");
-            }
-
             fileIterations++;
 
             int networkNo = 0;
 
             for(ScalableLengthNetwork network : networks) {
+
+                double [] targets = composeTargets(network, isJava, isPython, isC);
+
                 try {
                     iterations = network.learn(inputs, targets, error, maxIterations);
                     summedIterations[networkNo] += iterations;
@@ -104,6 +90,8 @@ public class SourceClassifier {
             network.writeWeights();
         }
     }
+
+    abstract double [] composeTargets(ScalableLengthNetwork network, boolean isJava, boolean isPython, boolean isC);
 
     private List<File> shuffle(File [] fileArr) {
         List<File> files = new ArrayList<>();
