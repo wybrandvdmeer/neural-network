@@ -57,9 +57,9 @@ public abstract class SourceClassifier {
                 inputs[idx] = scaleInput(keywordCounter.keywordOccurrences[idx]);
             }
 
-            int maxIterations = 100000;
+            int maxIterations = 50000;
             int iterations;
-            double error = 0.000001;
+            double error = 0.0001;
 
             fileIterations++;
 
