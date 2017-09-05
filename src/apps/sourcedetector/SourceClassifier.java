@@ -3,153 +3,144 @@ package apps.sourcedetector;
 import neuralnetwork.ScalableLengthNetwork;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SourceClassifier {
 
-    private static ScalableLengthNetwork javaClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 20, 10, 1});
-    private static ScalableLengthNetwork pythonClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 20, 10,  1});
-    private static ScalableLengthNetwork cClassifier = new ScalableLengthNetwork(new int [] {KeywordCounter.getNoOfKeywords(), 20, 10, 1});
+    List<ScalableLengthNetwork> networks = new ArrayList<>();
 
-    public static void main(String [] args) throws Exception {
-
-        javaClassifier.setName("javaClassifier");
-        pythonClassifier.setName("pythonClassifier");
-        cClassifier.setName("cClassifier");
-
-        File javaWeights = new File("javaClassifier");
-        File pythonWeights = new File("pythonClassifier");
-        File cWeights = new File("cClassifier");
-
-        if(javaWeights.exists() && pythonWeights.exists() && cWeights.exists()) {
-            javaClassifier.read(new FileInputStream(javaWeights));
-            pythonClassifier.read(new FileInputStream(pythonWeights));
-            cClassifier.read(new FileInputStream(cWeights));
-
-            File unknownSource = new File(args[0]);
-            KeywordCounter keywordCounter = new KeywordCounter(unknownSource);
-
-            double [] inputs = new double[keywordCounter.keywordOccurrences.length];
-            for(int idx=0; idx < keywordCounter.keywordOccurrences.length; idx++) {
-               inputs[idx] = scaleInput(keywordCounter.keywordOccurrences[idx]);
-            }
-
-            javaClassifier.passForward(inputs);
-            pythonClassifier.passForward(inputs);
-            cClassifier.passForward(inputs);
-
-            double javaOutput = javaClassifier.getOutput(0);
-            double pythonOutput = pythonClassifier.getOutput(0);
-            double cOutput = cClassifier.getOutput(0);
-
-            if(javaOutput > 0.9) {
-                System.out.println("Source is recognized as a Java file.");
-            } else {
-                System.out.println("Source is not recognized as a Java file.");
-            }
-
-            if(pythonOutput > 0.9) {
-                System.out.println("Source is recognized as a Python file.");
-            } else {
-                System.out.println("Source is not recognized as a Python file.");
-            }
-
-            if(cOutput > 0.9) {
-                System.out.println("Source is recognized as a C file.");
-            } else {
-                System.out.println("Source is not recognized as a C file.");
-            }
-
-            return;
-        }
-
-        Arrays.stream(args).forEach(arg -> {
-            File sourceDir = new File(arg);
-
-            if(!sourceDir.isDirectory()) {
-                throw new RuntimeException(String.format("Argument %s is not a directory.", args[0]));
-            }
-
-            try {
-                processFiles(sourceDir);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        File weights = new File("javaClassifier");
-        javaClassifier.write(new FileOutputStream(weights));
-
-        weights = new File("pythonClassifier");
-        pythonClassifier.write(new FileOutputStream(weights));
-
-        weights = new File("cClassifier");
-        cClassifier.write(new FileOutputStream(weights));
+    public void addNetwork(ScalableLengthNetwork network) throws Exception {
+        networks.add(network);
+        network.readWeights();
     }
 
-    private static double scaleInput(int input) {
-        if(input >= 10) {
+    double scaleInput(int input) {
+        if (input >= 10) {
             return 0.99;
         }
 
-        if(input == 0) {
+        if (input == 0) {
             return 0.01;
         }
 
-        return (double)input / 10;
+        return (double) input / 10;
     }
 
-    private static void processFiles(File root) throws Exception {
-        List<File> files = Arrays.asList(root.listFiles());
-        Collections.shuffle(files);
-        for(File file : files) {
-            if(file.isDirectory()) {
-                processFiles(file);
-            } else {
-                String extenstion = getExtension(file.getName());
-
-                boolean isJava = "java".equals(extenstion);
-                boolean isPython = "py".equals(extenstion);
-                boolean isC = "c".equals(extenstion);
-
-                System.out.println(String.format("File: %s", file.getName()));
-
-                KeywordCounter keywordCounter = new KeywordCounter(file);
-
-                double[] inputs = new double[keywordCounter.keywordOccurrences.length];
-                for (int idx = 0; idx < keywordCounter.keywordOccurrences.length; idx++) {
-                    inputs[idx] = scaleInput(keywordCounter.keywordOccurrences[idx]);
-                }
-
-                int maxIterations = 50000;
-                int iterations;
-                double error = 0.0001;
-                try {
-                    iterations = pythonClassifier.learn(inputs, isPython ? new double[]{0.99} : new double[]{0.01}, error, maxIterations);
-                    iterations += cClassifier.learn(inputs, isC ? new double[]{0.99} : new double[]{0.01}, error, maxIterations);
-                    iterations += javaClassifier.learn(inputs, isJava ? new double[]{0.99} : new double[]{0.01}, error, maxIterations);
-
-                    System.out.println(String.format("Iterations: %d.", iterations));
-                    System.out.println();
-
-                } catch(Exception e) {
-                    throw new RuntimeException(String.format("Max iterations exceeded for file %s.", file.getName(), e));
-                }
-            }
-        }
-    }
-
-    private static String getExtension(String file) {
+    private String getExtension(String file) {
         int index;
         if((index = file.lastIndexOf(".")) < 0) {
             return null;
         }
         return file.substring(index + 1, file.length());
     }
-}
 
+    public void learn(File root) throws Exception {
+
+        int summedIterations=0;
+        int fileIterations=0;
+
+        for(File file : shuffle(root.listFiles())) {
+
+            String extenstion = getExtension(file.getName());
+
+            boolean isJava = "java".equals(extenstion);
+            boolean isPython = "py".equals(extenstion);
+            boolean isC = "c".equals(extenstion);
+
+            System.out.println(String.format("File: %s", file.getName()));
+
+            KeywordCounter keywordCounter = new KeywordCounter(file);
+
+            double[] inputs = new double[keywordCounter.keywordOccurrences.length];
+            for (int idx = 0; idx < keywordCounter.keywordOccurrences.length; idx++) {
+                inputs[idx] = scaleInput(keywordCounter.keywordOccurrences[idx]);
+            }
+
+            int maxIterations = 100000;
+            int iterations;
+            double error = 0.000001;
+
+            double [] targets = new double[3];
+            if(isJava) {
+                targets[0] = 0.99;
+                targets[1] = 0.01;
+                targets[2] = 0.01;
+            } else if(isPython) {
+                targets[0] = 0.01;
+                targets[1] = 0.99;
+                targets[2] = 0.01;
+            } else if(isC) {
+                targets[0] = 0.01;
+                targets[1] = 0.01;
+                targets[2] = 0.99;
+            } else {
+                throw new RuntimeException("Unknown source.");
+            }
+
+            for(ScalableLengthNetwork network : networks) {
+                try {
+                    iterations = network.learn(inputs, targets, error, maxIterations);
+                    summedIterations += iterations;
+
+                    System.out.println(String.format("Files: %d, iterations: %d, avg: %d",
+                            fileIterations,
+                            iterations,
+                            summedIterations / ++fileIterations));
+                    System.out.println();
+
+                } catch (Exception e) {
+                    throw new RuntimeException(String.format("Max iterations exceeded for file %s.", file.getName(), e));
+                }
+            }
+        }
+
+        for(ScalableLengthNetwork network : networks) {
+            network.writeWeights();
+        }
+    }
+
+    private List<File> shuffle(File [] fileArr) {
+        List<File> files = new ArrayList<>();
+        for(File f : fileArr) {
+            String ext = getExtension(f.getName());
+            if(!ext.equals("c") && !ext.equals("java") && !ext.equals("py")) {
+                continue;
+            }
+            files.add(f);
+        }
+
+        List<File> shuffledFiles = new ArrayList<>();
+
+        List extensions = new ArrayList();
+        int idx=0;
+        do {
+            extensions.clear();
+            for(File file : files) {
+                String ext = getExtension(file.getName());
+                if(!extensions.contains(ext)) {
+                    extensions.add(ext);
+                }
+            }
+
+            if(idx >= extensions.size()) {
+                idx = 0;
+            }
+
+            for(Iterator<File> it = files.iterator(); it.hasNext();) {
+                File file = it.next();
+
+                if(getExtension(file.getName()).equals(extensions.get(idx))) {
+                    shuffledFiles.add(file);
+                    it.remove();
+
+                    if(++idx == extensions.size()) {
+                        idx = 0;
+                    }
+                }
+            }
+
+        } while(files.size() > 0);
+
+        return shuffledFiles;
+    }
+}

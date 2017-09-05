@@ -47,7 +47,7 @@ public class TestNetwork {
 
     @Test
     public void testScalableLengthNetworkFirstPass() throws Exception {
-        ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork(new int []{2, 2, 2});
+        ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork("test", new int []{2, 2, 2});
 
         for(int layerIdx=0; layerIdx < scalableLengthNetwork.getLayers().length; layerIdx++) {
             for(int neuronIdx=0; neuronIdx < scalableLengthNetwork.getLayers()[layerIdx].length; neuronIdx++) {
@@ -67,7 +67,7 @@ public class TestNetwork {
 
     @Test
     public void testScalableLengthNetwork2() throws Exception {
-        ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork(new int []{2, 2, 2});
+        ScalableLengthNetwork scalableLengthNetwork = new ScalableLengthNetwork("test", new int []{2, 2, 2});
 
         Neuron[][] layers = scalableLengthNetwork.getLayers();
 
@@ -95,7 +95,7 @@ public class TestNetwork {
 
     @Test
     public void testScalableLengthNetwork() throws Exception {
-        ScalableLengthNetwork network = new ScalableLengthNetwork(new int []{5, 100, 100,  2});
+        ScalableLengthNetwork network = new ScalableLengthNetwork("test", new int []{5, 100, 100,  2});
         network.learn(new double[]{ 200, 10, 30, 900, 10 }, new double[] {0.01, 0.99}, 0.000001);
 
         network.passForward(new double[] { 0.01, 0.01});

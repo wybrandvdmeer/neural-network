@@ -14,9 +14,11 @@ public class ScalableLengthNetwork {
     private double [][][] weightDerivatives;
     private double [][] biasDerivatives;
 
-    private String name;
+    private final String name;
 
-    public ScalableLengthNetwork(int [] layerSizes) {
+    public ScalableLengthNetwork(String name, int [] layerSizes) {
+        this.name = name;
+
         layers = new Neuron[layerSizes.length][];
         weightDerivatives = new double[layerSizes.length - 1][][];
         biasDerivatives = new double[layerSizes.length - 1][];
@@ -40,10 +42,6 @@ public class ScalableLengthNetwork {
             weightDerivatives[idx1 - 1] = new double[layerSizes[idx1]][layerSizes[idx1-1]];
             biasDerivatives[idx1 - 1] = new double[layerSizes[idx1]];
         }
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Neuron [][] getLayers() {
@@ -181,7 +179,7 @@ public class ScalableLengthNetwork {
         return outputLayer[output].getOutput();
     }
 
-    public void write(FileOutputStream weights) throws Exception {
+    private void write(FileOutputStream weights) throws Exception {
         for(int idx1=0; idx1 < layers.length; idx1++) {
             for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
                 for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
@@ -192,7 +190,7 @@ public class ScalableLengthNetwork {
         }
     }
 
-    public void read(FileInputStream weights) throws Exception {
+    private void read(FileInputStream weights) throws Exception {
         BufferedReader weightReader = new BufferedReader(new InputStreamReader(weights));
 
         for(int idx1=0; idx1 < layers.length; idx1++) {
@@ -207,5 +205,17 @@ public class ScalableLengthNetwork {
 
     public String toString() {
         return name;
+    }
+
+    public void readWeights() throws Exception {
+        File weights = new File(name);
+        if(weights.exists()) {
+            read(new FileInputStream(weights));
+        }
+    }
+
+    public void writeWeights() throws Exception {
+        File weights = new File(name);
+        write(new FileOutputStream(weights));
     }
 }
