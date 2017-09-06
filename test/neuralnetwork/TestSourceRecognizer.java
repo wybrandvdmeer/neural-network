@@ -70,7 +70,7 @@ public class TestSourceRecognizer {
             } else
             if(ext.equals("c")) {
                 cFiles++;
-                if(sourceClassifierSingleNetwork.isJava()) {
+                if(sourceClassifierSingleNetwork.isC()) {
                     recognizedAsC++;
                 }
             }
