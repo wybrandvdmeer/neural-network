@@ -29,6 +29,7 @@ public class TestSourceRecognizer {
         int files=0;
         int recognizedAsJava=0, recognizedAsPython=0, recognizedAsC=0;
         List<String> recognizeErrors = new ArrayList<>();
+        List<String> notRecognizedErrors = new ArrayList<>();
 
         for(File file : test.listFiles()) {
             String ext = getExtension(file.getName());
@@ -65,6 +66,10 @@ public class TestSourceRecognizer {
                 }
             }
 
+            if(!isJava && !isPython && !isC) {
+                notRecognizedErrors.add(String.format("File %s is not recognized.", file.getName()));
+            }
+
             System.out.println(String.format("Recognized: %d, java: %s, python: %s, C: %s", recognized,
                     sourceClassifierMultipleNetworks.isJava(),
                     sourceClassifierMultipleNetworks.isPython(),
@@ -78,6 +83,11 @@ public class TestSourceRecognizer {
 
         System.out.println("Recognize errors: " + recognizeErrors.size());
         for(String s : recognizeErrors) {
+            System.out.println(s);
+        }
+        System.out.println();
+        System.out.println("Sources not recognized: " + recognizeErrors.size());
+        for(String s : notRecognizedErrors) {
             System.out.println(s);
         }
     }
@@ -101,6 +111,7 @@ public class TestSourceRecognizer {
         int files=0;
         int recognizedAsJava=0, recognizedAsPython=0, recognizedAsC=0;
         List<String> recognizeErrors = new ArrayList<>();
+        List<String> notRecognizedErrors = new ArrayList<>();
 
         for(File file : test.listFiles()) {
             String ext = getExtension(file.getName());
@@ -137,6 +148,11 @@ public class TestSourceRecognizer {
                 }
             }
 
+
+            if(!isJava && !isPython && !isC) {
+                notRecognizedErrors.add(String.format("File %s is not recognized.", file.getName()));
+            }
+
             System.out.println(String.format("Recognized: %d, java: %s, python: %s, C: %s", recognized,
                     sourceClassifierSingleNetwork.isJava(),
                     sourceClassifierSingleNetwork.isPython(),
@@ -150,6 +166,11 @@ public class TestSourceRecognizer {
 
         System.out.println("Recognize errors: " + recognizeErrors.size());
         for(String s : recognizeErrors) {
+            System.out.println(s);
+        }
+        System.out.println();
+        System.out.println("Sources not recognized: " + recognizeErrors.size());
+        for(String s : notRecognizedErrors) {
             System.out.println(s);
         }
     }
