@@ -59,7 +59,7 @@ public abstract class SourceClassifier {
 
             int maxIterations = 50000;
             int iterations;
-            double error = 0.00001;
+            double error = 0.000001;
 
             fileIterations++;
 
