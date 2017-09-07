@@ -6,9 +6,9 @@ import java.io.File;
 
 public class SourceClassifierMultipleNetworks extends SourceClassifier {
 
-    private static ScalableLengthNetwork javaClassifier = new ScalableLengthNetwork("javaClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 20, 10, 1});
-    private static ScalableLengthNetwork pythonClassifier = new ScalableLengthNetwork("pythonClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 20, 10,  1});
-    private static ScalableLengthNetwork cClassifier = new ScalableLengthNetwork("cClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 20, 10, 1});
+    private static ScalableLengthNetwork javaClassifier = new ScalableLengthNetwork("javaClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10, 1});
+    private static ScalableLengthNetwork pythonClassifier = new ScalableLengthNetwork("pythonClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10,  1});
+    private static ScalableLengthNetwork cClassifier = new ScalableLengthNetwork("cClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10, 1});
 
     private boolean isJava, isPython, isC;
 

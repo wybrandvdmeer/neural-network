@@ -59,7 +59,7 @@ public abstract class SourceClassifier {
 
             int maxIterations = 50000;
             int iterations;
-            double error = 0.0001;
+            double error = 0.00001;
 
             fileIterations++;
 
@@ -71,6 +71,10 @@ public abstract class SourceClassifier {
 
                 try {
                     iterations = network.learn(inputs, targets, error, maxIterations);
+                    if(iterations == -1) {
+                        throw new RuntimeException("Max iterations exceeded for classifier");
+                    }
+
                     summedIterations[networkNo] += iterations;
 
                     System.out.println(String.format("Network: %s, files: %d, iterations: %d, avg: %d",

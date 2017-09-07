@@ -80,7 +80,7 @@ public class ScalableLengthNetwork {
             if(maxIterations > 0 && iterations >= maxIterations) {
                 String s = String.format("Max iterations exceeded for classifier %s.", name);
                 System.out.println(s);
-                throw new Exception(String.format("Max iterations exceeded for classifier %s.", name));
+                return -1;
             }
 
             for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
