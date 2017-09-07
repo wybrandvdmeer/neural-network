@@ -10,57 +10,57 @@ public class SourceClassifierMultipleNetworks extends SourceClassifier {
     private static ScalableLengthNetwork pythonClassifier = new ScalableLengthNetwork("pythonClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 20, 10,  1});
     private static ScalableLengthNetwork cClassifier = new ScalableLengthNetwork("cClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 20, 10, 1});
 
-    public static int main(String [] args) throws Exception {
+    private boolean isJava, isPython, isC;
 
-        SourceClassifierMultipleNetworks sourceClassifier = new SourceClassifierMultipleNetworks();
-        sourceClassifier.addNetwork(javaClassifier);
-        sourceClassifier.addNetwork(pythonClassifier);
-        sourceClassifier.addNetwork(cClassifier);
+    public int recognize(String file) throws Exception {
 
-        if(args[0].equals("recognize")) {
-            File unknownSource = new File(args[1]);
-            KeywordCounter keywordCounter = new KeywordCounter(unknownSource);
+        isJava = isPython = isC = false;
 
-            double [] inputs = new double[keywordCounter.keywordOccurrences.length];
-            for(int idx=0; idx < keywordCounter.keywordOccurrences.length; idx++) {
-                inputs[idx] = sourceClassifier.scaleInput(keywordCounter.keywordOccurrences[idx]);
-            }
+        addNetwork(javaClassifier);
+        addNetwork(pythonClassifier);
+        addNetwork(cClassifier);
 
-            javaClassifier.passForward(inputs);
-            pythonClassifier.passForward(inputs);
-            cClassifier.passForward(inputs);
+        File unknownSource = new File(file);
+        KeywordCounter keywordCounter = new KeywordCounter(unknownSource);
 
-            double javaOutput = javaClassifier.getOutput(0);
-            double pythonOutput = pythonClassifier.getOutput(0);
-            double cOutput = cClassifier.getOutput(0);
+        double [] inputs = new double[keywordCounter.keywordOccurrences.length];
+        for(int idx=0; idx < keywordCounter.keywordOccurrences.length; idx++) {
+            inputs[idx] = scaleInput(keywordCounter.keywordOccurrences[idx]);
+        }
 
-            System.out.println(String.format("Source: %s", unknownSource.getName()));
+        javaClassifier.passForward(inputs);
+        pythonClassifier.passForward(inputs);
+        cClassifier.passForward(inputs);
 
-            if(javaOutput > 0.9) {
-                System.out.println("Source is recognized as a Java file.");
-                return 1;
-            } else {
-                System.out.println("Source is not recognized as a Java file.");
-            }
+        double javaOutput = javaClassifier.getOutput(0);
+        double pythonOutput = pythonClassifier.getOutput(0);
+        double cOutput = cClassifier.getOutput(0);
 
-            if(pythonOutput > 0.9) {
-                System.out.println("Source is recognized as a Python file.");
-                return 1;
-            } else {
-                System.out.println("Source is not recognized as a Python file.");
-            }
+        System.out.println(String.format("Source: %s", unknownSource.getName()));
 
-            if(cOutput > 0.9) {
-                System.out.println("Source is recognized as a C file.");
-                return 1;
-            } else {
-                System.out.println("Source is not recognized as a C file.");
-            }
-        } else if(args[0].equals("learn")) {
-            sourceClassifier.learn(new File(args[1]));
+        if(javaOutput > 0.9) {
+            isJava = true;
+            return 1;
+        }
+
+        if(pythonOutput > 0.9) {
+            isPython = true;
+            return 1;
+        }
+
+        if(cOutput > 0.9) {
+            isC = true;
+            return 1;
         }
 
         return 0;
+    }
+
+    public void learn(String dir) throws Exception {
+        addNetwork(javaClassifier);
+        addNetwork(pythonClassifier);
+        addNetwork(cClassifier);
+        learn(new File(dir));
     }
 
     double [] composeTargets(ScalableLengthNetwork network, boolean isJava, boolean isPython, boolean isC) {
@@ -79,6 +79,19 @@ public class SourceClassifierMultipleNetworks extends SourceClassifier {
         }
 
         return new double[]{target};
+    }
+
+
+    public boolean isJava() {
+        return isJava;
+    }
+
+    public boolean isPython() {
+        return isPython;
+    }
+
+    public boolean isC() {
+        return isC;
     }
 }
 
