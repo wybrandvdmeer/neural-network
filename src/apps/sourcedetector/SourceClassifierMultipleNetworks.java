@@ -74,7 +74,7 @@ public class SourceClassifierMultipleNetworks extends SourceClassifier {
             target = 0.99;
         }
 
-        if(network.toString().equals("cClassifier") && isPython) {
+        if(network.toString().equals("cClassifier") && isC) {
             target = 0.99;
         }
 

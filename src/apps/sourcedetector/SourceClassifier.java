@@ -78,12 +78,11 @@ public abstract class SourceClassifier {
                             fileIterations,
                             iterations,
                             summedIterations[networkNo++]/fileIterations));
-                    System.out.println();
-
                 } catch (Exception e) {
                     throw new RuntimeException(String.format("Max iterations exceeded for file %s.", file.getName(), e));
                 }
             }
+            System.out.println();
         }
 
         for(ScalableLengthNetwork network : networks) {
