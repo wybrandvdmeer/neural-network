@@ -36,9 +36,10 @@ public abstract class SourceClassifier {
 
     public void learn(File root) throws Exception {
 
-        int [] summedIterations = new int[networks.size()];
+        int [][] summedIterations = new int[networks.size()][10];
 
-        int fileIterations=0;
+        int fileNo=0;
+        int noOfIterations = 0;
 
         for(File file : shuffle(root.listFiles())) {
 
@@ -60,8 +61,7 @@ public abstract class SourceClassifier {
             int maxIterations = 50000;
             int iterations;
             double error = 0.000001;
-
-            fileIterations++;
+            fileNo++;
 
             int networkNo = 0;
 
@@ -75,18 +75,28 @@ public abstract class SourceClassifier {
                         throw new RuntimeException("Max iterations exceeded for classifier");
                     }
 
-                    summedIterations[networkNo] += iterations;
+                    summedIterations[networkNo][noOfIterations++] = iterations;
+
+                    int totalNoOfIterations = 0;
+                    for(int idx=0; idx < noOfIterations; idx++) {
+                        totalNoOfIterations += summedIterations[networkNo][idx];
+                    }
 
                     System.out.println(String.format("Network: %s, files: %d, iterations: %d, avg: %d",
                             network,
-                            fileIterations,
+                            fileNo,
                             iterations,
-                            summedIterations[networkNo++]/fileIterations));
+                            totalNoOfIterations/noOfIterations));
                 } catch (Exception e) {
                     throw new RuntimeException(String.format("Max iterations exceeded for file %s.", file.getName(), e));
                 }
             }
+
             System.out.println();
+
+            if(noOfIterations == 10) {
+                noOfIterations = 0;
+            }
         }
 
         for(ScalableLengthNetwork network : networks) {
