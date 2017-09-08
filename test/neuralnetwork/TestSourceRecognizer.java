@@ -169,7 +169,7 @@ public class TestSourceRecognizer {
             System.out.println(s);
         }
         System.out.println();
-        System.out.println("Sources not recognized: " + recognizeErrors.size());
+        System.out.println("Sources not recognized: " + notRecognizedErrors.size());
         for(String s : notRecognizedErrors) {
             System.out.println(s);
         }
