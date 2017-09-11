@@ -1,15 +1,15 @@
 package apps.sourcedetector;
 
-import neuralnetwork.ScalableLengthNetwork;
+import neuralnetwork.Network;
 
 import java.io.File;
 import java.util.*;
 
 public abstract class SourceClassifier {
 
-    List<ScalableLengthNetwork> networks = new ArrayList<>();
+    List<Network> networks = new ArrayList<>();
 
-    public void addNetwork(ScalableLengthNetwork network) throws Exception {
+    public void addNetwork(Network network) throws Exception {
         networks.add(network);
         network.readWeights();
     }
@@ -65,7 +65,7 @@ public abstract class SourceClassifier {
 
             int networkNo = 0;
 
-            for(ScalableLengthNetwork network : networks) {
+            for(Network network : networks) {
 
                 double [] targets = composeTargets(network, isJava, isPython, isC);
 
@@ -100,12 +100,12 @@ public abstract class SourceClassifier {
             System.out.println();
         }
 
-        for(ScalableLengthNetwork network : networks) {
+        for(Network network : networks) {
             network.writeWeights();
         }
     }
 
-    abstract double [] composeTargets(ScalableLengthNetwork network, boolean isJava, boolean isPython, boolean isC);
+    abstract double [] composeTargets(Network network, boolean isJava, boolean isPython, boolean isC);
 
     private List<File> shuffle(File [] fileArr) {
         List<File> files = new ArrayList<>();

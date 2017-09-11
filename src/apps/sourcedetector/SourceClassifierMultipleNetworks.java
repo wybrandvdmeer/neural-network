@@ -1,14 +1,14 @@
 package apps.sourcedetector;
 
-import neuralnetwork.ScalableLengthNetwork;
+import neuralnetwork.Network;
 
 import java.io.File;
 
 public class SourceClassifierMultipleNetworks extends SourceClassifier {
 
-    private static ScalableLengthNetwork javaClassifier = new ScalableLengthNetwork("javaClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10, 1});
-    private static ScalableLengthNetwork pythonClassifier = new ScalableLengthNetwork("pythonClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10,  1});
-    private static ScalableLengthNetwork cClassifier = new ScalableLengthNetwork("cClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10, 1});
+    private static Network javaClassifier = new Network("javaClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10, 1});
+    private static Network pythonClassifier = new Network("pythonClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10,  1});
+    private static Network cClassifier = new Network("cClassifier", new int [] {KeywordCounter.getNoOfKeywords(), 10, 1});
 
     private boolean isJava, isPython, isC;
 
@@ -63,7 +63,7 @@ public class SourceClassifierMultipleNetworks extends SourceClassifier {
         learn(new File(dir));
     }
 
-    double [] composeTargets(ScalableLengthNetwork network, boolean isJava, boolean isPython, boolean isC) {
+    double [] composeTargets(Network network, boolean isJava, boolean isPython, boolean isC) {
         double target=0.01;
 
         if(network.toString().equals("javaClassifier") && isJava) {

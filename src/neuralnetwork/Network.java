@@ -1,107 +1,145 @@
 package neuralnetwork;
 
+import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Network {
 
     private double learningConstant = 0.5;
 
-    private Neuron [] inputLayer = new Neuron[2];
-    private Neuron [] hiddenLayer = new Neuron[2];
-    private Neuron [] outputLayer = new Neuron[2];
+    private Neuron [][] layers; // 0 -> input layer.
 
-    public Network() {
-        inputLayer[0] = new Neuron(1).isInputNeuron();
-        inputLayer[1] = new Neuron(1).isInputNeuron();
+    private double [][][] weightDerivatives;
+    private double [][] biasDerivatives;
 
-        hiddenLayer[0] = new Neuron(2);
-        hiddenLayer[1] = new Neuron(2);
+    private final String name;
 
-        outputLayer[0] = new Neuron(2);
-        outputLayer[1] = new Neuron(2);
+    public Network(String name, int [] layerSizes) {
+        this.name = name;
 
-        hiddenLayer[0].setInput(0, inputLayer[0]);
-        hiddenLayer[0].setInput(1, inputLayer[1]);
+        layers = new Neuron[layerSizes.length][];
+        weightDerivatives = new double[layerSizes.length - 1][][];
+        biasDerivatives = new double[layerSizes.length - 1][];
 
-        hiddenLayer[1].setInput(0, inputLayer[0]);
-        hiddenLayer[1].setInput(1, inputLayer[1]);
+        for(int idx1=0; idx1 < layerSizes.length; idx1++) {
+            layers[idx1] = new Neuron[layerSizes[idx1]];
+            for(int idx2=0; idx2 < layerSizes[idx1]; idx2++) {
+                if(idx1 ==0) {
+                    layers[idx1][idx2] = new Neuron(1).isInputNeuron();
+                } else {
+                    layers[idx1][idx2] = new Neuron(layers[idx1 - 1].length);
+                }
+            }
+        }
 
-        outputLayer[0].setInput(0, hiddenLayer[0]);
-        outputLayer[0].setInput(1, hiddenLayer[1]);
+        for(int idx=0; idx < layerSizes.length - 1; idx++) {
+            connectLayer(layers[idx], layers[idx + 1]);
+        }
 
-        outputLayer[1].setInput(0, hiddenLayer[0]);
-        outputLayer[1].setInput(1, hiddenLayer[1]);
+        for(int idx1=1; idx1 < layerSizes.length; idx1++) {
+            weightDerivatives[idx1 - 1] = new double[layerSizes[idx1]][layerSizes[idx1-1]];
+            biasDerivatives[idx1 - 1] = new double[layerSizes[idx1]];
+        }
     }
 
-    public void learn(double input1, double input2, double target1, double target2, double errorLimit) {
+    public Neuron [][] getLayers() {
+        return layers;
+    }
+
+    public double [][][] getPartialDerivatives() {
+        return weightDerivatives;
+    }
+
+    private void connectLayer(Neuron [] left, Neuron [] right) {
+        for(int idx1=0; idx1 < right.length; idx1++) {
+            for(int idx2=0; idx2 < left.length; idx2++) {
+                right[idx1].setInput(idx2, left[idx2]);
+            }
+        }
+    }
+
+    public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
+        return learn(inputs, targets, errorLimit, 0);
+    }
+
+    public int learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
         int iterations=0;
         double error;
+
         while(true) {
-            passForward(input1, input2);
+            passForward(inputs);
 
-            error = error(target1, target2);
-
-            System.out.println(String.format("It: %d. Error: %f", iterations++, error));
+            error = error(targets);
 
             if(error < errorLimit) {
                 break;
             }
 
-            double outputO1 = outputLayer[0].getOutput();
-            double outputO2 = outputLayer[1].getOutput();
+            if(maxIterations > 0 && iterations >= maxIterations) {
+                String s = String.format("Max iterations exceeded for classifier %s.", name);
+                System.out.println(s);
+                return -1;
+            }
 
-            double hiddenO1 = hiddenLayer[0].getOutput();
-            double hiddenO2 = hiddenLayer[1].getOutput();
+            for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
+                for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+                    Neuron neuron = layers[layerIdx][neuronIdx];
 
-            double inputO1 = inputLayer[0].getOutput();
-            double inputO2 = inputLayer[1].getOutput();
+                    List<Double> summationTerms = new ArrayList<>();
+                    calculateSummationTerm(layerIdx, neuronIdx, targets, summationTerms, 1);
+                    double neuronPd = summationTerms.stream().mapToDouble(d -> d).sum();
 
-            double theta1 = (outputO1 - target1) * outputO1 * (1 - outputO1);
-            double theta2 = (outputO2 - target2) * outputO2 * (1 - outputO2);
+                    neuronPd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
 
-            double w5 = outputLayer[0].getWeight(0);
-            double w6 = outputLayer[0].getWeight(1);
+                    for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
+                        // Times output previous neuralnetwork.Neuron.
+                        weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = neuronPd * layers[layerIdx - 1][weightIdx].getOutput();
+                    }
 
-            double w7 = outputLayer[1].getWeight(0);
-            double w8 = outputLayer[1].getWeight(1);
+                    biasDerivatives[layerIdx - 1][neuronIdx] = neuronPd;
+                }
+            }
 
-            double pdW1 = (theta1 * w5 + theta2 * w7) * hiddenO1 * (1 - hiddenO1) * inputO1;
-            double pdW2 = (theta1 * w5 + theta2 * w7) * hiddenO1 * (1 - hiddenO1) * inputO2;
+            for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
+                for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+                    Neuron neuron = layers[layerIdx][neuronIdx];
+                    for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
+                        adjustWeight(neuron, weightIdx, weightDerivatives[layerIdx - 1][neuronIdx][weightIdx]);
+                    }
 
-            double pdW3 = (theta1 * w6 + theta2 * w8) * hiddenO2 * (1 - hiddenO2) * inputO1;
-            double pdW4 = (theta1 * w6 + theta2 * w8) * hiddenO2 * (1 - hiddenO2) * inputO2;
+                    adjustBiasWeight(neuron, biasDerivatives[layerIdx - 1][neuronIdx]);
+                }
+            }
 
-            double pdW5 = theta1 * hiddenO1;
-            double pdW6 = theta1 * hiddenO2;
-
-            double pdW7 = theta2 * hiddenO1;
-            double pdW8 = theta2 * hiddenO2;
-
-            double pdBiasO1 = theta1;
-            double pdBiasO2 = theta2;
-
-            double pdBiasH1 = (theta1 * w5 + theta2 * w7) * hiddenO1 * (1 - hiddenO1);
-            double pdBiasH2 = (theta1 * w6 + theta2 * w8) * hiddenO2 * (1 - hiddenO2);
-
-
-            adjustWeight(hiddenLayer[0], 0, pdW1);
-            adjustWeight(hiddenLayer[0], 1, pdW2);
-
-            adjustWeight(hiddenLayer[1], 0, pdW3);
-            adjustWeight(hiddenLayer[1], 1, pdW4);
-
-            adjustWeight(outputLayer[0], 0, pdW5);
-            adjustWeight(outputLayer[0], 1, pdW6);
-
-            adjustWeight(outputLayer[1], 0, pdW7);
-            adjustWeight(outputLayer[1], 1, pdW8);
-
-            adjustBiasWeight(hiddenLayer[0], pdBiasH1);
-            adjustBiasWeight(hiddenLayer[1], pdBiasH2);
-
-            adjustBiasWeight(outputLayer[0], pdBiasO1);
-            adjustBiasWeight(outputLayer[1], pdBiasO2);
+            iterations++;
         }
+
+        return iterations;
+    }
+
+    private void calculateSummationTerm(int layerIdx, int neuronIdx, double [] targets, List<Double> summationTerms, double pd) {
+        if(layerIdx < layers.length - 1) {
+            for(int neuronInNextLayerIdx=0; neuronInNextLayerIdx < layers[layerIdx + 1].length; neuronInNextLayerIdx++) {
+                Neuron neuronInNextLayer = layers[layerIdx + 1][neuronInNextLayerIdx];
+
+                double pdDelta = pd;
+                pdDelta *= neuronInNextLayer.getWeight(neuronIdx);
+                pdDelta *= calculateSigmoidDerivative(layerIdx + 1, neuronInNextLayerIdx);
+                calculateSummationTerm(layerIdx + 1, neuronInNextLayerIdx, targets, summationTerms, pdDelta);
+            }
+        } else {
+            // When arriving at the output, calculate dE/dOoutput
+            Neuron outputNeuron = layers[layers.length - 1][neuronIdx];
+            pd *= (outputNeuron.getOutput() - targets[neuronIdx]);
+            summationTerms.add(pd);
+        }
+    }
+
+    private double calculateSigmoidDerivative(int layerIdx, int neuronIdx) {
+        Neuron neuron = layers[layerIdx][neuronIdx];
+        return neuron.getOutput() * (1 - neuron.getOutput());
     }
 
     private void adjustWeight(Neuron neuron, int index, double partialDerivative) {
@@ -114,22 +152,70 @@ public class Network {
         neuron.setBiasWeight(oldWeight - learningConstant * partialDerivative);
     }
 
-    public void passForward(double input1, double input2) {
-        inputLayer[0].setInput(input1);
-        inputLayer[1].setInput(input2);
+    public void passForward(double [] inputs) {
+        for(int idx=0; idx < inputs.length; idx++) {
+            layers[0][idx].setInput(inputs[idx]);
+        }
 
-        Arrays.stream(inputLayer).forEach(n -> n.fire());
-        Arrays.stream(hiddenLayer).forEach(n -> n.fire());
-        Arrays.stream(outputLayer).forEach(n -> n.fire());
+        Arrays.stream(layers).forEach(layer -> {
+            Arrays.stream(layer).forEach(n->n.fire());
+        });
     }
 
-    private double error(double target1, double target2) {
-        double o1 = outputLayer[0].getOutput();
-        double o2 = outputLayer[1].getOutput();
-        return 0.5 * (target1 - o1) * (target1 - o1) + 0.5 * (target2 - o2) * (target2 - o2);
+    private double error(double [] targets) {
+        double summedError = 0;
+
+        Neuron [] outputLayer = layers[layers.length - 1];
+
+        for(int idx=0; idx < targets.length; idx++) {
+            summedError += 0.5 * (targets[idx] - outputLayer[idx].getOutput()) * (targets[idx] - outputLayer[idx].getOutput());
+        }
+
+        return summedError;
     }
 
     public double getOutput(int output) {
+        Neuron [] outputLayer = layers[layers.length - 1];
         return outputLayer[output].getOutput();
+    }
+
+    private void write(FileOutputStream weights) throws Exception {
+        for(int idx1=0; idx1 < layers.length; idx1++) {
+            for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
+                for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
+                    weights.write((new Double(layers[idx1][idx2].getWeights()[idx3]).toString() + "\n").getBytes());
+                }
+                weights.write((new Double(layers[idx1][idx2].getBiasWeight()).toString() + "\n").getBytes());
+            }
+        }
+    }
+
+    private void read(FileInputStream weights) throws Exception {
+        BufferedReader weightReader = new BufferedReader(new InputStreamReader(weights));
+
+        for(int idx1=0; idx1 < layers.length; idx1++) {
+            for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
+                for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
+                    layers[idx1][idx2].setWeight(idx3, Double.parseDouble(weightReader.readLine()));
+                }
+                layers[idx1][idx2].setBiasWeight(Double.parseDouble(weightReader.readLine()));
+            }
+        }
+    }
+
+    public String toString() {
+        return name;
+    }
+
+    public void readWeights() throws Exception {
+        File weights = new File(name);
+        if(weights.exists()) {
+            read(new FileInputStream(weights));
+        }
+    }
+
+    public void writeWeights() throws Exception {
+        File weights = new File(name);
+        write(new FileOutputStream(weights));
     }
 }
