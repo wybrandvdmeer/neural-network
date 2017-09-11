@@ -52,14 +52,4 @@ public class KeywordCounter {
             }
         }
     }
-
-    public int getKeywordOccurrence(String keyword) throws Exception {
-        for(int idx=0; idx < keywords.length; idx++) {
-            if(keyword.equals(keywords[idx])) {
-                return keywordOccurrences[idx];
-            }
-        }
-
-        throw new Exception(String.format("Keyword %s is not counted.", keyword));
-    }
 }
