@@ -75,7 +75,12 @@ public abstract class SourceClassifier {
                         throw new RuntimeException("Max iterations exceeded for classifier");
                     }
 
-                    summedIterations[networkNo][noOfIterations++] = iterations;
+                    if(noOfIterations < 10) {
+                        summedIterations[networkNo][noOfIterations++] = iterations;
+                    } else {
+                        System.arraycopy(summedIterations[networkNo], 1, summedIterations[networkNo], 0, 9);
+                        summedIterations[networkNo][9] = iterations;
+                    }
 
                     int totalNoOfIterations = 0;
                     for(int idx=0; idx < noOfIterations; idx++) {
@@ -93,10 +98,6 @@ public abstract class SourceClassifier {
             }
 
             System.out.println();
-
-            if(noOfIterations == 10) {
-                noOfIterations = 0;
-            }
         }
 
         for(ScalableLengthNetwork network : networks) {
