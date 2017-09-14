@@ -12,7 +12,7 @@ public class MeetPunt {
     }
 
     public void setRoadName(String roadName) {
-        this.roadName = roadName;
+        this.roadName = roadName.trim();
     }
 
     public void setMeterPosition(long meterPosition) {
@@ -53,5 +53,30 @@ public class MeetPunt {
 
     public String toString() {
         return String.format("Meetpunt(%d, %s)", id, roadName);
+    }
+
+    public boolean isMainRoad() {
+        return roadName.charAt(roadName.length() - 2) == ' ';
+    }
+
+    public char getDirection() {
+        return roadName.charAt(roadName.length() - 1);
+    }
+
+    public int getRoadNumber() {
+
+        String s="";
+
+        for(char c : roadName.toCharArray()) {
+            if(Character.isDigit(c)) {
+                s += c;
+            }
+        }
+
+        return Integer.parseInt(s);
+    }
+
+    public boolean isSuspect() {
+        return !Character.isDigit(roadName.charAt(0));
     }
 }

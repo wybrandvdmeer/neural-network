@@ -2,29 +2,100 @@ package apps.meetpuntdetector.st4;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class St4Reader {
 
+    private final FileInputStream stream;
+
     public St4Reader(File st4) throws Exception {
+        stream = new FileInputStream(st4);
+    }
 
-        FileInputStream fileInputStream = new FileInputStream(st4);
-        long noOfMeasurements = readHeader(fileInputStream);
+    public void process(List<Sample> samples) throws Exception {
 
-        log("Found %d meetpunten.", noOfMeasurements);
+        Map<Integer, Sample> meetPuntIdx2Sample = new HashMap<>();
 
-        for(int idx=0; idx < noOfMeasurements; idx++) {
-            MeetPunt meetPunt = readMeetPunt(fileInputStream);
-            log("Found meetpunt %s.", meetPunt);
+        long noOfMeetPunten = readHeader(stream);
+
+        log("Found %d meetpunten.", noOfMeetPunten);
+
+        for(int meetPuntSequence=0; meetPuntSequence < noOfMeetPunten; meetPuntSequence++) {
+            MeetPunt meetPunt = readMeetPunt(stream);
+
+            if(!meetPunt.isMainRoad() || meetPunt.isSuspect()) {
+                continue;
+            }
+
+            for(Iterator<Sample> it = samples.iterator(); it.hasNext();) {
+                Sample sample = it.next();
+                if(sample.getRoadNumber() == meetPunt.getRoadNumber() && sample.getDirection() == meetPunt.getDirection()) {
+                    log("Found Sampled meetpunt %s.", meetPunt);
+                    meetPuntIdx2Sample.put(meetPuntSequence, sample);
+                    it.remove();
+                }
+            }
+
+            if(samples.isEmpty()) {
+                break;
+            }
         }
+
+        Sample sample=null;
+        int meetPuntSequencePerRoad=0;
+
+        int intensityA=0, intensityB=0, velocityA=0, velocityB=0;
 
         /* Read the data. Data is in order of the meetPunten, and for each Meetpunt is starts from minute 0 to minute 1439.
         */
-        for(int meetPuntIdx=0; meetPuntIdx < noOfMeasurements; meetPuntIdx++) {
-            for(int minute=0; minute < 1440; minute++) {
-                DataRecord dataRecord = readDataRecord(fileInputStream, minute);
-                log("Found datarecord %s.", dataRecord);
+        for(int meetPuntSequence=0; meetPuntSequence < noOfMeetPunten; meetPuntSequence++) {
+            if(sample == null) {
+                for (int key : meetPuntIdx2Sample.keySet()) {
+                    if (key == meetPuntSequence) {
+                        break;
+                    }
+                }
+                sample = meetPuntIdx2Sample.get(meetPuntSequence);
+                meetPuntSequencePerRoad = 0;
             }
+
+            intensityA=intensityB=velocityA=velocityB=0;
+
+            for(int minute=0; minute < 1440; minute++) {
+                DataRecord dataRecord = readDataRecord(stream, minute);
+
+                if(sample != null && sample.meetPuntInRange(meetPuntSequencePerRoad) && sample.minuteInRange(minute)) {
+                    intensityA += dataRecord.getIntensityA();
+                    intensityB += dataRecord.getIntensityB();
+                    velocityA += dataRecord.getVelocityA();
+                    velocityB += dataRecord.getVelocityB();
+                }
+            }
+
+            if(sample != null && sample.meetPuntInRange(meetPuntSequencePerRoad)) {
+                writeSample(meetPuntSequence, intensityA, intensityB, velocityA, velocityB);
+            }
+
+            if(sample != null && sample.meetPuntAboveRange(meetPuntSequencePerRoad)) {
+                meetPuntIdx2Sample.values().remove(sample);
+                sample = null;
+            }
+
+            if(meetPuntIdx2Sample.isEmpty()) {
+                break;
+            }
+
+            meetPuntSequencePerRoad++;
         }
+    }
+
+    private void writeSample(int meetPuntID, int intensityA, int intentityB, int velocityA, int velocityB) throws Exception {
+        FileOutputStream out = new FileOutputStream(new File(String.format("%d", meetPuntID)));
+        out.write(String.format("%d %d %d %d", intensityA, intentityB, velocityA, velocityB).getBytes());
     }
 
     private void log(String format, Object... args) {
@@ -101,7 +172,6 @@ public class St4Reader {
         if(size >= 4) {
             throw new RuntimeException("Unsigned integer is less than 4 bytes.");
         }
-
 
         byte [] bytes = new byte[size];
 

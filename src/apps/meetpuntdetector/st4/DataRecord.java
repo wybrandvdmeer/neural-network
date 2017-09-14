@@ -28,4 +28,20 @@ public class DataRecord {
     public String toString() {
         return String.format("Datarecord(minute: %d, %d/%d/%d/%d", minute, intensityA, intensityB, velocityA, velocityB);
     }
+
+    public int getIntensityA() {
+        return intensityA;
+    }
+
+    public int getIntensityB() {
+        return intensityB;
+    }
+
+    public int getVelocityA() {
+        return velocityA;
+    }
+
+    public int getVelocityB() {
+        return velocityB;
+    }
 }
