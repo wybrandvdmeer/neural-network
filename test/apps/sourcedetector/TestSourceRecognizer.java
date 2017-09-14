@@ -1,4 +1,4 @@
-package neuralnetwork;
+package apps.sourcedetector;
 
 import apps.sourcedetector.SourceClassifierMultipleNetworks;
 import apps.sourcedetector.SourceClassifierSingleNetwork;
