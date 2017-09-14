@@ -56,11 +56,11 @@ public class St4Reader {
             if(sample == null) {
                 for (int key : meetPuntIdx2Sample.keySet()) {
                     if (key == meetPuntSequence) {
+                        sample = meetPuntIdx2Sample.get(key);
+                        meetPuntSequencePerRoad = 0;
                         break;
                     }
                 }
-                sample = meetPuntIdx2Sample.get(meetPuntSequence);
-                meetPuntSequencePerRoad = 0;
             }
 
             intensityA=intensityB=velocityA=velocityB=0;
@@ -77,7 +77,7 @@ public class St4Reader {
             }
 
             if(sample != null && sample.meetPuntInRange(meetPuntSequencePerRoad)) {
-                writeSample(meetPuntSequence, intensityA, intensityB, velocityA, velocityB);
+                writeSample(meetPuntSequence, sample.getMinutesInRange(), intensityA, intensityB, velocityA, velocityB);
             }
 
             if(sample != null && sample.meetPuntAboveRange(meetPuntSequencePerRoad)) {
@@ -93,9 +93,13 @@ public class St4Reader {
         }
     }
 
-    private void writeSample(int meetPuntID, int intensityA, int intentityB, int velocityA, int velocityB) throws Exception {
+    private void writeSample(int meetPuntID, int minuntes, int intensityA, int intentityB, int velocityA, int velocityB) throws Exception {
         FileOutputStream out = new FileOutputStream(new File(String.format("%d", meetPuntID)));
-        out.write(String.format("%d %d %d %d", intensityA, intentityB, velocityA, velocityB).getBytes());
+        out.write(String.format("%.2f %.2f %.2f %.2f",
+                (double)intensityA/minuntes,
+                (double)intentityB/minuntes,
+                (double)velocityA/minuntes,
+                (double)velocityB/minuntes).getBytes());
     }
 
     private void log(String format, Object... args) {
