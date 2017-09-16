@@ -23,7 +23,7 @@ public class NetworkMatrix {
             /* rows = neurons, columns = weights
             */
             Matrix matrix = new Matrix(layerSizes[layer], layerSizes[layer + 1]);
-            matrix = matrix.random(matrix.getRowDimension(), matrix.getColumnDimension());
+            matrix = matrix.random(matrix.getRowDimension(), matrix.getColumnDimension() + 1); // Plus bias weight.
             matrix = matrix.times(2);
             minus(matrix, 1);
             weights.put(layer, matrix);
@@ -38,7 +38,10 @@ public class NetworkMatrix {
         Matrix inputVector = new Matrix(input, input.length);
 
         for(int layer = 0; layer < weights.values().size(); layer++) {
-            inputVector = weights.get(layer).times(inputVector);
+
+            Matrix w = weightsWithoutBias(weights.get(layer));
+
+            inputVector = w.times(inputVector);
             this.inputs.put(layer, inputVector);
 
             Matrix outputVector = transfer(inputVector);
@@ -46,6 +49,10 @@ public class NetworkMatrix {
 
             inputVector = outputVector;
         }
+    }
+
+    private Matrix weightsWithoutBias(Matrix weights) {
+        return weights.getMatrix(0, weights.getRowDimension() - 1, 0, weights.getColumnDimension() - 2);
     }
 
     private Matrix transfer(Matrix vector) {
