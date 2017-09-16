@@ -53,4 +53,17 @@ public class TestNetworkMatrix {
         }
         System.out.println();
     }
+
+    public void testMatrix() {
+        Matrix m1 = new Matrix(2,1);
+        Matrix m2 = new Matrix(2,1);
+
+        m1.set(0,0,1);
+        m1.set(1,0,2);
+
+        m2.set(0,0,3);
+        m2.set(1,0,4);
+
+        printMatrix(m1.times(m2), "test");
+    }
 }
