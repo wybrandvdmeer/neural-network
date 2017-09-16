@@ -70,43 +70,18 @@ public class NetworkMatrix {
         return transfered;
     }
 
-    private double sigmoid(double x) {
-        return (1/( 1 + Math.pow(Math.E,(-1*x))));
-    }
-
-    public double getOutput(int index) {
-        return outputs.get(outputs.size() - 1).get(index,0);
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
-        return learn(inputs, targets, errorLimit, 0);
-    }
-
     public int learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
         int iterations=0;
         double error=0;
 
-        while(true) {
-            //passForward(inputs);
+        Matrix targetVector = new Matrix(targets, targets.length);
 
-            // error = error(targets);
+        while(true) {
+            passForward(inputs);
+
+            Matrix errorDeriv = getOutputVector().minus(targetVector);
+
+            error = error(targetVector);
 
             if(error < errorLimit) {
                 break;
@@ -122,6 +97,20 @@ public class NetworkMatrix {
         }
 
         return iterations;
+    }
+
+    public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
+        return learn(inputs, targets, errorLimit, 0);
+    }
+
+    private double error(Matrix targets) {
+        double error=0;
+        Matrix m1 = targets.minus(getOutputVector());
+        for(int row=0; row < m1.getRowDimension(); row++) {
+            error += m1.get(row, 0) * m1.get(row, 0) * 0.5;
+        }
+
+        return error;
     }
 
     private void minus(Matrix m, double minus) {
@@ -148,4 +137,17 @@ public class NetworkMatrix {
     public Map<Integer, Matrix> getWeights() {
         return weights;
     }
+
+    private double sigmoid(double x) {
+        return (1/( 1 + Math.pow(Math.E,(-1*x))));
+    }
+
+    private Matrix getOutputVector() {
+        return outputs.get(outputs.size() - 1);
+    }
+
+    public double getOutput(int index) {
+        return getOutputVector().get(index,0);
+    }
+
 }

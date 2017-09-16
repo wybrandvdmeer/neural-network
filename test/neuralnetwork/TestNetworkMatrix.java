@@ -35,6 +35,12 @@ public class TestNetworkMatrix {
 
     }
 
+    @Test
+    public void testLearn() throws Exception {
+        NetworkMatrix network = new NetworkMatrix("test", new int[]{2,2,2});
+        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.00001, 1);
+    }
+
     public void printMatrix(Matrix matrix, String name) {
         System.out.println("Matrix: " + name);
         for (int i = 0; i < matrix.getRowDimension(); i++) {
