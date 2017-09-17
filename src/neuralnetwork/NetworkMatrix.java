@@ -16,6 +16,8 @@ public class NetworkMatrix {
     private Map<Integer, Matrix> transferDerivertives = new HashMap<>(); // E.g. dNout/dNin
     private Map<Integer, Matrix> gradients = new HashMap<>();
 
+    private double error;
+
     private boolean noTransfer = false;
 
     public NetworkMatrix(String name, int [] layerSizes) {
@@ -37,37 +39,45 @@ public class NetworkMatrix {
     }
 
     public void passForward(double [] input) {
-        Matrix inputVector = new Matrix(input, input.length);
+        Matrix inputVector = new Matrix(input.length + 1, 1);
+
+        int row=0;
+        for(; row < input.length; row++) {
+            inputVector.set(row, 0, input[row]);
+        }
+
+        inputVector.set(row, 0, 1); // bias.
 
         for(int layer = 0; layer < weights.values().size(); layer++) {
-            Matrix w = weightsWithoutBias(weights.get(layer));
 
-            inputVector = w.times(inputVector);
-            this.inputs.put(layer, inputVector);
+            inputVector = weights.get(layer).times(inputVector);
+            inputs.put(layer, inputVector);
 
             Matrix outputVector = transfer(inputVector);
-            this.outputs.put(layer, outputVector);
+            outputs.put(layer, outputVector);
 
             transferDerivertives.put(layer, get2Dim(transferDerivative(outputVector)));
 
-            inputVector = outputVector;
-        }
-    }
+            inputVector = new Matrix(outputVector.getRowDimension() + 1, 1);
+            for(row=0; row < inputVector.getRowDimension() -1; row++) {
+                inputVector.set(row, 0, outputVector.get(row, 0));
+            }
 
-    private Matrix weightsWithoutBias(Matrix weights) {
-        return weights.getMatrix(0, weights.getRowDimension() - 1, 0, weights.getColumnDimension() - 2);
+            inputVector.set(row, 0, 1); // Bias.
+        }
     }
 
     private Matrix transferDerivative(Matrix vector) {
+        Matrix v2 = vector.copy();
         for(int row=0; row < vector.getRowDimension(); row++) {
             if(noTransfer) {
-                vector.set(row, 0, 1);
+                v2.set(row, 0, 1);
             } else {
-                vector.set(row, 0, vector.get(row, 0) * (1 - vector.get(row, 0)));
+                v2.set(row, 0, vector.get(row, 0) * (1 - vector.get(row, 0)));
             }
         }
 
-        return vector;
+        return v2;
     }
 
     private Matrix transfer(Matrix vector) {
@@ -87,7 +97,6 @@ public class NetworkMatrix {
 
     public int learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
         int iterations=0;
-        double error=0;
 
         Matrix targetVector = new Matrix(targets, targets.length);
 
@@ -102,11 +111,11 @@ public class NetworkMatrix {
 
             Matrix errorDeriv = getOutputVector().minus(targetVector);
 
-
             Matrix theta;
 
             for(int layer=weights.values().size() - 1; layer >= 0; layer--) {
-                theta = transferDerivertives.get(layer).times(errorDeriv);
+                theta = outputs.get(layer).times(transferDerivertives.get(layer).times(errorDeriv).transpose());
+                gradients.put(layer, theta);
             }
 
             if(maxIterations > 0 && iterations >= maxIterations) {
@@ -125,7 +134,7 @@ public class NetworkMatrix {
         return learn(inputs, targets, errorLimit, 0);
     }
 
-    private double error(Matrix targets) {
+    double error(Matrix targets) {
         double error=0;
         Matrix m1 = targets.minus(getOutputVector());
         for(int row=0; row < m1.getRowDimension(); row++) {
@@ -147,7 +156,7 @@ public class NetworkMatrix {
         System.out.println("Matrix: " + name);
         for (int i = 0; i < matrix.getRowDimension(); i++) {
             for (int j = 0; j < matrix.getColumnDimension(); j++) {
-                String s = String.format("%.2f", matrix.get(i,j));
+                String s = String.format("%.4f", matrix.get(i,j));
                 System.out.print(' ');
                 System.out.print(s);
             }
@@ -186,5 +195,9 @@ public class NetworkMatrix {
         }
 
         return matrix;
+    }
+
+    public double getError() {
+        return error;
     }
 }

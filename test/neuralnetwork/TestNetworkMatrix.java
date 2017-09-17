@@ -36,9 +36,54 @@ public class TestNetworkMatrix {
     }
 
     @Test
+    public void testPassforward() throws Exception {
+        NetworkMatrix network = new NetworkMatrix("test", new int[]{2,2,2});
+
+        network.getWeights().get(0).set(0,0, 0.15);
+        network.getWeights().get(0).set(0,1, 0.2);
+        network.getWeights().get(0).set(0,2, 0.35);
+
+        network.getWeights().get(0).set(1,0, 0.25);
+        network.getWeights().get(0).set(1,1, 0.3);
+        network.getWeights().get(0).set(1,2, 0.35);
+
+        network.getWeights().get(1).set(0,0, 0.4);
+        network.getWeights().get(1).set(0,1, 0.45);
+        network.getWeights().get(1).set(0,2, 0.6);
+
+        network.getWeights().get(1).set(1,0, 0.5);
+        network.getWeights().get(1).set(1,1, 0.55);
+        network.getWeights().get(1).set(1,2, 0.6);
+
+        network.passForward(new double[]{ 0.05, 0.1 });
+
+        assertEquals(0.7513650695523157, network.getOutput(0));
+        assertEquals(0.7729284653214625, network.getOutput(1));
+    }
+
+    @Test
     public void testLearn() throws Exception {
         NetworkMatrix network = new NetworkMatrix("test", new int[]{2,2,2});
+
+        network.getWeights().get(0).set(0,0, 0.15);
+        network.getWeights().get(0).set(0,1, 0.2);
+        network.getWeights().get(0).set(0,2, 0.35);
+
+        network.getWeights().get(0).set(1,0, 0.25);
+        network.getWeights().get(0).set(1,1, 0.3);
+        network.getWeights().get(0).set(1,2, 0.35);
+
+        network.getWeights().get(1).set(0,0, 0.4);
+        network.getWeights().get(1).set(0,1, 0.45);
+        network.getWeights().get(1).set(0,2, 0.6);
+
+        network.getWeights().get(1).set(1,0, 0.5);
+        network.getWeights().get(1).set(1,1, 0.55);
+        network.getWeights().get(1).set(1,2, 0.6);
+
         network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.00001, 1);
+        assertEquals(0.2983711087600027, network.getError());
+
     }
 
     public void printMatrix(Matrix matrix, String name) {
@@ -54,6 +99,7 @@ public class TestNetworkMatrix {
         System.out.println();
     }
 
+    @Test
     public void testMatrix() {
         Matrix m1 = new Matrix(2,1);
         Matrix m2 = new Matrix(2,1);
@@ -64,6 +110,11 @@ public class TestNetworkMatrix {
         m2.set(0,0,3);
         m2.set(1,0,4);
 
-        printMatrix(m1.times(m2), "test");
+
+        printMatrix(m1, "m1");
+        printMatrix(m2, "m2");
+        printMatrix(m2.transpose(), "m2 transpose");
+
+        printMatrix(m1.times(m2.transpose()), "test");
     }
 }
