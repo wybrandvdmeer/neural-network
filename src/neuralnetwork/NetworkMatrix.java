@@ -11,7 +11,6 @@ public class NetworkMatrix {
     private final String name;
 
     private Map<Integer, Matrix> weights = new HashMap<>();
-    private Map<Integer, Matrix> inputs = new HashMap<>();
     private Map<Integer, Matrix> outputs = new HashMap<>();
     private Map<Integer, Matrix> transferDerivertives = new HashMap<>(); // E.g. dNout/dNin
     private Map<Integer, Matrix> gradients = new HashMap<>();
@@ -48,10 +47,12 @@ public class NetworkMatrix {
 
         inputVector.set(row, 0, 1); // bias.
 
-        for(int layer = 0; layer < weights.values().size(); layer++) {
+        // Store the input as output of the input layer.
+        outputs.put(0, inputVector.getMatrix(0, input.length - 1, 0, 0));
 
-            inputVector = weights.get(layer).times(inputVector);
-            inputs.put(layer, inputVector);
+        for(int layer = 1; layer <= weights.values().size(); layer++) {
+
+            inputVector = weights.get(layer - 1).times(inputVector);
 
             Matrix outputVector = transfer(inputVector);
             outputs.put(layer, outputVector);
@@ -113,8 +114,8 @@ public class NetworkMatrix {
 
             Matrix theta;
 
-            for(int layer=weights.values().size() - 1; layer >= 0; layer--) {
-                theta = outputs.get(layer).times(transferDerivertives.get(layer).times(errorDeriv).transpose());
+            for(int layer=weights.values().size(); layer > 0; layer--) {
+                theta = outputs.get(layer - 1).times(transferDerivertives.get(layer).times(errorDeriv).transpose()).transpose();
                 gradients.put(layer, theta);
             }
 
@@ -132,6 +133,10 @@ public class NetworkMatrix {
 
     public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
         return learn(inputs, targets, errorLimit, 0);
+    }
+
+    Matrix getGradients(int layer) {
+        return gradients.get(layer);
     }
 
     double error(Matrix targets) {
