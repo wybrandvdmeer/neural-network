@@ -25,6 +25,10 @@ public class Sample {
         return this.meetPuntIdx <= meetPunt && meetPunt < this.meetPuntIdx + meetPuntRange;
     }
 
+    public int getMeetPunt() {
+        return meetPuntIdx;
+    }
+
     public boolean meetPuntAboveRange(int meetPunt) {
         return this.meetPuntIdx + meetPuntRange <= meetPunt;
     }
@@ -33,7 +37,31 @@ public class Sample {
         return this.minute <= minute && minute < this.minute + minutesInRange;
     }
 
+    public int getMeetPuntRange() {
+        return meetPuntRange;
+    }
+
+    public int getMinute() {
+        return minute;
+    }
+
     public int getMinutesInRange() {
         return minutesInRange;
+    }
+
+    public static Sample readSample(String line) throws Exception {
+        String [] arr = line.split(" ");
+        return new Sample(
+                Integer.parseInt(arr[0]),
+                arr[1].charAt(0),
+                Integer.parseInt(arr[2]),
+                Integer.parseInt(arr[3]),
+                Integer.parseInt(arr[4]),
+                Integer.parseInt(arr[5])
+                );
+    }
+
+    public String toString() {
+        return String.format("%d-%c-%d-%d", roadNumber, direction, meetPuntIdx, minute);
     }
 }

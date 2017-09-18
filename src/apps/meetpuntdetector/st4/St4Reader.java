@@ -1,30 +1,30 @@
 package apps.meetpuntdetector.st4;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class St4Reader {
 
     private final FileInputStream stream;
+    private String outputDir=null;
 
-    public St4Reader(File st4) throws Exception {
-        stream = new FileInputStream(st4);
+    public St4Reader(String st4) throws Exception {
+        stream = new FileInputStream(new File(st4));
     }
 
-    public void process(List<Sample> samples) throws Exception {
+    public void process(List<Sample> samplesArg) throws Exception {
+        List<Sample> samples = new ArrayList<>(samplesArg);
 
-        Map<Integer, Sample> meetPuntIdx2Sample = new HashMap<>();
+        Map<Integer, List<Sample>> meetPuntID2Sample = new HashMap<>();
 
         long noOfMeetPunten = readHeader(stream);
 
         log("Found %d meetpunten.", noOfMeetPunten);
 
-        for(int meetPuntSequence=0; meetPuntSequence < noOfMeetPunten; meetPuntSequence++) {
+        for(int meetPuntID=0; meetPuntID < noOfMeetPunten; meetPuntID++) {
             MeetPunt meetPunt = readMeetPunt(stream);
 
             if(!meetPunt.isMainRoad() || meetPunt.isSuspect()) {
@@ -34,8 +34,11 @@ public class St4Reader {
             for(Iterator<Sample> it = samples.iterator(); it.hasNext();) {
                 Sample sample = it.next();
                 if(sample.getRoadNumber() == meetPunt.getRoadNumber() && sample.getDirection() == meetPunt.getDirection()) {
-                    log("Found Sampled meetpunt %s.", meetPunt);
-                    meetPuntIdx2Sample.put(meetPuntSequence, sample);
+                    log("Found sampled meetpunt %s.", sample);
+                    if(meetPuntID2Sample.get(meetPuntID) == null) {
+                        meetPuntID2Sample.put(meetPuntID, new ArrayList<>());
+                    }
+                    meetPuntID2Sample.get(meetPuntID).add(sample);
                     it.remove();
                 }
             }
@@ -45,61 +48,92 @@ public class St4Reader {
             }
         }
 
-        Sample sample=null;
-        int meetPuntSequencePerRoad=0;
+        List<Sample> samplesPerMeetpunt=null;
+        Map<Sample, List<DataRecord>> dataRecordsPerSample = new HashMap<>();
 
-        int intensityA=0, intensityB=0, velocityA=0, velocityB=0;
+        Map<Sample, List<String>> outputtedSamples = new HashMap<>();
 
         /* Read the data. Data is in order of the meetPunten, and for each Meetpunt is starts from minute 0 to minute 1439.
         */
         for(int meetPuntSequence=0; meetPuntSequence < noOfMeetPunten; meetPuntSequence++) {
-            if(sample == null) {
-                for (int key : meetPuntIdx2Sample.keySet()) {
+            if(samplesPerMeetpunt == null) {
+                outputtedSamples.clear();
+
+                for (int key : meetPuntID2Sample.keySet()) {
                     if (key == meetPuntSequence) {
-                        sample = meetPuntIdx2Sample.get(key);
-                        meetPuntSequencePerRoad = 0;
+                        samplesPerMeetpunt = meetPuntID2Sample.get(key);
+                        samplesPerMeetpunt.forEach(sample -> outputtedSamples.put(sample, new ArrayList<>()));
                         break;
                     }
                 }
             }
 
-            intensityA=intensityB=velocityA=velocityB=0;
+            if(samplesPerMeetpunt != null) {
+                dataRecordsPerSample.clear();
+                samplesPerMeetpunt.forEach(sample -> dataRecordsPerSample.put(sample, new ArrayList<>()));
 
-            for(int minute=0; minute < 1440; minute++) {
-                DataRecord dataRecord = readDataRecord(stream, minute);
+                for(int minute=0; minute < 1440; minute++) {
+                    DataRecord dataRecord = readDataRecord(stream, minute);
 
-                if(sample != null && sample.meetPuntInRange(meetPuntSequencePerRoad) && sample.minuteInRange(minute)) {
-                    intensityA += dataRecord.getIntensityA();
-                    intensityB += dataRecord.getIntensityB();
-                    velocityA += dataRecord.getVelocityA();
-                    velocityB += dataRecord.getVelocityB();
+                    for(int idx=0; idx < samplesPerMeetpunt.size(); idx++) {
+                        Sample sample = samplesPerMeetpunt.get(idx);
+                        if(sample.meetPuntInRange(meetPuntSequence) && sample.minuteInRange(minute)) {
+                            dataRecordsPerSample.get(sample).add(dataRecord);
+                        }
+                    }
+                }
+
+                for(Iterator<Sample> it = samplesPerMeetpunt.iterator(); it.hasNext();) {
+                    Sample sample = it.next();
+
+                    if(sample.meetPuntInRange(meetPuntSequence)) {
+                        samples(outputtedSamples.get(sample), sample.getMinutesInRange(), dataRecordsPerSample.get(sample));
+                    }
+
+                    if(sample.meetPuntAboveRange(meetPuntSequence)) {
+                        writeSamples(outputtedSamples.get(sample), sample);
+                        it.remove();
+                    }
+                }
+
+                if(samplesPerMeetpunt.isEmpty()) {
+                    meetPuntID2Sample.values().remove(samplesPerMeetpunt);
+                    samplesPerMeetpunt = null;
                 }
             }
 
-            if(sample != null && sample.meetPuntInRange(meetPuntSequencePerRoad)) {
-                writeSample(meetPuntSequence, sample.getMinutesInRange(), intensityA, intensityB, velocityA, velocityB);
-            }
-
-            if(sample != null && sample.meetPuntAboveRange(meetPuntSequencePerRoad)) {
-                meetPuntIdx2Sample.values().remove(sample);
-                sample = null;
-            }
-
-            if(meetPuntIdx2Sample.isEmpty()) {
+            if(meetPuntID2Sample.isEmpty()) {
                 break;
             }
-
-            meetPuntSequencePerRoad++;
         }
     }
 
-    private void writeSample(int meetPuntID, int minuntes, int intensityA, int intentityB, int velocityA, int velocityB) throws Exception {
-        FileOutputStream out = new FileOutputStream(new File(String.format("%d", meetPuntID)));
-        out.write(String.format("%.2f %.2f %.2f %.2f",
-                (double)intensityA/minuntes,
-                (double)intentityB/minuntes,
-                (double)velocityA/minuntes,
-                (double)velocityB/minuntes).getBytes());
+    private void writeSamples(List<String> samples, Sample sample) throws Exception {
+        FileOutputStream out;
+        if(outputDir != null) {
+            out = new FileOutputStream(new File(String.format("%s/%d-%c-%d-%d", outputDir, sample.getRoadNumber(), sample.getDirection(), sample.getMeetPunt(), sample.getMinute())));
+        } else {
+            out = new FileOutputStream(new File(String.format("%d-%c-%d-%d", sample.getRoadNumber(), sample.getDirection(), sample.getMeetPunt(), sample.getMinute())));
+        }
+
+        for(String s : samples) {
+            out.write(s.getBytes());
+        }
+        out.close();
+    }
+
+    private void samples(List<String> sampleFile, int minuntes, List<DataRecord> dataRecords) {
+
+        int intensityA=0, intentityB=0, velocityA=0, velocityB=0;
+
+        for(DataRecord dataRecord : dataRecords) {
+            intensityA += dataRecord.getIntensityA();
+            intentityB += dataRecord.getIntensityB();
+            velocityA += dataRecord.getVelocityA();
+            velocityB += dataRecord.getVelocityB();
+        }
+
+        sampleFile.add(String.format("%.2f %.2f %.2f %.2f\n", (double)intensityA/minuntes,(double)intentityB/minuntes, (double)velocityA/minuntes, (double)velocityB/minuntes));
     }
 
     private void log(String format, Object... args) {
@@ -224,5 +258,9 @@ public class St4Reader {
         }
 
         return value;
+    }
+
+    public void setOutputDir(String outputDir) {
+        this.outputDir = outputDir;
     }
 }
