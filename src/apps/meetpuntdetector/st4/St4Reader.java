@@ -55,12 +55,12 @@ public class St4Reader {
 
         /* Read the data. Data is in order of the meetPunten, and for each Meetpunt is starts from minute 0 to minute 1439.
         */
-        for(int meetPuntSequence=0; meetPuntSequence < noOfMeetPunten; meetPuntSequence++) {
+        for(int meetPunID=0; meetPunID < noOfMeetPunten; meetPunID++) {
             if(samplesPerMeetpunt == null) {
                 outputtedSamples.clear();
 
                 for (int key : meetPuntID2Sample.keySet()) {
-                    if (key == meetPuntSequence) {
+                    if (key == meetPunID) {
                         samplesPerMeetpunt = meetPuntID2Sample.get(key);
                         samplesPerMeetpunt.forEach(sample -> outputtedSamples.put(sample, new ArrayList<>()));
                         break;
@@ -77,7 +77,7 @@ public class St4Reader {
 
                     for(int idx=0; idx < samplesPerMeetpunt.size(); idx++) {
                         Sample sample = samplesPerMeetpunt.get(idx);
-                        if(sample.meetPuntInRange(meetPuntSequence) && sample.minuteInRange(minute)) {
+                        if(sample.meetPuntInRange(meetPunID) && sample.minuteInRange(minute)) {
                             dataRecordsPerSample.get(sample).add(dataRecord);
                         }
                     }
@@ -86,11 +86,11 @@ public class St4Reader {
                 for(Iterator<Sample> it = samplesPerMeetpunt.iterator(); it.hasNext();) {
                     Sample sample = it.next();
 
-                    if(sample.meetPuntInRange(meetPuntSequence)) {
+                    if(sample.meetPuntInRange(meetPunID)) {
                         samples(outputtedSamples.get(sample), sample.getMinutesInRange(), dataRecordsPerSample.get(sample));
                     }
 
-                    if(sample.meetPuntAboveRange(meetPuntSequence)) {
+                    if(sample.meetPuntAboveRange(meetPunID)) {
                         writeSamples(outputtedSamples.get(sample), sample);
                         it.remove();
                     }
