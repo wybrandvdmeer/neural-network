@@ -1,14 +1,49 @@
 package apps.meetpuntdetector.st4;
 
+import neuralnetwork.Network;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Detector {
+    private String goodSampleDir = "good-samples";
+    private String badSampleDir = "bad-samples";
+    private double ERROR = 0.0001;
+
+    private Network network = new Network("meetpunt-detector", new int [] {3, 5, 1});
+
+    public void learn() throws Exception {
+        File [] goodSamples = new File(goodSampleDir).listFiles();
+        File [] badSamples = new File(badSampleDir).listFiles();
+
+        for(int idx=0; idx < goodSamples.length; idx++) {
+            network.learn(scaleInput(goodSamples[idx]), new double[] {0.99}, ERROR, 5000);
+            network.learn(scaleInput(badSamples[idx]), new double[] {0.01}, ERROR, 5000);
+        }
+    }
+
+    private double [] scaleInput(File input) throws Exception {
+        List<Double> targets = new ArrayList<>();
+        BufferedReader reader = getReader(input);
+
+        String line;
+        while((line = reader.readLine()) != null) {
+            String [] arr = line.split(" ");
+            double intensitiyA = Double.parseDouble(arr[0]);
+            double intensitiyB = Double.parseDouble(arr[1]);
+            double velocityA = Double.parseDouble(arr[2]);
+            double velocityB = Double.parseDouble(arr[3]);
+
+            targets.add(velocityA  + velocityB);
+        }
+
+        return targets.stream().mapToDouble(d->d).toArray();
+    }
+
     public void createTrainingData() throws Exception {
         String trainingMetaData = "resources/meetpuntdetector/good-samples";
-        String goodSampleDir = "good-samples";
-        String badSampleDir = "bad-samples";
+
 
         List<Sample> samples = new ArrayList<>();
 
@@ -47,6 +82,9 @@ public class Detector {
             String goodSample = String.format("%s/%s-%c-%s-%s", goodSampleDir, arr[0], arr[1].charAt(0) == 'L' ? 'R' : 'L', arr[2], arr[3]);
 
             String line2Switch = getLine(goodSample, MEET_PUNT_SWITCHED);
+            if(line2Switch == null) {
+                throw new RuntimeException(String.format("No corresponding line found for file %s.", file.getName()));
+            }
 
             reader = getReader(file.getAbsolutePath());
 
@@ -74,6 +112,10 @@ public class Detector {
             s = reader.readLine();
         }
         return s;
+    }
+
+    private BufferedReader getReader(File file) throws Exception {
+        return new BufferedReader(new InputStreamReader(new FileInputStream(file)));
     }
 
     private BufferedReader getReader(String file) throws Exception {

@@ -22,7 +22,7 @@ public class Sample {
     }
 
     public boolean meetPuntInRange(int meetPunt) {
-        return this.meetPuntIdx <= meetPunt && meetPunt < this.meetPuntIdx + meetPuntRange;
+        return meetPunt < meetPuntRange;
     }
 
     public int getMeetPunt() {
@@ -30,7 +30,7 @@ public class Sample {
     }
 
     public boolean meetPuntAboveRange(int meetPunt) {
-        return this.meetPuntIdx + meetPuntRange <= meetPunt;
+        return meetPunt >= meetPuntRange;
     }
 
     public boolean minuteInRange(int minute) {

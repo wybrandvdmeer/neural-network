@@ -24,6 +24,9 @@ public class St4Reader {
 
         log("Found %d meetpunten.", noOfMeetPunten);
 
+        int roadNumber=0, relativeMeetpuntID=0;
+        char direction=0x00;
+
         for(int meetPuntID=0; meetPuntID < noOfMeetPunten; meetPuntID++) {
             MeetPunt meetPunt = readMeetPunt(stream);
 
@@ -31,9 +34,17 @@ public class St4Reader {
                 continue;
             }
 
+            if(roadNumber != meetPunt.getRoadNumber() || direction != meetPunt.getDirection()) {
+                roadNumber = meetPunt.getRoadNumber();
+                direction = meetPunt.getDirection();
+                relativeMeetpuntID = 0;
+            }
+
+            System.out.println(String.format("Meetpunt: %s - %d", meetPunt, relativeMeetpuntID));
+
             for(Iterator<Sample> it = samples.iterator(); it.hasNext();) {
                 Sample sample = it.next();
-                if(sample.getRoadNumber() == meetPunt.getRoadNumber() && sample.getDirection() == meetPunt.getDirection()) {
+                if(sample.getRoadNumber() == meetPunt.getRoadNumber() && sample.getDirection() == meetPunt.getDirection() && sample.getMeetPunt() == relativeMeetpuntID) {
                     log("Found sampled meetpunt %s.", sample);
                     if(meetPuntID2Sample.get(meetPuntID) == null) {
                         meetPuntID2Sample.put(meetPuntID, new ArrayList<>());
@@ -46,6 +57,16 @@ public class St4Reader {
             if(samples.isEmpty()) {
                 break;
             }
+
+            relativeMeetpuntID++;
+        }
+
+        if(!samples.isEmpty()) {
+            System.out.println("Geen meetpunten gevonden voor volgende samples:");
+            for(Sample sample : samples) {
+                System.out.println("Sample: " + sample);
+            }
+            throw new RuntimeException("Geen meetpunten gevonden voor een aantal samples.");
         }
 
         List<Sample> samplesPerMeetpunt=null;
@@ -53,16 +74,19 @@ public class St4Reader {
 
         Map<Sample, List<String>> outputtedSamples = new HashMap<>();
 
+        relativeMeetpuntID = 0;
+
         /* Read the data. Data is in order of the meetPunten, and for each Meetpunt is starts from minute 0 to minute 1439.
         */
-        for(int meetPunID=0; meetPunID < noOfMeetPunten; meetPunID++) {
+        for(int meetPuntID=0; meetPuntID < noOfMeetPunten; meetPuntID++) {
             if(samplesPerMeetpunt == null) {
                 outputtedSamples.clear();
 
                 for (int key : meetPuntID2Sample.keySet()) {
-                    if (key == meetPunID) {
+                    if (key == meetPuntID) {
                         samplesPerMeetpunt = meetPuntID2Sample.get(key);
                         samplesPerMeetpunt.forEach(sample -> outputtedSamples.put(sample, new ArrayList<>()));
+                        relativeMeetpuntID = 0;
                         break;
                     }
                 }
@@ -73,11 +97,14 @@ public class St4Reader {
                 samplesPerMeetpunt.forEach(sample -> dataRecordsPerSample.put(sample, new ArrayList<>()));
 
                 for(int minute=0; minute < 1440; minute++) {
+                    if(minute == 320) {
+                        String a = "";
+                    }
                     DataRecord dataRecord = readDataRecord(stream, minute);
 
                     for(int idx=0; idx < samplesPerMeetpunt.size(); idx++) {
                         Sample sample = samplesPerMeetpunt.get(idx);
-                        if(sample.meetPuntInRange(meetPunID) && sample.minuteInRange(minute)) {
+                        if(sample.meetPuntInRange(relativeMeetpuntID) && sample.minuteInRange(minute)) {
                             dataRecordsPerSample.get(sample).add(dataRecord);
                         }
                     }
@@ -86,11 +113,11 @@ public class St4Reader {
                 for(Iterator<Sample> it = samplesPerMeetpunt.iterator(); it.hasNext();) {
                     Sample sample = it.next();
 
-                    if(sample.meetPuntInRange(meetPunID)) {
+                    if(sample.meetPuntInRange(relativeMeetpuntID)) {
                         samples(outputtedSamples.get(sample), sample.getMinutesInRange(), dataRecordsPerSample.get(sample));
                     }
 
-                    if(sample.meetPuntAboveRange(meetPunID)) {
+                    if(sample.meetPuntAboveRange(relativeMeetpuntID)) {
                         writeSamples(outputtedSamples.get(sample), sample);
                         it.remove();
                     }
@@ -100,6 +127,8 @@ public class St4Reader {
                     meetPuntID2Sample.values().remove(samplesPerMeetpunt);
                     samplesPerMeetpunt = null;
                 }
+
+                relativeMeetpuntID++;
             }
 
             if(meetPuntID2Sample.isEmpty()) {
