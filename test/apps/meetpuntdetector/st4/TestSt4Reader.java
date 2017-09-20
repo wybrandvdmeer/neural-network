@@ -7,6 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestSt4Reader {
+
+    @Test
+    public void testSt4Reader2() throws Exception {
+        St4PlotMeetpuntenInTime st4PlotMeetpuntenInTime = new St4PlotMeetpuntenInTime("resources/meetpuntdetector/M170829.st4");
+        st4PlotMeetpuntenInTime.process(1, 'L');
+    }
+
     @Test
     public void testSt4Reader() throws Exception {
         St4Reader st4Reader = new St4Reader("resources/meetpuntdetector/M170829.st4");

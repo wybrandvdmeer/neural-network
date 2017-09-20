@@ -63,6 +63,10 @@ public class MeetPunt {
         return roadName.charAt(roadName.length() - 1);
     }
 
+    public long getMeterPosition() {
+        return meterPosition;
+    }
+
     public int getRoadNumber() {
 
         String s="";
