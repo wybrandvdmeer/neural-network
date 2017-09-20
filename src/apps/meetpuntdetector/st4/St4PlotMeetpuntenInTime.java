@@ -42,22 +42,29 @@ public class St4PlotMeetpuntenInTime {
             }
         }
 
-        File directory = new File(String.format("%d-%c", roadNumber, direction));
+        File directory = new File(String.format("meetpunten-%d-%c", roadNumber, direction));
         directory.mkdir();
+
+        int beginMinute=720, endMinute=1440;
 
         /* Read the data. Data is in order of the meetPunten, and for each Meetpunt is starts from minute 0 to minute 1439.
         */
         for(int meetPuntID=0; meetPuntID < noOfMeetPunten; meetPuntID++) {
+            if(meetPuntID >= endMeetPuntID) {
+                break;
+            }
+
             FileOutputStream out=null;
+
             if(meetPuntID >= beginMeetPundID && meetPuntID <= endMeetPuntID) {
                 File meetPuntFile = new File(directory, String.format("meetpunt-%.1f.tsv",
-                        (double)selectedMeetPunten.get(meetPuntID - beginMeetPundID).getMeterPosition()));
+                        (double)selectedMeetPunten.get(meetPuntID - beginMeetPundID).getMeterPosition()/1000));
                 out = new FileOutputStream(meetPuntFile);
 
                 //Write header.
-                for(int minute=0; minute < 1440; minute++) {
-                    out.write(String.format("%d/%d", minute/60, minute%60).getBytes());
-                    if (minute == 1439) {
+                for(int minute=beginMinute; minute < endMinute; minute++) {
+                    out.write(String.format("%d:%d", minute/60, minute%60).getBytes());
+                    if (minute == endMinute - 1) {
                         out.write("\n".getBytes());
                     } else {
                         out.write("\t".getBytes());
@@ -67,7 +74,7 @@ public class St4PlotMeetpuntenInTime {
 
             for(int minute=0; minute < 1440; minute++) {
                 DataRecord dataRecord = readDataRecord(stream, minute);
-                if(out != null) {
+                if(out != null && minute >= beginMinute && minute < endMinute) {
                     out.write(String.format("%d", dataRecord.getIntensityA()).getBytes());
                     if (minute == 1439) {
                         out.write("\n".getBytes());
@@ -80,10 +87,6 @@ public class St4PlotMeetpuntenInTime {
             if(out != null) {
                 out.close();
             }
-        }
-
-        if(stream.read() != -1) {
-            throw new RuntimeException("Lees fout");
         }
     }
 
