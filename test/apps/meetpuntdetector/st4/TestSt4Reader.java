@@ -11,7 +11,7 @@ public class TestSt4Reader {
     public void testSt4Reader() throws Exception {
         St4Reader st4Reader = new St4Reader("resources/meetpuntdetector/M170829.st4");
 
-        Sample a1R = new Sample(1, 'R', 0, 10, 0, 10);
+        Sample a1R = new Sample(1, 'R', 0, 2, 0, 2);
 
         List<Sample> samples = new ArrayList<>();
         samples.add(a1R);
