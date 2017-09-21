@@ -13,7 +13,8 @@ public class NetworkMatrix {
     private Map<Integer, Matrix> weights = new HashMap<>();
     private Map<Integer, Matrix> outputs = new HashMap<>();
     private Map<Integer, Matrix> transferDerivertives = new HashMap<>(); // E.g. dNout/dNin
-    private Map<Integer, Matrix> gradients = new HashMap<>();
+    private Map<Integer, Matrix> gradientsPerLayer = new HashMap<>();
+    private Map<Integer, Matrix> biasGradientsPerLayer = new HashMap<>();
 
     private double error;
 
@@ -48,7 +49,7 @@ public class NetworkMatrix {
         inputVector.set(row, 0, 1); // bias.
 
         // Store the input as output of the input layer.
-        outputs.put(0, inputVector.getMatrix(0, input.length - 1, 0, 0));
+        outputs.put(0, inputVector.getMatrix(0, inputVector.getRowDimension() - 2, 0, 0));
 
         for(int layer = 1; layer <= weights.values().size(); layer++) {
 
@@ -115,17 +116,36 @@ public class NetworkMatrix {
             Matrix theta;
 
             for(int layer=weights.values().size(); layer > 0; layer--) {
-                theta = outputs.get(layer - 1).times(transferDerivertives.get(layer).times(errorDeriv).transpose()).transpose();
-                gradients.put(layer, theta);
+                theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
+                gradientsPerLayer.put(layer, outputs.get(layer - 1).times(theta).transpose());
+                biasGradientsPerLayer.put(layer, theta.transpose());
             }
 
-            if(maxIterations > 0 && iterations >= maxIterations) {
+            for(int layer=weights.values().size(); layer > 0; layer--) {
+                Matrix weightsPerLayer = weights.get(layer - 1);
+
+                Matrix newWeights =  weightsPerLayer.getMatrix(0, weightsPerLayer.getRowDimension() - 1, 0, weightsPerLayer.getColumnDimension() - 2).minus(gradientsPerLayer.get(layer).times(learningConstant));
+
+                Matrix weightsPlusBias = new Matrix(weightsPerLayer.getRowDimension(), weightsPerLayer.getColumnDimension());
+
+                for(int row=0; row < newWeights.getRowDimension(); row++) {
+                    for(int col=0; col < newWeights.getColumnDimension(); col++) {
+                        weightsPlusBias.getArray()[row][col] = newWeights.get(row, col);
+                    }
+                }
+
+                for(int row=0; row < newWeights.getRowDimension(); row++) {
+                    weightsPlusBias.getArray()[row][weightsPlusBias.getColumnDimension() - 1] = biasGradientsPerLayer.get(layer).get(row, 0);
+                }
+
+                weights.put(layer - 1, weightsPlusBias);
+            }
+
+            if(maxIterations > 0 && ++iterations >= maxIterations) {
                 String s = String.format("Max iterations exceeded for classifier %s.", name);
                 System.out.println(s);
                 return -1;
             }
-
-            iterations++;
         }
 
         return iterations;
@@ -136,7 +156,7 @@ public class NetworkMatrix {
     }
 
     Matrix getGradients(int layer) {
-        return gradients.get(layer);
+        return gradientsPerLayer.get(layer);
     }
 
     double error(Matrix targets) {
@@ -156,6 +176,9 @@ public class NetworkMatrix {
             }
         }
     }
+    public void printMatrix(Matrix matrix) {
+        printMatrix(matrix, "matrix");
+    }
 
     public void printMatrix(Matrix matrix, String name) {
         System.out.println("Matrix: " + name);
@@ -170,8 +193,8 @@ public class NetworkMatrix {
         System.out.println();
     }
 
-    public Map<Integer, Matrix> getWeights() {
-        return weights;
+    public Matrix getWeights(int layer) {
+        return weights.get(layer - 1);
     }
 
     private double sigmoid(double x) {

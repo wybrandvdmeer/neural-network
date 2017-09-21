@@ -10,21 +10,21 @@ public class TestNetworkMatrix {
     public void testPassForward() throws Exception {
         NetworkMatrix network = new NetworkMatrix("test", new int []{2, 2, 2});
 
-        network.getWeights().get(0).set(0,0,1);
-        network.getWeights().get(0).set(0,1,2);
+        network.getWeights(1).set(0,0,1);
+        network.getWeights(1).set(0,1,2);
 
-        network.getWeights().get(0).set(1,0,3);
-        network.getWeights().get(0).set(1,1,4);
+        network.getWeights(1).set(1,0,3);
+        network.getWeights(1).set(1,1,4);
 
-        network.printMatrix(network.getWeights().get(0), "weight0");
+        network.printMatrix(network.getWeights(1), "weight0");
 
-        network.getWeights().get(1).set(0,0,5);
-        network.getWeights().get(1).set(0,1,6);
+        network.getWeights(2).set(0,0,5);
+        network.getWeights(2).set(0,1,6);
 
-        network.getWeights().get(1).set(1,0,7);
-        network.getWeights().get(1).set(1,1,8);
+        network.getWeights(2).set(1,0,7);
+        network.getWeights(2).set(1,1,8);
 
-        network.printMatrix(network.getWeights().get(1), "weight1");
+        network.printMatrix(network.getWeights(2), "weight1");
 
         network.setNoTransfer();
 
@@ -39,21 +39,21 @@ public class TestNetworkMatrix {
     public void testPassforward() throws Exception {
         NetworkMatrix network = new NetworkMatrix("test", new int[]{2,2,2});
 
-        network.getWeights().get(0).set(0,0, 0.15);
-        network.getWeights().get(0).set(0,1, 0.2);
-        network.getWeights().get(0).set(0,2, 0.35);
+        network.getWeights(1).set(0,0, 0.15);
+        network.getWeights(1).set(0,1, 0.2);
+        network.getWeights(1).set(0,2, 0.35);
 
-        network.getWeights().get(0).set(1,0, 0.25);
-        network.getWeights().get(0).set(1,1, 0.3);
-        network.getWeights().get(0).set(1,2, 0.35);
+        network.getWeights(1).set(1,0, 0.25);
+        network.getWeights(1).set(1,1, 0.3);
+        network.getWeights(1).set(1,2, 0.35);
 
-        network.getWeights().get(1).set(0,0, 0.4);
-        network.getWeights().get(1).set(0,1, 0.45);
-        network.getWeights().get(1).set(0,2, 0.6);
+        network.getWeights(2).set(0,0, 0.4);
+        network.getWeights(2).set(0,1, 0.45);
+        network.getWeights(2).set(0,2, 0.6);
 
-        network.getWeights().get(1).set(1,0, 0.5);
-        network.getWeights().get(1).set(1,1, 0.55);
-        network.getWeights().get(1).set(1,2, 0.6);
+        network.getWeights(2).set(1,0, 0.5);
+        network.getWeights(2).set(1,1, 0.55);
+        network.getWeights(2).set(1,2, 0.6);
 
         network.passForward(new double[]{ 0.05, 0.1 });
 
@@ -65,23 +65,23 @@ public class TestNetworkMatrix {
     public void testLearn() throws Exception {
         NetworkMatrix network = new NetworkMatrix("test", new int[]{2,2,2});
 
-        network.getWeights().get(0).set(0,0, 0.15);
-        network.getWeights().get(0).set(0,1, 0.2);
-        network.getWeights().get(0).set(0,2, 0.35);
+        network.getWeights(1).set(0,0, 0.15);
+        network.getWeights(1).set(0,1, 0.2);
+        network.getWeights(1).set(0,2, 0.35);
 
-        network.getWeights().get(0).set(1,0, 0.25);
-        network.getWeights().get(0).set(1,1, 0.3);
-        network.getWeights().get(0).set(1,2, 0.35);
+        network.getWeights(1).set(1,0, 0.25);
+        network.getWeights(1).set(1,1, 0.3);
+        network.getWeights(1).set(1,2, 0.35);
 
-        network.getWeights().get(1).set(0,0, 0.4);
-        network.getWeights().get(1).set(0,1, 0.45);
-        network.getWeights().get(1).set(0,2, 0.6);
+        network.getWeights(2).set(0,0, 0.4);
+        network.getWeights(2).set(0,1, 0.45);
+        network.getWeights(2).set(0,2, 0.6);
 
-        network.getWeights().get(1).set(1,0, 0.5);
-        network.getWeights().get(1).set(1,1, 0.55);
-        network.getWeights().get(1).set(1,2, 0.6);
+        network.getWeights(2).set(1,0, 0.5);
+        network.getWeights(2).set(1,1, 0.55);
+        network.getWeights(2).set(1,2, 0.6);
 
-        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.00001, 1);
+        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.29, 1);
         assertEquals(0.2983711087600027, network.getError());
 
         assertEquals(0.08216704056423078, network.getGradients(2).get(0, 0)); // First Neuron output layer w11.
@@ -89,6 +89,11 @@ public class TestNetworkMatrix {
 
         assertEquals(-0.022602540477475067, network.getGradients(2).get(1, 0)); // First Neuron output layer w21.
         assertEquals(-0.02274024221597822, network.getGradients(2).get(1, 1)); // First Neuron output layer w22.
+
+        assertEquals(0.35891648, network.getWeights(2).get(0,0), 0.00000001); // First Neuron output layer w11.
+        assertEquals(0.408666186, network.getWeights(2).get(0,1), 0.00000001); // First Neuron output layer w11.
+        assertEquals(0.51130127, network.getWeights(2).get(1,0), 0.00000001); // First Neuron output layer w11
+        assertEquals(0.561370121, network.getWeights(2).get(1,1), 0.00000001); // First Neuron output layer w11
     }
 
     public void printMatrix(Matrix matrix, String name) {
