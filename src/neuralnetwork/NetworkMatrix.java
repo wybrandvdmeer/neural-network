@@ -113,10 +113,14 @@ public class NetworkMatrix {
 
             Matrix errorDeriv = getOutputVector().minus(targetVector);
 
-            Matrix theta;
+            Matrix theta = null;
 
             for(int layer=weights.values().size(); layer > 0; layer--) {
-                theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
+                if(theta == null) {
+                    theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
+                } else {
+                    theta = theta.times(weights.get(layer));
+                }
                 gradientsPerLayer.put(layer, outputs.get(layer - 1).times(theta).transpose());
                 biasGradientsPerLayer.put(layer, theta.transpose());
             }
@@ -195,6 +199,15 @@ public class NetworkMatrix {
 
     public Matrix getWeights(int layer) {
         return weights.get(layer - 1);
+    }
+
+    private Matrix initMatrix(Matrix matrix, double value) {
+        for(int row=0; row < matrix.getRowDimension(); row++) {
+            for(int col=0; col < matrix.getColumnDimension(); col++) {
+                matrix.set(row, col, value);
+            }
+        }
+        return matrix;
     }
 
     private double sigmoid(double x) {
