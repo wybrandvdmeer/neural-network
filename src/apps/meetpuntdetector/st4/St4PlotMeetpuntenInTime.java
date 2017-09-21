@@ -25,16 +25,16 @@ public class St4PlotMeetpuntenInTime {
         for(int meetPuntID=0; meetPuntID < noOfMeetPunten; meetPuntID++) {
             MeetPunt meetPunt = readMeetPunt(stream);
 
+            if(beginMeetPundID != -1 && endMeetPuntID == -1 && (roadNumber != meetPunt.getRoadNumber() || direction != meetPunt.getDirection() || !meetPunt.isMainRoad() || meetPunt.isSuspect())) {
+                endMeetPuntID = meetPuntID - 1;
+            }
+
             if(!meetPunt.isMainRoad() || meetPunt.isSuspect()) {
                 continue;
             }
 
             if(beginMeetPundID == -1 && roadNumber == meetPunt.getRoadNumber() && direction == meetPunt.getDirection()) {
                 beginMeetPundID = meetPuntID;
-            }
-
-            if(beginMeetPundID != -1 && endMeetPuntID == -1 && (roadNumber != meetPunt.getRoadNumber() || direction != meetPunt.getDirection())) {
-                endMeetPuntID = meetPuntID - 1;
             }
 
             if(roadNumber == meetPunt.getRoadNumber() && direction == meetPunt.getDirection()) {
@@ -45,7 +45,7 @@ public class St4PlotMeetpuntenInTime {
         File directory = new File(String.format("meetpunten-%d-%c", roadNumber, direction));
         directory.mkdir();
 
-        int beginMinute=720, endMinute=1440;
+        int beginMinute=0, endMinute=1440;
 
         /* Read the data. Data is in order of the meetPunten, and for each Meetpunt is starts from minute 0 to minute 1439.
         */
