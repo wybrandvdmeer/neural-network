@@ -56,9 +56,9 @@ public class TestNetwork {
     @Test
     public void testNetwork2() throws Exception {
         Network network = new Network("test", new int []{5, 100, 100,  2});
-        int iterations = network.learn(new double[]{ 200, 10, 30, 900, 10 }, new double[] {0.01, 0.99}, 0.0000001);
+        int iterations = network.learn(new double[]{ 0.99, 0.99, 0.01, 0.01, 0.01 }, new double[] {0.01, 0.99}, 0.000000001);
 
-        network.passForward(new double[] { 0.01, 0.01});
+        network.passForward(new double[]{ 0.99, 0.99, 0.01, 0.01, 0.01 });
         System.out.println(String.format("Iterations: %d, Output1: %f, output2: %f",
                 iterations,
                 network.getOutput(0),

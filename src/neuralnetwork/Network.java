@@ -153,6 +153,9 @@ public class Network {
     }
 
     public void passForward(double [] inputs) {
+        if(inputs.length != layers[0].length) {
+            throw new RuntimeException("Wrong number of inputs.");
+        }
         for(int idx=0; idx < inputs.length; idx++) {
             layers[0][idx].setInput(inputs[idx]);
         }

@@ -58,7 +58,6 @@ public class NetworkMatrix {
         outputs.put(0, inputVector);
 
         for(int layer = 1; layer <= weights.values().size(); layer++) {
-
             inputVector = weights.get(layer - 1).times(inputVector);
             inputVector = inputVector.plus(biasWeights.get(layer - 1));
 
@@ -132,11 +131,13 @@ public class NetworkMatrix {
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
             }
 
-            if(maxIterations > 0 && ++iterations >= maxIterations) {
+            if(maxIterations > 0 && iterations >= maxIterations) {
                 String s = String.format("Max iterations exceeded for classifier %s.", name);
                 System.out.println(s);
                 return -1;
             }
+
+            iterations++;
         }
 
         return iterations;
@@ -175,7 +176,7 @@ public class NetworkMatrix {
         System.out.println("Matrix: " + name);
         for (int i = 0; i < matrix.getRowDimension(); i++) {
             for (int j = 0; j < matrix.getColumnDimension(); j++) {
-                String s = String.format("%.4f", matrix.get(i,j));
+                String s = String.format("%.8f", matrix.get(i,j));
                 System.out.print(' ');
                 System.out.print(s);
             }
@@ -191,15 +192,6 @@ public class NetworkMatrix {
 
     public Matrix getBiasWeights(int layer) {
         return biasWeights.get(layer - 1);
-    }
-
-    private Matrix initMatrix(Matrix matrix, double value) {
-        for(int row=0; row < matrix.getRowDimension(); row++) {
-            for(int col=0; col < matrix.getColumnDimension(); col++) {
-                matrix.set(row, col, value);
-            }
-        }
-        return matrix;
     }
 
     private double sigmoid(double x) {
