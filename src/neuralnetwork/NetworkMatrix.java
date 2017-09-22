@@ -11,6 +11,7 @@ public class NetworkMatrix {
     private final String name;
 
     private Map<Integer, Matrix> weights = new HashMap<>();
+    private Map<Integer, Matrix> biasWeights = new HashMap<>();
     private Map<Integer, Matrix> outputs = new HashMap<>();
     private Map<Integer, Matrix> transferDerivertives = new HashMap<>(); // E.g. dNout/dNin
     private Map<Integer, Matrix> gradientsPerLayer = new HashMap<>();
@@ -27,10 +28,17 @@ public class NetworkMatrix {
             /* rows = neurons, columns = weights
             */
             Matrix weightsPerLayer = new Matrix(layerSizes[layer], layerSizes[layer + 1]);
-            weightsPerLayer = weightsPerLayer.random(weightsPerLayer.getRowDimension(), weightsPerLayer.getColumnDimension() + 1); // Plus bias weight.
+            weightsPerLayer = weightsPerLayer.random(weightsPerLayer.getRowDimension(), weightsPerLayer.getColumnDimension());
             weightsPerLayer = weightsPerLayer.times(2);
             minus(weightsPerLayer, 1);
+
+            Matrix biasWeightsPerLayer = new Matrix(layerSizes[layer], 1);
+            biasWeightsPerLayer = biasWeightsPerLayer.random(biasWeightsPerLayer.getRowDimension(), biasWeightsPerLayer.getColumnDimension());
+            biasWeightsPerLayer = biasWeightsPerLayer.times(2);
+            minus(biasWeightsPerLayer, 1);
+
             weights.put(layer, weightsPerLayer);
+            biasWeights.put(layer, biasWeightsPerLayer);
         }
     }
 
@@ -39,33 +47,27 @@ public class NetworkMatrix {
     }
 
     public void passForward(double [] input) {
-        Matrix inputVector = new Matrix(input.length + 1, 1);
+        Matrix inputVector = new Matrix(input.length, 1);
 
         int row=0;
         for(; row < input.length; row++) {
             inputVector.set(row, 0, input[row]);
         }
 
-        inputVector.set(row, 0, 1); // bias.
-
         // Store the input as output of the input layer.
-        outputs.put(0, inputVector.getMatrix(0, inputVector.getRowDimension() - 2, 0, 0));
+        outputs.put(0, inputVector);
 
         for(int layer = 1; layer <= weights.values().size(); layer++) {
 
             inputVector = weights.get(layer - 1).times(inputVector);
+            inputVector = inputVector.plus(biasWeights.get(layer - 1));
 
             Matrix outputVector = transfer(inputVector);
             outputs.put(layer, outputVector);
 
             transferDerivertives.put(layer, get2Dim(transferDerivative(outputVector)));
 
-            inputVector = new Matrix(outputVector.getRowDimension() + 1, 1);
-            for(row=0; row < inputVector.getRowDimension() -1; row++) {
-                inputVector.set(row, 0, outputVector.get(row, 0));
-            }
-
-            inputVector.set(row, 0, 1); // Bias.
+            inputVector = outputVector;
         }
     }
 
@@ -126,23 +128,8 @@ public class NetworkMatrix {
             }
 
             for(int layer=weights.values().size(); layer > 0; layer--) {
-                Matrix weightsPerLayer = weights.get(layer - 1);
-
-                Matrix newWeights =  weightsPerLayer.getMatrix(0, weightsPerLayer.getRowDimension() - 1, 0, weightsPerLayer.getColumnDimension() - 2).minus(gradientsPerLayer.get(layer).times(learningConstant));
-
-                Matrix weightsPlusBias = new Matrix(weightsPerLayer.getRowDimension(), weightsPerLayer.getColumnDimension());
-
-                for(int row=0; row < newWeights.getRowDimension(); row++) {
-                    for(int col=0; col < newWeights.getColumnDimension(); col++) {
-                        weightsPlusBias.getArray()[row][col] = newWeights.get(row, col);
-                    }
-                }
-
-                for(int row=0; row < newWeights.getRowDimension(); row++) {
-                    weightsPlusBias.getArray()[row][weightsPlusBias.getColumnDimension() - 1] = biasGradientsPerLayer.get(layer).get(row, 0);
-                }
-
-                weights.put(layer - 1, weightsPlusBias);
+                weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
+                biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
             }
 
             if(maxIterations > 0 && ++iterations >= maxIterations) {
@@ -199,6 +186,11 @@ public class NetworkMatrix {
 
     public Matrix getWeights(int layer) {
         return weights.get(layer - 1);
+    }
+
+
+    public Matrix getBiasWeights(int layer) {
+        return biasWeights.get(layer - 1);
     }
 
     private Matrix initMatrix(Matrix matrix, double value) {
