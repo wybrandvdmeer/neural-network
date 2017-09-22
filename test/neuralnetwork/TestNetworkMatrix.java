@@ -127,6 +127,18 @@ public class TestNetworkMatrix {
     }
 
     @Test
+    public void testNetwork2() throws Exception {
+        NetworkMatrix network = new NetworkMatrix("test", new int []{5, 100, 100,  2});
+        int iterations = network.learn(new double[]{ 200, 10, 30, 900, 10 }, new double[] {0.01, 0.99}, 0.001);
+
+        network.passForward(new double[] { 0.01, 0.01});
+        System.out.println(String.format("Iterations: %d, Output1: %f, output2: %f",
+                iterations,
+                network.getOutput(0),
+                network.getOutput(1)));
+    }
+
+    @Test
     public void testMatrix() {
         Matrix m1 = new Matrix(2,1);
         Matrix m2 = new Matrix(2,1);

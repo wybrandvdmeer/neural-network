@@ -27,12 +27,12 @@ public class NetworkMatrix {
         for(int layer=0; layer < layerSizes.length - 1; layer++) {
             /* rows = neurons, columns = weights
             */
-            Matrix weightsPerLayer = new Matrix(layerSizes[layer], layerSizes[layer + 1]);
+            Matrix weightsPerLayer = new Matrix(layerSizes[layer+1], layerSizes[layer]);
             weightsPerLayer = weightsPerLayer.random(weightsPerLayer.getRowDimension(), weightsPerLayer.getColumnDimension());
             weightsPerLayer = weightsPerLayer.times(2);
             minus(weightsPerLayer, 1);
 
-            Matrix biasWeightsPerLayer = new Matrix(layerSizes[layer], 1);
+            Matrix biasWeightsPerLayer = new Matrix(layerSizes[layer + 1], 1);
             biasWeightsPerLayer = biasWeightsPerLayer.random(biasWeightsPerLayer.getRowDimension(), biasWeightsPerLayer.getColumnDimension());
             biasWeightsPerLayer = biasWeightsPerLayer.times(2);
             minus(biasWeightsPerLayer, 1);
