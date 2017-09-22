@@ -92,11 +92,13 @@ public class TestNetworkMatrix {
         network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.0000001, 1);
         assertEquals(0.2983711087600027, network.getError());
 
-        assertEquals(0.08216704056423078, network.getGradients(2).get(0, 0)); // First Neuron output layer w11.
-        assertEquals(0.08266762784753326, network.getGradients(2).get(0, 1)); // First Neuron output layer w12.
 
-        assertEquals(-0.022602540477475067, network.getGradients(2).get(1, 0)); // First Neuron output layer w21.
-        assertEquals(-0.02274024221597822, network.getGradients(2).get(1, 1)); // First Neuron output layer w22.
+        // Layer 2.
+        assertEquals(0.08216704056423078, network.getGradients(2).get(0, 0)); // w11
+        assertEquals(0.08266762784753326, network.getGradients(2).get(0, 1)); // w12.
+
+        assertEquals(-0.022602540477475067, network.getGradients(2).get(1, 0)); // w21.
+        assertEquals(-0.02274024221597822, network.getGradients(2).get(1, 1)); // w22.
 
         assertEquals(0.35891648, network.getWeights(2).get(0,0), 0.00000001);
         assertEquals(0.408666186, network.getWeights(2).get(0,1), 0.00000001);
@@ -105,6 +107,10 @@ public class TestNetworkMatrix {
 
         assertEquals(0.530750719, network.getBiasWeights(2).get(0,0), 0.00000001);
         assertEquals(0.619049119, network.getBiasWeights(2).get(1,0), 0.00000001);
+
+        // Layer 1.
+        assertEquals(0.149780716, network.getWeights(1).get(0, 0), 0.00000001); // w11.
+        assertEquals(0.199561432, network.getWeights(1).get(0, 1), 0.00000001); // w11.
     }
 
     public void printMatrix(Matrix matrix, String name) {
