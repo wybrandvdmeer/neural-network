@@ -92,7 +92,6 @@ public class TestNetworkMatrix {
         network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.0000001, 1);
         assertEquals(0.2983711087600027, network.getError());
 
-
         // Layer 2.
         assertEquals(0.08216704056423078, network.getGradients(2).get(0, 0)); // w11
         assertEquals(0.08266762784753326, network.getGradients(2).get(0, 1)); // w12.

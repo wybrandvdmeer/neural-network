@@ -47,14 +47,8 @@ public class NetworkMatrix {
     }
 
     public void passForward(double [] input) {
-        Matrix inputVector = new Matrix(input.length, 1);
+        Matrix inputVector = new Matrix(input, input.length);
 
-        int row=0;
-        for(; row < input.length; row++) {
-            inputVector.set(row, 0, input[row]);
-        }
-
-        // Store the input as output of the input layer.
         outputs.put(0, inputVector);
 
         for(int layer = 1; layer <= weights.values().size(); layer++) {
@@ -131,13 +125,13 @@ public class NetworkMatrix {
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
             }
 
+            iterations++;
+
             if(maxIterations > 0 && iterations >= maxIterations) {
                 String s = String.format("Max iterations exceeded for classifier %s.", name);
                 System.out.println(s);
                 return -1;
             }
-
-            iterations++;
         }
 
         return iterations;
