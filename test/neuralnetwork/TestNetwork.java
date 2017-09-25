@@ -6,6 +6,43 @@ import org.junit.Test;
 import static junit.framework.TestCase.assertEquals;
 
 public class TestNetwork {
+
+    @Test
+    public void testReadWrite() throws Exception {
+        Network network = new Network("testReadWrite", new int[]{2,2,2});
+
+        network.getWeights(1).set(0, 0, 0.15);
+        network.getWeights(1).set(0, 1, 0.2);
+        network.getBiasWeights(1).set(0, 0, 0.35);
+
+        network.getWeights(1).set(1, 0, 0.25);
+        network.getWeights(1).set(1, 1, 0.3);
+        network.getBiasWeights(1).set(1, 0, 0.35);
+
+        network.getWeights(2).set(0, 0, 0.4);
+        network.getWeights(2).set(0, 1, 0.45);
+        network.getBiasWeights(2).set(0, 0, 0.6);
+
+        network.getWeights(2).set(1, 0, 0.5);
+        network.getWeights(2).set(1, 1, 0.55);
+        network.getBiasWeights(2).set(1, 0, 0.6);
+
+        network.write();
+
+        network.passForward(new double[]{ 0.05, 0.1 });
+
+        assertEquals(0.7513650695523157, network.getOutput(0));
+        assertEquals(0.7729284653214625, network.getOutput(1));
+
+        network = new Network("testReadWrite", new int[]{2,2,2});
+        network.read();
+
+        network.passForward(new double[]{ 0.05, 0.1 });
+
+        assertEquals(0.7513650695523157, network.getOutput(0));
+        assertEquals(0.7729284653214625, network.getOutput(1));
+    }
+
     @Test
     public void testPassForward() throws Exception {
         Network network = new Network("test", new int []{2, 2, 2});

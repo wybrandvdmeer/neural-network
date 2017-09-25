@@ -254,7 +254,7 @@ public class Network {
 
             for(int row=0; row < biasWeights.get(layer).getRowDimension(); row++) {
                 for (int col = 0; col < biasWeights.get(layer).getColumnDimension(); col++) {
-                    weights.get(layer).set(row, col, Double.parseDouble(weightReader.readLine()));
+                    biasWeights.get(layer).set(row, col, Double.parseDouble(weightReader.readLine()));
                 }
             }
         }
