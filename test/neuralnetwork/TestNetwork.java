@@ -107,8 +107,14 @@ public class TestNetwork {
         assertEquals(0.619049119, network.getBiasWeights(2).get(1,0), 0.00000001);
 
         // Layer 1.
-        assertEquals(0.149780716, network.getWeights(1).get(0, 0), 0.00000001); // w11.
-        assertEquals(0.199561432, network.getWeights(1).get(0, 1), 0.00000001); // w11.
+        assertEquals(0.149780716, network.getWeights(1).get(0, 0), 0.00000001);
+        assertEquals(0.199561432, network.getWeights(1).get(0, 1), 0.00000001);
+
+        assertEquals(0.24975114, network.getWeights(1).get(1, 0), 0.00000001);
+        assertEquals(0.29950229, network.getWeights(1).get(1, 1), 0.00000001);
+
+        assertEquals(0.345614323, network.getBiasWeights(1).get(0,0), 0.00000001);
+        assertEquals(0.345022873, network.getBiasWeights(1).get(1,0), 0.00000001);
     }
 
     public void printMatrix(Matrix matrix, String name) {
