@@ -12,7 +12,7 @@ public class TestNetwork {
 
     @Test
     public void testReadWrite() throws Exception {
-        Network network = new Network("testReadWrite", new int[]{2,2, 2, 2});
+        Network network = new Network("testReadWrite", new int[]{2,200, 200, 2});
         network.write();
 
         network.passForward(new double[]{ 0.05, 0.1 });
@@ -20,7 +20,7 @@ public class TestNetwork {
         double o1 = network.getOutput(0);
         double o2 = network.getOutput(1);
 
-        network = new Network("testReadWrite", new int[]{2,2,2});
+        network = new Network("testReadWrite", new int[]{2,200,200,2});
         network.read();
 
         network.passForward(new double[]{ 0.05, 0.1 });
