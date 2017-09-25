@@ -3,7 +3,10 @@ package neuralnetwork;
 import Jama.Matrix;
 import org.junit.Test;
 
+import java.io.File;
+
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestNetwork {
 
@@ -41,6 +44,9 @@ public class TestNetwork {
 
         assertEquals(0.7513650695523157, network.getOutput(0));
         assertEquals(0.7729284653214625, network.getOutput(1));
+
+        File weights = new File("testReadWrite");
+        assertTrue(weights.delete());
     }
 
     @Test
