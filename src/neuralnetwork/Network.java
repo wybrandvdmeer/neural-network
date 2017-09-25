@@ -227,12 +227,7 @@ public class Network {
                 for(int col=0; col < weights.get(layer).getColumnDimension(); col++) {
                     weightsFile.write((new Double(weights.get(layer).get(row,col)).toString() + "\n").getBytes());
                 }
-            }
-
-            for(int row=0; row < biasWeights.get(layer).getRowDimension(); row++) {
-                for (int col = 0; col < biasWeights.get(layer).getColumnDimension(); col++) {
-                    weightsFile.write((new Double(biasWeights.get(layer).get(row, col)).toString() + "\n").getBytes());
-                }
+                weightsFile.write((new Double(biasWeights.get(layer).get(row, 0)).toString() + "\n").getBytes());
             }
         }
     }
@@ -250,12 +245,7 @@ public class Network {
                 for(int col=0; col < weights.get(layer).getColumnDimension(); col++) {
                     weights.get(layer).set(row, col, Double.parseDouble(weightReader.readLine()));
                 }
-            }
-
-            for(int row=0; row < biasWeights.get(layer).getRowDimension(); row++) {
-                for (int col = 0; col < biasWeights.get(layer).getColumnDimension(); col++) {
-                    biasWeights.get(layer).set(row, col, Double.parseDouble(weightReader.readLine()));
-                }
+                biasWeights.get(layer).set(row, 0, Double.parseDouble(weightReader.readLine()));
             }
         }
     }
