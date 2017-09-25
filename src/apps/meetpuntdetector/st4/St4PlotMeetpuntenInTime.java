@@ -45,7 +45,7 @@ public class St4PlotMeetpuntenInTime {
         File directory = new File(String.format("meetpunten-%d-%c", roadNumber, direction));
         directory.mkdir();
 
-        int beginMinute=0, endMinute=1440;
+        int beginMinute=0, endMinute=840;
 
         /* Read the data. Data is in order of the meetPunten, and for each Meetpunt is starts from minute 0 to minute 1439.
         */

@@ -11,7 +11,7 @@ public abstract class SourceClassifier {
 
     public void addNetwork(Network network) throws Exception {
         networks.add(network);
-        network.readWeights();
+        network.read();
     }
 
     double scaleInput(int input) {
@@ -101,7 +101,7 @@ public abstract class SourceClassifier {
         }
 
         for(Network network : networks) {
-            network.writeWeights();
+            network.write();
         }
     }
 

@@ -1,224 +1,262 @@
 package neuralnetwork;
 
+import Jama.Matrix;
+
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Network {
 
     private double learningConstant = 0.5;
 
-    private Neuron [][] layers; // 0 -> input layer.
-
-    private double [][][] weightDerivatives;
-    private double [][] biasDerivatives;
-
     private final String name;
+
+    private Map<Integer, Matrix> weights = new HashMap<>();
+    private Map<Integer, Matrix> biasWeights = new HashMap<>();
+    private Map<Integer, Matrix> outputs = new HashMap<>();
+    private Map<Integer, Matrix> transferDerivertives = new HashMap<>(); // E.g. dNout/dNin
+    private Map<Integer, Matrix> gradientsPerLayer = new HashMap<>();
+    private Map<Integer, Matrix> biasGradientsPerLayer = new HashMap<>();
+
+    private double error;
+
+    private boolean noTransfer = false;
 
     public Network(String name, int [] layerSizes) {
         this.name = name;
 
-        layers = new Neuron[layerSizes.length][];
-        weightDerivatives = new double[layerSizes.length - 1][][];
-        biasDerivatives = new double[layerSizes.length - 1][];
+        for(int layer=0; layer < layerSizes.length - 1; layer++) {
+            /* rows = neurons, columns = weights
+            */
+            Matrix weightsPerLayer = new Matrix(layerSizes[layer+1], layerSizes[layer]);
+            weightsPerLayer = weightsPerLayer.random(weightsPerLayer.getRowDimension(), weightsPerLayer.getColumnDimension());
+            weightsPerLayer = weightsPerLayer.times(2);
+            minus(weightsPerLayer, 1);
 
-        for(int idx1=0; idx1 < layerSizes.length; idx1++) {
-            layers[idx1] = new Neuron[layerSizes[idx1]];
-            for(int idx2=0; idx2 < layerSizes[idx1]; idx2++) {
-                if(idx1 ==0) {
-                    layers[idx1][idx2] = new Neuron(1).isInputNeuron();
+            Matrix biasWeightsPerLayer = new Matrix(layerSizes[layer + 1], 1);
+            biasWeightsPerLayer = biasWeightsPerLayer.random(biasWeightsPerLayer.getRowDimension(), biasWeightsPerLayer.getColumnDimension());
+            biasWeightsPerLayer = biasWeightsPerLayer.times(2);
+            minus(biasWeightsPerLayer, 1);
+
+            weights.put(layer, weightsPerLayer);
+            biasWeights.put(layer, biasWeightsPerLayer);
+        }
+    }
+
+    public void setNoTransfer() {
+        noTransfer = true;
+    }
+
+    public void passForward(double [] input) {
+        Matrix inputVector = new Matrix(input, input.length);
+
+        outputs.put(0, inputVector);
+
+        for(int layer = 1; layer <= weights.values().size(); layer++) {
+            inputVector = weights.get(layer - 1).times(inputVector);
+            inputVector = inputVector.plus(biasWeights.get(layer - 1));
+
+            Matrix outputVector = transfer(inputVector);
+            outputs.put(layer, outputVector);
+
+            transferDerivertives.put(layer, get2Dim(transferDerivative(outputVector)));
+
+            inputVector = outputVector;
+        }
+    }
+
+    private Matrix transferDerivative(Matrix vector) {
+        Matrix v2 = vector.copy();
+        for(int row=0; row < vector.getRowDimension(); row++) {
+            if(noTransfer) {
+                v2.set(row, 0, 1);
+            } else {
+                v2.set(row, 0, vector.get(row, 0) * (1 - vector.get(row, 0)));
+            }
+        }
+
+        return v2;
+    }
+
+    private Matrix transfer(Matrix vector) {
+        Matrix transfered = new Matrix(vector.getRowDimension(), 1);
+
+        for(int kol=0; kol < vector.getColumnDimension(); kol++) {
+            for(int row=0; row < vector.getRowDimension(); row++) {
+                if(noTransfer) {
+                    transfered.set(row, kol, vector.get(row, kol));
                 } else {
-                    layers[idx1][idx2] = new Neuron(layers[idx1 - 1].length);
+                    transfered.set(row, kol, sigmoid(vector.get(row, kol)));
                 }
             }
         }
-
-        for(int idx=0; idx < layerSizes.length - 1; idx++) {
-            connectLayer(layers[idx], layers[idx + 1]);
-        }
-
-        for(int idx1=1; idx1 < layerSizes.length; idx1++) {
-            weightDerivatives[idx1 - 1] = new double[layerSizes[idx1]][layerSizes[idx1-1]];
-            biasDerivatives[idx1 - 1] = new double[layerSizes[idx1]];
-        }
-    }
-
-    public Neuron [][] getLayers() {
-        return layers;
-    }
-
-    public double [][][] getPartialDerivatives() {
-        return weightDerivatives;
-    }
-
-    private void connectLayer(Neuron [] left, Neuron [] right) {
-        for(int idx1=0; idx1 < right.length; idx1++) {
-            for(int idx2=0; idx2 < left.length; idx2++) {
-                right[idx1].setInput(idx2, left[idx2]);
-            }
-        }
-    }
-
-    public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
-        return learn(inputs, targets, errorLimit, 0);
+        return transfered;
     }
 
     public int learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
         int iterations=0;
-        double error;
+
+        Matrix targetVector = new Matrix(targets, targets.length);
 
         while(true) {
             passForward(inputs);
 
-            error = error(targets);
+            error = error(targetVector);
 
             if(error < errorLimit) {
                 break;
             }
+
+            Matrix errorDeriv = getOutputVector().minus(targetVector);
+
+            Matrix theta = null;
+
+            for(int layer=weights.values().size(); layer > 0; layer--) {
+                if(theta == null) {
+                    theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
+                } else {
+                    theta = theta.times(weights.get(layer)).times(transferDerivertives.get(layer));
+                }
+                gradientsPerLayer.put(layer, outputs.get(layer - 1).times(theta).transpose());
+                biasGradientsPerLayer.put(layer, theta.transpose());
+            }
+
+            for(int layer=weights.values().size(); layer > 0; layer--) {
+                weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
+                biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
+            }
+
+            iterations++;
 
             if(maxIterations > 0 && iterations >= maxIterations) {
                 String s = String.format("Max iterations exceeded for classifier %s.", name);
                 System.out.println(s);
                 return -1;
             }
-
-            for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
-                for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
-                    Neuron neuron = layers[layerIdx][neuronIdx];
-
-                    List<Double> summationTerms = new ArrayList<>();
-                    calculateSummationTerm(layerIdx, neuronIdx, targets, summationTerms, 1);
-                    double neuronPd = summationTerms.stream().mapToDouble(d -> d).sum();
-
-                    neuronPd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
-
-                    for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
-                        // Times output previous neuralnetwork.Neuron.
-                        weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = neuronPd * layers[layerIdx - 1][weightIdx].getOutput();
-                    }
-
-                    biasDerivatives[layerIdx - 1][neuronIdx] = neuronPd;
-                }
-            }
-
-            for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
-                for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
-                    Neuron neuron = layers[layerIdx][neuronIdx];
-                    for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
-                        adjustWeight(neuron, weightIdx, weightDerivatives[layerIdx - 1][neuronIdx][weightIdx]);
-                    }
-
-                    adjustBiasWeight(neuron, biasDerivatives[layerIdx - 1][neuronIdx]);
-                }
-            }
-
-            iterations++;
         }
 
         return iterations;
     }
 
-    private void calculateSummationTerm(int layerIdx, int neuronIdx, double [] targets, List<Double> summationTerms, double pd) {
-        if(layerIdx < layers.length - 1) {
-            for(int neuronInNextLayerIdx=0; neuronInNextLayerIdx < layers[layerIdx + 1].length; neuronInNextLayerIdx++) {
-                Neuron neuronInNextLayer = layers[layerIdx + 1][neuronInNextLayerIdx];
+    public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
+        return learn(inputs, targets, errorLimit, 0);
+    }
 
-                double pdDelta = pd;
-                pdDelta *= neuronInNextLayer.getWeight(neuronIdx);
-                pdDelta *= calculateSigmoidDerivative(layerIdx + 1, neuronInNextLayerIdx);
-                calculateSummationTerm(layerIdx + 1, neuronInNextLayerIdx, targets, summationTerms, pdDelta);
+    Matrix getGradients(int layer) {
+        return gradientsPerLayer.get(layer);
+    }
+
+    double error(Matrix targets) {
+        double error=0;
+        Matrix m1 = targets.minus(getOutputVector());
+        for(int row=0; row < m1.getRowDimension(); row++) {
+            error += m1.get(row, 0) * m1.get(row, 0) * 0.5;
+        }
+
+        return error;
+    }
+
+    private void minus(Matrix m, double minus) {
+        for (int i = 0; i < m.getRowDimension(); i++) {
+            for (int j = 0; j < m.getColumnDimension(); j++) {
+                m.set(i, j, m.get(i, j) - minus);
             }
-        } else {
-            // When arriving at the output, calculate dE/dOoutput
-            Neuron outputNeuron = layers[layers.length - 1][neuronIdx];
-            pd *= (outputNeuron.getOutput() - targets[neuronIdx]);
-            summationTerms.add(pd);
         }
     }
-
-    private double calculateSigmoidDerivative(int layerIdx, int neuronIdx) {
-        Neuron neuron = layers[layerIdx][neuronIdx];
-        return neuron.getOutput() * (1 - neuron.getOutput());
+    public void printMatrix(Matrix matrix) {
+        printMatrix(matrix, "matrix");
     }
 
-    private void adjustWeight(Neuron neuron, int index, double partialDerivative) {
-        double oldWeight = neuron.getWeight(index);
-        neuron.setWeight(index, oldWeight - learningConstant * partialDerivative);
-    }
-
-    private void adjustBiasWeight(Neuron neuron, double partialDerivative) {
-        double oldWeight = neuron.getBiasWeight();
-        neuron.setBiasWeight(oldWeight - learningConstant * partialDerivative);
-    }
-
-    public void passForward(double [] inputs) {
-        if(inputs.length != layers[0].length) {
-            throw new RuntimeException("Wrong number of inputs.");
+    public void printMatrix(Matrix matrix, String name) {
+        System.out.println("Matrix: " + name);
+        for (int i = 0; i < matrix.getRowDimension(); i++) {
+            for (int j = 0; j < matrix.getColumnDimension(); j++) {
+                String s = String.format("%.8f", matrix.get(i,j));
+                System.out.print(' ');
+                System.out.print(s);
+            }
+            System.out.println();
         }
-        for(int idx=0; idx < inputs.length; idx++) {
-            layers[0][idx].setInput(inputs[idx]);
-        }
-
-        Arrays.stream(layers).forEach(layer -> {
-            Arrays.stream(layer).forEach(n->n.fire());
-        });
+        System.out.println();
     }
 
-    private double error(double [] targets) {
-        double summedError = 0;
-
-        Neuron [] outputLayer = layers[layers.length - 1];
-
-        for(int idx=0; idx < targets.length; idx++) {
-            summedError += 0.5 * (targets[idx] - outputLayer[idx].getOutput()) * (targets[idx] - outputLayer[idx].getOutput());
-        }
-
-        return summedError;
+    public Matrix getWeights(int layer) {
+        return weights.get(layer - 1);
     }
 
-    public double getOutput(int output) {
-        Neuron [] outputLayer = layers[layers.length - 1];
-        return outputLayer[output].getOutput();
+    public Matrix getBiasWeights(int layer) {
+        return biasWeights.get(layer - 1);
     }
 
-    private void write(FileOutputStream weights) throws Exception {
-        for(int idx1=0; idx1 < layers.length; idx1++) {
-            for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
-                for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
-                    weights.write((new Double(layers[idx1][idx2].getWeights()[idx3]).toString() + "\n").getBytes());
+    private double sigmoid(double x) {
+        return (1/( 1 + Math.pow(Math.E,(-1*x))));
+    }
+
+    private Matrix getOutputVector() {
+        return outputs.get(outputs.size() - 1);
+    }
+
+    public double getOutput(int index) {
+        return getOutputVector().get(index,0);
+    }
+
+    private Matrix get2Dim(Matrix vector) {
+        Matrix matrix = new Matrix(vector.getRowDimension(), vector.getRowDimension());
+
+        for(int row=0; row < vector.getRowDimension(); row++) {
+            for(int col=0; col < vector.getRowDimension(); col++) {
+                if(col == row) {
+                    matrix.set(row, col, vector.get(row, 0));
+                } else {
+                    matrix.set(row, col, 0);
                 }
-                weights.write((new Double(layers[idx1][idx2].getBiasWeight()).toString() + "\n").getBytes());
             }
         }
+
+        return matrix;
     }
 
-    private void read(FileInputStream weights) throws Exception {
-        BufferedReader weightReader = new BufferedReader(new InputStreamReader(weights));
+    public double getError() {
+        return error;
+    }
 
-        for(int idx1=0; idx1 < layers.length; idx1++) {
-            for(int idx2=0; idx2 < layers[idx1].length; idx2++) {
-                for(int idx3=0; idx3 < layers[idx1][idx2].getWeights().length; idx3++) {
-                    layers[idx1][idx2].setWeight(idx3, Double.parseDouble(weightReader.readLine()));
+    public void write() throws Exception {
+        FileOutputStream weightsFile = new FileOutputStream(name);
+        for(int layer : weights.keySet()) {
+            for(int row=0; row < weights.get(layer).getRowDimension(); row++) {
+                for(int col=0; col < weights.get(layer).getColumnDimension(); col++) {
+                    weightsFile.write((new Double(weights.get(layer).get(row,col)).toString() + "\n").getBytes());
                 }
-                layers[idx1][idx2].setBiasWeight(Double.parseDouble(weightReader.readLine()));
+            }
+
+            for(int row=0; row < biasWeights.get(layer).getRowDimension(); row++) {
+                for (int col = 0; col < biasWeights.get(layer).getColumnDimension(); col++) {
+                    weightsFile.write((new Double(biasWeights.get(layer).get(row, col)).toString() + "\n").getBytes());
+                }
             }
         }
     }
 
-    public String toString() {
-        return name;
-    }
-
-    public void readWeights() throws Exception {
-        File weights = new File(name);
-        if(weights.exists()) {
-            read(new FileInputStream(weights));
+    public void read() throws Exception {
+        File file = new File(name);
+        if(!file.exists()) {
+            return;
         }
-    }
 
-    public void writeWeights() throws Exception {
-        File weights = new File(name);
-        write(new FileOutputStream(weights));
+        BufferedReader weightReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+
+        for(int layer : weights.keySet()) {
+            for(int row=0; row < weights.get(layer).getRowDimension(); row++) {
+                for(int col=0; col < weights.get(layer).getColumnDimension(); col++) {
+                    weights.get(layer).set(row, col, Double.parseDouble(weightReader.readLine()));
+                }
+            }
+
+            for(int row=0; row < biasWeights.get(layer).getRowDimension(); row++) {
+                for (int col = 0; col < biasWeights.get(layer).getColumnDimension(); col++) {
+                    weights.get(layer).set(row, col, Double.parseDouble(weightReader.readLine()));
+                }
+            }
+        }
     }
 }
