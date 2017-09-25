@@ -1,17 +1,21 @@
 package apps.sourcedetector;
 
 import neuralnetwork.Network;
+import neuralnetwork.Network1;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
-public abstract class SourceClassifier {
+public abstract class SourceClassifier1 {
 
-    List<Network> networks = new ArrayList<>();
+    List<Network1> networks = new ArrayList<>();
 
-    public void addNetwork(Network network) throws Exception {
+    public void addNetwork(Network1 network) throws Exception {
         networks.add(network);
-        network.read();
+        network.readWeights();
     }
 
     double scaleInput(int input) {
@@ -45,6 +49,7 @@ public abstract class SourceClassifier {
         Arrays.sort(files);
 
         for(File file : shuffle(files)) {
+
             String extenstion = getExtension(file.getName());
 
             boolean isJava = "java".equals(extenstion);
@@ -67,7 +72,7 @@ public abstract class SourceClassifier {
 
             int networkNo = 0;
 
-            for(Network network : networks) {
+            for(Network1 network : networks) {
 
                 double [] targets = composeTargets(network, isJava, isPython, isC);
 
@@ -102,12 +107,12 @@ public abstract class SourceClassifier {
             System.out.println();
         }
 
-        for(Network network : networks) {
-            network.write();
+        for(Network1 network : networks) {
+            network.writeWeights();
         }
     }
 
-    abstract double [] composeTargets(Network network, boolean isJava, boolean isPython, boolean isC);
+    abstract double [] composeTargets(Network1 network, boolean isJava, boolean isPython, boolean isC);
 
     private List<File> shuffle(File [] fileArr) {
         List<File> files = new ArrayList<>();

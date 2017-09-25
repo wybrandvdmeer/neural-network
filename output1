@@ -1,0 +1,154 @@
+/usr/lib/jvm/java-8-oracle/bin/java -ea -Didea.launcher.port=7532 -Didea.launcher.bin.path=/opt/intellij-idea-community/bin -Didea.junit.sm_runner -Dfile.encoding=UTF-8 -classpath /opt/intellij-idea-community/lib/idea_rt.jar:/opt/intellij-idea-community/plugins/junit/lib/junit-rt.jar:/usr/lib/jvm/java-8-oracle/jre/lib/charsets.jar:/usr/lib/jvm/java-8-oracle/jre/lib/deploy.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/cldrdata.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/dnsns.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/jaccess.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/jfxrt.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/localedata.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/nashorn.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/sunec.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/sunjce_provider.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/sunpkcs11.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/zipfs.jar:/usr/lib/jvm/java-8-oracle/jre/lib/javaws.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jce.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jfr.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jfxswt.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jsse.jar:/usr/lib/jvm/java-8-oracle/jre/lib/management-agent.jar:/usr/lib/jvm/java-8-oracle/jre/lib/plugin.jar:/usr/lib/jvm/java-8-oracle/jre/lib/resources.jar:/usr/lib/jvm/java-8-oracle/jre/lib/rt.jar:/home/wybrand/neural-network/out/test/neural-network:/home/wybrand/neural-network/out/production/neural-network:/home/wybrand/neural-network/lib/junit-4.12.jar:/home/wybrand/neural-network/lib/hamcrest-core-1.3.jar:/home/wybrand/neural-network/lib/Jama-1.0.3.jar com.intellij.rt.execution.application.AppMain com.intellij.rt.execution.junit.JUnitStarter -ideVersion5 apps.sourcedetector.TestSourceRecognizer,testLearnSingleNetworks1
+File: AbstractAsyncBulkByScrollAction.java
+Network: sourceClassifier, files: 1, iterations: 35392, avg: 35392
+
+File: AbstractErrorHandler.py
+Network: sourceClassifier, files: 2, iterations: 2003, avg: 18697
+
+File: AbstractFieldDataImplTestCase.java
+Network: sourceClassifier, files: 3, iterations: 14116, avg: 17170
+
+File: _3d.py
+Network: sourceClassifier, files: 4, iterations: 1995, avg: 13376
+
+File: AbstractAsyncBulkByScrollActionMetadataTestCase.java
+Network: sourceClassifier, files: 5, iterations: 7769, avg: 12255
+
+File: AbstractExporter.py
+Network: sourceClassifier, files: 6, iterations: 1985, avg: 10543
+
+File: AbstractFieldDataTestCase.java
+Network: sourceClassifier, files: 7, iterations: 6576, avg: 9976
+
+File: __about__.py
+Network: sourceClassifier, files: 8, iterations: 2103, avg: 8992
+
+File: AbstractAsyncBulkByScrollActionScriptTestCase.java
+Network: sourceClassifier, files: 9, iterations: 7286, avg: 8802
+
+File: _abcoll.py
+Network: sourceClassifier, files: 10, iterations: 1220, avg: 8044
+
+File: AbstractAsyncBulkByScrollActionTestCase.java
+Network: sourceClassifier, files: 11, iterations: 2863, avg: 4791
+
+File: _abnf.py
+Network: sourceClassifier, files: 12, iterations: 1585, avg: 4749
+
+File: AbstractAwsTestCase.java
+Network: sourceClassifier, files: 13, iterations: 14065, avg: 4744
+
+File: abag.py
+Network: sourceClassifier, files: 14, iterations: 1452, avg: 4690
+
+File: AbstractAzureComputeServiceTestCase.java
+Network: sourceClassifier, files: 15, iterations: 3084, avg: 4221
+
+File: abc.py
+Network: sourceClassifier, files: 16, iterations: 1077, avg: 4131
+
+File: AbstractAzureFsTestCase.java
+Network: sourceClassifier, files: 17, iterations: 1390, avg: 3612
+
+File: aboutDialog.py
+Network: sourceClassifier, files: 18, iterations: 1236, avg: 3525
+
+File: AbstractAzureIntegTestCase.java
+Network: sourceClassifier, files: 19, iterations: 1252, avg: 2922
+
+File: absoft.py
+Network: sourceClassifier, files: 20, iterations: 965, avg: 2896
+
+File: AbstractAzureWithThirdPartyIntegTestCase.java
+Network: sourceClassifier, files: 21, iterations: 1359, avg: 2746
+
+File: abstract.py
+Network: sourceClassifier, files: 22, iterations: 694, avg: 2657
+
+File: AbstractBaseReindexRestHandler.java
+Network: sourceClassifier, files: 23, iterations: 2487, avg: 1499
+
+File: AbstractBenchmark.java
+Network: sourceClassifier, files: 24, iterations: 1014, avg: 1455
+
+File: AbstractBulkByQueryRestHandler.java
+Network: sourceClassifier, files: 25, iterations: 3350, avg: 1482
+
+File: AbstractBulkByScrollRequestTestCase.java
+Network: sourceClassifier, files: 26, iterations: 2668, avg: 1641
+
+File: AbstractBytesReferenceTestCase.java
+Network: sourceClassifier, files: 27, iterations: 5999, avg: 2102
+
+File: AbstractClientHeadersTestCase.java
+Network: sourceClassifier, files: 28, iterations: 5305, avg: 2509
+
+File: AbstractClientYamlTestFragmentParserTestCase.java
+Network: sourceClassifier, files: 29, iterations: 3526, avg: 2736
+
+File: AbstractCompoundWordTokenFilterFactory.java
+Network: sourceClassifier, files: 30, iterations: 1906, avg: 2830
+
+File: AbstractDiffableSerializationTestCase.java
+Network: sourceClassifier, files: 31, iterations: 1403, avg: 2835
+
+File: AbstractDiffableWireSerializationTestCase.java
+Network: sourceClassifier, files: 32, iterations: 25, avg: 2768
+
+File: AbstractFilteringTestCase.java
+Network: sourceClassifier, files: 33, iterations: 5937, avg: 3113
+
+File: AbstractGeoFieldDataTestCase.java
+Network: sourceClassifier, files: 34, iterations: 5545, avg: 3566
+
+File: AbstractIndicesClusterStateServiceTestCase.java
+Network: sourceClassifier, files: 35, iterations: 1392, avg: 3370
+
+File: AbstractLifecycleRunnableTests.java
+Network: sourceClassifier, files: 36, iterations: 4735, avg: 3577
+
+File: AbstractNioChannel.java
+Network: sourceClassifier, files: 37, iterations: 1538, avg: 3131
+
+File: AbstractNumberNestedSortingTestCase.java
+Network: sourceClassifier, files: 38, iterations: 3516, avg: 2952
+
+File: AbstractNumericFieldMapperTestCase.java
+Network: sourceClassifier, files: 39, iterations: 3220, avg: 2921
+
+File: AbstractNumericTestCase.java
+Network: sourceClassifier, files: 40, iterations: 316, avg: 2762
+
+File: AbstractQueryBuilderTests.java
+Network: sourceClassifier, files: 41, iterations: 1399, avg: 2762
+
+File: AbstractQueryTestCase.java
+Network: sourceClassifier, files: 42, iterations: 3407, avg: 3100
+
+File: AbstractQueryTestCaseTests.java
+Network: sourceClassifier, files: 43, iterations: 1491, avg: 2655
+
+File: AbstractRecyclerTestCase.java
+Network: sourceClassifier, files: 44, iterations: 10164, avg: 3117
+
+File: AbstractRunnableTests.java
+Network: sourceClassifier, files: 45, iterations: 1102, avg: 3088
+
+File: AbstractS3SnapshotRestoreTest.java
+Network: sourceClassifier, files: 46, iterations: 1979, avg: 2813
+
+File: AbstractSerializingTestCase.java
+Network: sourceClassifier, files: 47, iterations: 3718, avg: 3031
+
+File: AbstractShapeBuilderTestCase.java
+Network: sourceClassifier, files: 48, iterations: 0, avg: 2679
+
+File: AbstractSimpleTransportTestCase.java
+Network: sourceClassifier, files: 49, iterations: 1301, avg: 2487
+
+File: AbstractSnapshotIntegTestCase.java
+Network: sourceClassifier, files: 50, iterations: 2463, avg: 2702
+
+
+Process finished with exit code 0
+

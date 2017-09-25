@@ -99,6 +99,12 @@ public class TestSourceRecognizer {
     }
 
     @Test
+    public void testLearnSingleNetworks1() throws Exception {
+        SourceClassifierSingleNetwork1 sourceClassifierSingleNetwork = new SourceClassifierSingleNetwork1();
+        sourceClassifierSingleNetwork.learn("/home/wybrand/source");
+    }
+
+    @Test
     public void testRecoginizeSingleNetwork() throws Exception {
         SourceClassifierSingleNetwork sourceClassifierSingleNetwork = new SourceClassifierSingleNetwork();
 

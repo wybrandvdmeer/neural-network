@@ -93,26 +93,22 @@ public class TestNetwork {
     }
 
     @Test
+    public void testLearn1() throws Exception {
+        Network1 network = new Network1("testLearn", new int[]{2,2,2});
+        network.readWeights();
+
+        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.0000001, 1);
+
+        double w= network.getLayers()[1][0].getWeight(0);
+
+        assertEquals(0.149780716, network.getLayers()[1][0].getWeight(0), 0.00000001);
+
+    }
+
+    @Test
     public void testLearn() throws Exception {
-        Network network = new Network("test", new int[]{2,2,2});
-
-        network.getWeights(1).set(0, 0, 0.15);
-        network.getWeights(1).set(0, 1, 0.2);
-
-        network.getWeights(1).set(1, 0, 0.25);
-        network.getWeights(1).set(1, 1, 0.3);
-
-        network.getBiasWeights(1).set(0, 0, 0.35);
-        network.getBiasWeights(1).set(1, 0, 0.35);
-
-        network.getWeights(2).set(0, 0, 0.4);
-        network.getWeights(2).set(0, 1, 0.45);
-
-        network.getWeights(2).set(1, 0, 0.5);
-        network.getWeights(2).set(1, 1, 0.55);
-
-        network.getBiasWeights(2).set(0, 0, 0.6);
-        network.getBiasWeights(2).set(1, 0, 0.6);
+        Network network = new Network("testLearn", new int[]{2,2,2});
+        network.read();
 
         network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.0000001, 1);
         assertEquals(0.2983711087600027, network.getError());
@@ -131,6 +127,8 @@ public class TestNetwork {
 
         assertEquals(0.530750719, network.getBiasWeights(2).get(0,0), 0.00000001);
         assertEquals(0.619049119, network.getBiasWeights(2).get(1,0), 0.00000001);
+
+        double w = network.getWeights(1).get(0, 0);
 
         // Layer 1.
         assertEquals(0.149780716, network.getWeights(1).get(0, 0), 0.00000001);
