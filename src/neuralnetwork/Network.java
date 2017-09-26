@@ -111,6 +111,10 @@ public class Network {
 
             Matrix theta = null;
 
+            if(iterations == 126) {
+                int i = 0;
+            }
+
             for(int layer=weights.values().size(); layer > 0; layer--) {
                 if(theta == null) {
                     theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
@@ -125,6 +129,9 @@ public class Network {
                 weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
             }
+
+System.out.println("BIAS N1: " + biasWeights.get(0).get(0, 0));
+
 
             iterations++;
 

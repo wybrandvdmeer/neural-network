@@ -94,51 +94,28 @@ public class TestNetwork {
 
     @Test
     public void testLearn1() throws Exception {
-        Network1 network = new Network1("testLearn", new int[]{2,2,2});
-        network.readWeights();
+        int epochs=0;
+        while(epochs++ < 1) {
+            Network1 network = new Network1("testLearn1", new int[]{2, 2, 2, 2});
+            network.readWeights();
 
-        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.0000001, 1);
-
-        double w= network.getLayers()[1][0].getWeight(0);
-
-        assertEquals(0.149780716, network.getLayers()[1][0].getWeight(0), 0.00000001);
-
+            int i = network.learn(new double[]{0.05, 0.1}, new double[]{0.01, 0.99}, 0.0000001, 20000);
+            System.out.println(String.format("%d-%d", epochs, i));
+            network.writeWeights();
+        }
     }
 
     @Test
     public void testLearn() throws Exception {
-        Network network = new Network("testLearn", new int[]{2,2,2});
-        network.read();
+        int epochs=0;
+        while(epochs++ < 1) {
+            Network network = new Network("testLearn2", new int[]{2, 2, 2, 2});
+            network.read();
 
-        network.learn(new double[]{ 0.05, 0.1 }, new double[] {0.01, 0.99}, 0.0000001, 1);
-        assertEquals(0.2983711087600027, network.getError());
-
-        // Layer 2.
-        assertEquals(0.08216704056423078, network.getGradients(2).get(0, 0)); // w11
-        assertEquals(0.08266762784753326, network.getGradients(2).get(0, 1)); // w12.
-
-        assertEquals(-0.022602540477475067, network.getGradients(2).get(1, 0)); // w21.
-        assertEquals(-0.02274024221597822, network.getGradients(2).get(1, 1)); // w22.
-
-        assertEquals(0.35891648, network.getWeights(2).get(0,0), 0.00000001);
-        assertEquals(0.408666186, network.getWeights(2).get(0,1), 0.00000001);
-        assertEquals(0.51130127, network.getWeights(2).get(1,0), 0.00000001);
-        assertEquals(0.561370121, network.getWeights(2).get(1,1), 0.00000001);
-
-        assertEquals(0.530750719, network.getBiasWeights(2).get(0,0), 0.00000001);
-        assertEquals(0.619049119, network.getBiasWeights(2).get(1,0), 0.00000001);
-
-        double w = network.getWeights(1).get(0, 0);
-
-        // Layer 1.
-        assertEquals(0.149780716, network.getWeights(1).get(0, 0), 0.00000001);
-        assertEquals(0.199561432, network.getWeights(1).get(0, 1), 0.00000001);
-
-        assertEquals(0.24975114, network.getWeights(1).get(1, 0), 0.00000001);
-        assertEquals(0.29950229, network.getWeights(1).get(1, 1), 0.00000001);
-
-        assertEquals(0.345614323, network.getBiasWeights(1).get(0,0), 0.00000001);
-        assertEquals(0.345022873, network.getBiasWeights(1).get(1,0), 0.00000001);
+            int i = network.learn(new double[]{0.05, 0.1}, new double[]{0.01, 0.99}, 0.0000001, 20000);
+            System.out.println(String.format("%d-%d", epochs, i));
+            network.write();
+        }
     }
 
     public void printMatrix(Matrix matrix, String name) {

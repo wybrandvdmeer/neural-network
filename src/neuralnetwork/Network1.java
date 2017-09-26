@@ -83,6 +83,10 @@ public class Network1 {
                 return -1;
             }
 
+            if(iterations == 126) {
+                int i = 0;
+            }
+
             for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
                 for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
                     Neuron neuron = layers[layerIdx][neuronIdx];
@@ -112,6 +116,9 @@ public class Network1 {
                     adjustBiasWeight(neuron, biasDerivatives[layerIdx - 1][neuronIdx]);
                 }
             }
+
+System.out.println("BIAS N1: " + layers[1][0].getBiasWeight());
+
 
             iterations++;
         }
