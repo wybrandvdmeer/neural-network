@@ -89,7 +89,7 @@ public abstract class SourceClassifier {
                         totalNoOfIterations += summedIterations[networkNo][idx];
                     }
 
-                    System.out.println(String.format("Network: sourceClassifier, files: %d, iterations: %d, avg: %d",
+                    System.out.println(String.format("Network: %s, files: %d, iterations: %d, avg: %d",
                             network,
                             fileNo,
                             iterations,
