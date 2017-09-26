@@ -111,27 +111,44 @@ public class Network {
 
             Matrix theta = null;
 
-            if(iterations == 126) {
-                int i = 0;
-            }
-
             for(int layer=weights.values().size(); layer > 0; layer--) {
                 if(theta == null) {
                     theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
+
+                    if(iterations >= 17620  && iterations <= 17623) {
+                        System.out.println("IT: " + iterations);
+                        System.out.println(String.format("W: %.22f - %.22f", weights.get(layer-1).get(0,0),
+                                weights.get(layer-1).get(0,1)));
+                        System.out.println(String.format("O1: %.22f", outputs.get(layer).get(0,0)));
+
+                        System.out.println(String.format("H1-out: %.22f", outputs.get(layer-1).get(0,0)));
+                        System.out.println(String.format("H2-out: %.22f", outputs.get(layer-1).get(1,0)));
+
+                        System.out.println(String.format("T1: %.22f", theta.get(0,0)));
+                        System.out.println(String.format("GD 2e weight: %.22f",
+                                outputs.get(layer - 1).times(theta).transpose().get(0,1)));
+
+                        System.out.println(String.format("TD: %.22f",transferDerivertives.get(layer).get(0,0)));
+
+                    }
+
+
                 } else {
-                    theta = theta.times(weights.get(layer)).times(transferDerivertives.get(layer));
+                    theta = theta.times(weights.get(layer).times(transferDerivertives.get(layer)));
                 }
                 gradientsPerLayer.put(layer, outputs.get(layer - 1).times(theta).transpose());
                 biasGradientsPerLayer.put(layer, theta.transpose());
             }
 
             for(int layer=weights.values().size(); layer > 0; layer--) {
+
+                if(iterations == 17622) {
+                    int i = 0;
+                }
+
                 weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
             }
-
-System.out.println("BIAS N1: " + biasWeights.get(0).get(0, 0));
-
 
             iterations++;
 

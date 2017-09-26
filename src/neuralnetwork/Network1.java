@@ -83,12 +83,9 @@ public class Network1 {
                 return -1;
             }
 
-            if(iterations == 126) {
-                int i = 0;
-            }
-
             for (int layerIdx = 1; layerIdx < layers.length; layerIdx++) {
                 for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
+
                     Neuron neuron = layers[layerIdx][neuronIdx];
 
                     List<Double> summationTerms = new ArrayList<>();
@@ -96,6 +93,34 @@ public class Network1 {
                     double neuronPd = summationTerms.stream().mapToDouble(d -> d).sum();
 
                     neuronPd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
+
+                    if(layerIdx == layers.length - 1 && neuronIdx == 0) {
+                        //System.out.println(String.format("%d-%.16f", iterations, neuronPd));
+
+
+                        if(iterations >= 17620  && iterations <= 17623) {
+                            System.out.println("IT: " + iterations);
+                            System.out.println(String.format("W: %.22f - %.22f",
+                                    layers[layers.length - 1][0].getWeight(0),
+                                    layers[layers.length - 1][0].getWeight(1)));
+                            System.out.println(String.format("O1: %.22f", layers[layers.length - 1][0].getOutput()));
+
+                            System.out.println(String.format("H1-out: %.22f", layers[layers.length - 2][0].getOutput()));
+                            System.out.println(String.format("H2-out: %.22f", layers[layers.length - 2][1].getOutput()));
+
+                            System.out.println(String.format("T1: %.22f", neuronPd));
+
+                            System.out.println(String.format("GD 2e weight: %.22f",
+                                    neuronPd * layers[layerIdx - 1][1].getOutput()));
+
+                            System.out.println(String.format("TD: %.22f",calculateSigmoidDerivative(layerIdx, neuronIdx)));
+
+                        }
+                    }
+
+
+
+
 
                     for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
                         // Times output previous neuralnetwork.Neuron.
@@ -110,15 +135,17 @@ public class Network1 {
                 for (int neuronIdx = 0; neuronIdx < layers[layerIdx].length; neuronIdx++) {
                     Neuron neuron = layers[layerIdx][neuronIdx];
                     for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
+
+                        if(iterations == 17622 && layerIdx == 3) {
+                            int i = 0;
+                        }
+
                         adjustWeight(neuron, weightIdx, weightDerivatives[layerIdx - 1][neuronIdx][weightIdx]);
                     }
 
                     adjustBiasWeight(neuron, biasDerivatives[layerIdx - 1][neuronIdx]);
                 }
             }
-
-System.out.println("BIAS N1: " + layers[1][0].getBiasWeight());
-
 
             iterations++;
         }

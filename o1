@@ -1,0 +1,36 @@
+/usr/lib/jvm/java-8-oracle/bin/java -ea -Didea.launcher.port=7535 -Didea.launcher.bin.path=/opt/intellij-idea-community/bin -Didea.junit.sm_runner -Dfile.encoding=UTF-8 -classpath /opt/intellij-idea-community/lib/idea_rt.jar:/opt/intellij-idea-community/plugins/junit/lib/junit-rt.jar:/usr/lib/jvm/java-8-oracle/jre/lib/charsets.jar:/usr/lib/jvm/java-8-oracle/jre/lib/deploy.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/cldrdata.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/dnsns.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/jaccess.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/jfxrt.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/localedata.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/nashorn.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/sunec.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/sunjce_provider.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/sunpkcs11.jar:/usr/lib/jvm/java-8-oracle/jre/lib/ext/zipfs.jar:/usr/lib/jvm/java-8-oracle/jre/lib/javaws.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jce.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jfr.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jfxswt.jar:/usr/lib/jvm/java-8-oracle/jre/lib/jsse.jar:/usr/lib/jvm/java-8-oracle/jre/lib/management-agent.jar:/usr/lib/jvm/java-8-oracle/jre/lib/plugin.jar:/usr/lib/jvm/java-8-oracle/jre/lib/resources.jar:/usr/lib/jvm/java-8-oracle/jre/lib/rt.jar:/home/wybrand/neural-network/out/test/neural-network:/home/wybrand/neural-network/out/production/neural-network:/home/wybrand/neural-network/lib/junit-4.12.jar:/home/wybrand/neural-network/lib/hamcrest-core-1.3.jar:/home/wybrand/neural-network/lib/Jama-1.0.3.jar com.intellij.rt.execution.application.AppMain com.intellij.rt.execution.junit.JUnitStarter -ideVersion5 neuralnetwork.TestNetwork,testLearn1
+IT: 17620
+W: -1.5751618267099952000000 - -1.5693685173791052000000
+O1: 0.0103880487350722690000
+H1-out: 0.8605730368974096000000
+H2-out: 0.8702082632219572000000
+T1: 0.0000039891942285057436
+GD 2e weight: 0.0000034714297812430386
+TD: 0.0102801371785500320000
+IT: 17621
+W: -1.5751635432064912000000 - -1.5693702530939960000000
+O1: 0.0103879923729270180000
+H1-out: 0.8605732033313656000000
+H2-out: 0.8702084150527014000000
+T1: 0.0000039885934041705836
+GD 2e weight: 0.0000034709075445329425
+TD: 0.0102800819873870280000
+IT: 17622
+W: -1.5751652594447925000000 - -1.5693719885477682000000
+O1: 0.0103879360195597880000
+H1-out: 0.8605733697401386000000
+H2-out: 0.8702085668604732000000
+T1: 0.0000039879926796272060
+GD 2e weight: 0.0000034703853943884490
+TD: 0.0102800268048133210000
+IT: 17623
+W: -1.5751669754249418000000 - -1.5693737237404652000000
+O1: 0.0103878796749690490000
+H1-out: 0.8605735361237330000000
+H2-out: 0.8702087186452765000000
+T1: 0.0000039873920548563750
+GD 2e weight: 0.0000034698633307929220
+TD: 0.0102799716308274130000
+1-19015
+
+Process finished with exit code 0
