@@ -92,39 +92,21 @@ public class Network1 {
                     calculateSummationTerm(layerIdx, neuronIdx, targets, summationTerms, 1);
                     double neuronPd = summationTerms.stream().mapToDouble(d -> d).sum();
 
+if(iterations == 181 && layerIdx == 2 && neuronIdx == 0) {
+    System.out.println("THETA-SUM: " + neuronPd);
+    System.out.println("THETA1: " + summationTerms.get(0));
+    System.out.println("THETA2: " + summationTerms.get(1));
+}
+
                     neuronPd *= this.calculateSigmoidDerivative(layerIdx, neuronIdx);
-
-                    if(layerIdx == layers.length - 1 && neuronIdx == 0) {
-                        //System.out.println(String.format("%d-%.16f", iterations, neuronPd));
-
-
-                        if(iterations >= 17620  && iterations <= 17623) {
-                            System.out.println("IT: " + iterations);
-                            System.out.println(String.format("W: %.22f - %.22f",
-                                    layers[layers.length - 1][0].getWeight(0),
-                                    layers[layers.length - 1][0].getWeight(1)));
-                            System.out.println(String.format("O1: %.22f", layers[layers.length - 1][0].getOutput()));
-
-                            System.out.println(String.format("H1-out: %.22f", layers[layers.length - 2][0].getOutput()));
-                            System.out.println(String.format("H2-out: %.22f", layers[layers.length - 2][1].getOutput()));
-
-                            System.out.println(String.format("T1: %.22f", neuronPd));
-
-                            System.out.println(String.format("GD 2e weight: %.22f",
-                                    neuronPd * layers[layerIdx - 1][1].getOutput()));
-
-                            System.out.println(String.format("TD: %.22f",calculateSigmoidDerivative(layerIdx, neuronIdx)));
-
-                        }
-                    }
-
-
-
-
 
                     for (int weightIdx = 0; weightIdx < neuron.getNoOfWeights(); weightIdx++) {
                         // Times output previous neuralnetwork.Neuron.
                         weightDerivatives[layerIdx - 1][neuronIdx][weightIdx] = neuronPd * layers[layerIdx - 1][weightIdx].getOutput();
+                    }
+
+                    if(iterations == 181 && layerIdx == 2 && neuronIdx == 0) {
+                        System.out.println("THETA: " + neuronPd);
                     }
 
                     biasDerivatives[layerIdx - 1][neuronIdx] = neuronPd;

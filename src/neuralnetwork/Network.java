@@ -114,38 +114,29 @@ public class Network {
             for(int layer=weights.values().size(); layer > 0; layer--) {
                 if(theta == null) {
                     theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
-
-                    if(iterations >= 17620  && iterations <= 17623) {
-                        System.out.println("IT: " + iterations);
-                        System.out.println(String.format("W: %.22f - %.22f", weights.get(layer-1).get(0,0),
-                                weights.get(layer-1).get(0,1)));
-                        System.out.println(String.format("O1: %.22f", outputs.get(layer).get(0,0)));
-
-                        System.out.println(String.format("H1-out: %.22f", outputs.get(layer-1).get(0,0)));
-                        System.out.println(String.format("H2-out: %.22f", outputs.get(layer-1).get(1,0)));
-
-                        System.out.println(String.format("T1: %.22f", theta.get(0,0)));
-                        System.out.println(String.format("GD 2e weight: %.22f",
-                                outputs.get(layer - 1).times(theta).transpose().get(0,1)));
-
-                        System.out.println(String.format("TD: %.22f",transferDerivertives.get(layer).get(0,0)));
-
-                    }
-
-
                 } else {
-                    theta = theta.times(weights.get(layer).times(transferDerivertives.get(layer)));
+
+// GOED: weights.get(layer).get(0,0) * transferDerivertives.get(3).get(0,0) * errorDeriv.get(0,0)
+// FOUT: transferDerivertives.get(3).get(0,0) * errorDeriv.get(0,0) * weights.get(layer).get(0,0)
+
+                    if(iterations == 181 && layer == 2) {
+    System.out.println("THETA-SUM: " + (theta.times(weights.get(layer)).get(0,0)));
+    System.out.println("THETA1: " + theta.get(0,0) * weights.get(layer).get(0,0));
+    System.out.println("THETA2: " + theta.get(0,1) * weights.get(layer).get(1, 0));
+}
+                        theta = theta.times(weights.get(layer).times(transferDerivertives.get(layer)));
+                        //theta = weights.get(layer).times(transferDerivertives.get(layer)).times(theta);
                 }
+
+                if(iterations == 181 && layer == 2) {
+                    System.out.println("THETA: " + theta.get(0,0));
+                }
+
                 gradientsPerLayer.put(layer, outputs.get(layer - 1).times(theta).transpose());
                 biasGradientsPerLayer.put(layer, theta.transpose());
             }
 
             for(int layer=weights.values().size(); layer > 0; layer--) {
-
-                if(iterations == 17622) {
-                    int i = 0;
-                }
-
                 weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
             }
