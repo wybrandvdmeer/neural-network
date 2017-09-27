@@ -115,7 +115,7 @@ public class Network {
                 if(theta == null) {
                     theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
                 } else {
-                    theta = theta.times(weights.get(layer)).times(transferDerivertives.get(layer));
+                    theta = theta.times(weights.get(layer).times(transferDerivertives.get(layer)));
                 }
                 gradientsPerLayer.put(layer, outputs.get(layer - 1).times(theta).transpose());
                 biasGradientsPerLayer.put(layer, theta.transpose());
