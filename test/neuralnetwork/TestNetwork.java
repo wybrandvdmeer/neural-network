@@ -25,8 +25,8 @@ public class TestNetwork {
 
         network.passForward(new double[]{ 0.05, 0.1 });
 
-        assertEquals(o1, network.getOutput(0));
-        assertEquals(o2, network.getOutput(1));
+        assertEquals(o1, network.getOutput(0), 0.0001);
+        assertEquals(o2, network.getOutput(1), 0.0001);
 
         File weights = new File("testReadWrite");
         assertTrue(weights.delete());
