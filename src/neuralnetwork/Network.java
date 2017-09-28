@@ -220,14 +220,25 @@ public class Network {
         return error;
     }
 
+
+    /* The floating point arithmetic introduces a small errors. In order to avoid this error,
+    we only store a mantissa of 8 digits.
+    Note: our previous implementation did not have this fault.
+    Our previous implementation went recursive through the net: gradient = weight * sigmoid-deriv * error-deriv
+    The matrice implementation calculates first the gradient in the last layer, so the calculation above becomes:
+    gradient = weight * (sigmoid-deriv * error-deriv)
+    The result should be the same, but the latter form introduces an error. (Note: the first form also should introduce
+    errors, but for one reason or another, this implementation works better.
+    See: https://stackoverflow.com/questions/46467135/loss-of-precision-when-multiplying-doubles
+    */
     public void write() throws Exception {
         FileOutputStream weightsFile = new FileOutputStream(name);
         for(int layer : weights.keySet()) {
             for(int row=0; row < weights.get(layer).getRowDimension(); row++) {
                 for(int col=0; col < weights.get(layer).getColumnDimension(); col++) {
-                    weightsFile.write((new Double(weights.get(layer).get(row,col)).toString() + "\n").getBytes());
+                    weightsFile.write((String.format("%.8f", weights.get(layer).get(row,col)) + "\n").getBytes());
                 }
-                weightsFile.write((new Double(biasWeights.get(layer).get(row, 0)).toString() + "\n").getBytes());
+                weightsFile.write((String.format("%.8f", biasWeights.get(layer).get(row, 0)) + "\n").getBytes());
             }
         }
     }
