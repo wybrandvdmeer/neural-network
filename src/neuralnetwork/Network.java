@@ -117,7 +117,7 @@ public class Network {
                 } else {
 
 // GOED: weights.get(layer).get(0,0) * transferDerivertives.get(3).get(0,0) * errorDeriv.get(0,0)
-// FOUT: transferDerivertives.get(3).get(0,0) * errorDeriv.get(0,0) * weights.get(layer).get(0,0)
+// FOUT: weights.get(layer).get(0,0) * (transferDerivertives.get(3).get(0,0) * errorDeriv.get(0,0))
 
                     if(iterations == 181 && layer == 2) {
     System.out.println("THETA-SUM: " + (theta.times(weights.get(layer)).get(0,0)));
@@ -125,7 +125,6 @@ public class Network {
     System.out.println("THETA2: " + theta.get(0,1) * weights.get(layer).get(1, 0));
 }
                         theta = theta.times(weights.get(layer).times(transferDerivertives.get(layer)));
-                        //theta = weights.get(layer).times(transferDerivertives.get(layer)).times(theta);
                 }
 
                 if(iterations == 181 && layer == 2) {
