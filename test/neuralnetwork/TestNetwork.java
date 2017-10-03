@@ -155,7 +155,31 @@ public class TestNetwork {
         network.getWeights(1).set(1,1, 0.6);
         network.getBiasWeights(1).set(1,0, 0.1);
 
-        network.printMatrix(network.getWeights(1), "weight0");
+        network.getWeights(2).set(0,0, 0.7);
+        network.getWeights(2).set(0,1, 0.7);
+        network.getBiasWeights(2).set(0,0, 0.2);
+
+        network.getWeights(2).set(1,0, 0.8);
+        network.getWeights(2).set(1,1, 0.8);
+        network.getBiasWeights(2).set(1,0, 0.2);
+
+        network.passForward(new double[]{0.1, 0.2});
+
+        assertEquals(0.6389938878964051, network.getOutput(0));
+        assertEquals(0.6511277386034051, network.getOutput(1));
+    }
+
+    @Test
+    public void testLearnRelu() throws Exception {
+        Network network = new Network("Relu", new int []{2, 2, 2}, true);
+
+        network.getWeights(1).set(0,0, 0.5);
+        network.getWeights(1).set(0,1, 0.5);
+        network.getBiasWeights(1).set(0,0, 0.1);
+
+        network.getWeights(1).set(1,0, 0.6);
+        network.getWeights(1).set(1,1, 0.6);
+        network.getBiasWeights(1).set(1,0, 0.1);
 
         network.getWeights(2).set(0,0, 0.7);
         network.getWeights(2).set(0,1, 0.7);
@@ -165,11 +189,10 @@ public class TestNetwork {
         network.getWeights(2).set(1,1, 0.8);
         network.getBiasWeights(2).set(1,0, 0.2);
 
-        network.printMatrix(network.getWeights(2), "weight1");
+        network.learn(new double[]{0.1, 0.2}, new double[] {0.01, 0.99}, 0.0000001, 1);
 
-        network.passForward(new double[]{0.1, 0.2});
+        assertEquals(0.036274187, network.getGradients(2).get(0, 0), 0.00000001);
 
-        assertEquals(0.6389938878964051, network.getOutput(0));
-        assertEquals(0.6511277386034051, network.getOutput(1));
+        assertEquals(0.003997, network.getGradients(1).get(0, 0), 0.00001);
     }
 }
