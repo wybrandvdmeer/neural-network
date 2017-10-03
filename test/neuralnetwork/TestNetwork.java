@@ -67,7 +67,7 @@ public class TestNetwork {
     }
 
     @Test
-    public void testPassforward() throws Exception {
+    public void testPassForward2() throws Exception {
         Network network = new Network("test", new int[]{2,2,2});
 
         network.getWeights(1).set(0, 0, 0.15);
@@ -93,7 +93,7 @@ public class TestNetwork {
     }
 
     @Test
-    public void testLearn() throws Exception {
+    public void testLearnOnePass() throws Exception {
         Network network = new Network("test", new int[]{2,2,2});
 
         network.getWeights(1).set(0, 0, 0.15);
@@ -143,28 +143,33 @@ public class TestNetwork {
         assertEquals(0.345022873, network.getBiasWeights(1).get(1,0), 0.00000001);
     }
 
-    public void printMatrix(Matrix matrix, String name) {
-        System.out.println("Matrix: " + name);
-        for (int i = 0; i < matrix.getRowDimension(); i++) {
-            for (int j = 0; j < matrix.getColumnDimension(); j++) {
-                String s = String.format("%.2f", matrix.get(i,j));
-                System.out.print(' ');
-                System.out.print(s);
-            }
-            System.out.println();
-        }
-        System.out.println();
-    }
-
     @Test
-    public void testNetwork2Matrix() throws Exception {
-        Network network = new Network("test", new int []{5, 100, 100,  2});
-        int iterations = network.learn(new double[]{ 0.99, 0.99, 0.01, 0.01, 0.01 }, new double[] {0.01, 0.99}, 0.000000001);
+    public void testPassForwardRelu() throws Exception {
+        Network network = new Network("Relu", new int []{2, 2, 2}, true);
 
-        network.passForward(new double[]{ 0.99, 0.99, 0.01, 0.01, 0.01 });
-        System.out.println(String.format("Iterations: %d, Output1: %f, output2: %f",
-                iterations,
-                network.getOutput(0),
-                network.getOutput(1)));
+        network.getWeights(1).set(0,0, 0.5);
+        network.getWeights(1).set(0,1, 0.5);
+        network.getBiasWeights(1).set(0,0, 0.1);
+
+        network.getWeights(1).set(1,0, 0.6);
+        network.getWeights(1).set(1,1, 0.6);
+        network.getBiasWeights(1).set(1,0, 0.1);
+
+        network.printMatrix(network.getWeights(1), "weight0");
+
+        network.getWeights(2).set(0,0, 0.7);
+        network.getWeights(2).set(0,1, 0.7);
+        network.getBiasWeights(2).set(0,0, 0.2);
+
+        network.getWeights(2).set(1,0, 0.8);
+        network.getWeights(2).set(1,1, 0.8);
+        network.getBiasWeights(2).set(1,0, 0.2);
+
+        network.printMatrix(network.getWeights(2), "weight1");
+
+        network.passForward(new double[]{0.1, 0.2});
+
+        assertEquals(0.6389938878964051, network.getOutput(0));
+        assertEquals(0.6511277386034051, network.getOutput(1));
     }
 }

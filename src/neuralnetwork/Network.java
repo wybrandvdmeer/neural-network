@@ -20,10 +20,17 @@ public class Network {
 
     private double error;
 
-    private boolean noTransfer = false;
+    private boolean noTransfer=false, leakyRelu=false;
+
+    private final double RELU_LEAKAGE = 0.0;
 
     public Network(String name, int [] layerSizes) {
+        this(name, layerSizes, false);
+    }
+
+    public Network(String name, int [] layerSizes, boolean leakyRelu) {
         this.name = name;
+        this.leakyRelu = leakyRelu;
 
         for(int layer=0; layer < layerSizes.length - 1; layer++) {
             /* rows = neurons, columns = weights
@@ -53,43 +60,92 @@ public class Network {
         outputs.put(0, inputVector);
 
         for(int layer = 1; layer <= weights.values().size(); layer++) {
+
             inputVector = weights.get(layer - 1).times(inputVector);
             inputVector = inputVector.plus(biasWeights.get(layer - 1));
 
-            Matrix outputVector = transfer(inputVector);
+            boolean hidden = layer < weights.values().size();
+
+            Matrix outputVector = transfer(inputVector, hidden);
+
+            int noOfDeadNeurons=0;
+            for(int row=0; row < outputVector.getRowDimension(); row++) {
+                if(outputVector.get(row, 0) == 0) {
+                    noOfDeadNeurons++;
+                }
+            }
+
+            if(noOfDeadNeurons > 0) {
+                System.out.println(String.format("Layer - %d: %.2f percent is dead.", layer, (double)noOfDeadNeurons / outputVector.getRowDimension()));
+            }
+
             outputs.put(layer, outputVector);
 
-            transferDerivertives.put(layer, get2Dim(transferDerivative(outputVector)));
+            transferDerivertives.put(layer, get2Dim(transferDerivative(outputVector, hidden)));
 
             inputVector = outputVector;
         }
     }
 
-    private Matrix transferDerivative(Matrix vector) {
+    private Matrix transferDerivative(Matrix vector, boolean hidden) {
         Matrix v2 = vector.copy();
-        for(int row=0; row < vector.getRowDimension(); row++) {
-            if(noTransfer) {
+
+        if(noTransfer) {
+            for(int row=0; row < vector.getRowDimension(); row++) {
                 v2.set(row, 0, 1);
-            } else {
-                v2.set(row, 0, vector.get(row, 0) * (1 - vector.get(row, 0)));
             }
+            return v2;
+        }
+
+        if(hidden && leakyRelu) {
+            for(int row=0; row < vector.getRowDimension(); row++) {
+                if(vector.get(row, 0) >= 0) {
+                    v2.set(row, 0, 1);
+                } else {
+                    v2.set(row, 0, RELU_LEAKAGE);
+                }
+            }
+            return v2;
+        }
+
+        for(int row=0; row < vector.getRowDimension(); row++) {
+            v2.set(row, 0, vector.get(row, 0) * (1 - vector.get(row, 0)));
         }
 
         return v2;
     }
 
-    private Matrix transfer(Matrix vector) {
+    private Matrix transfer(Matrix vector, boolean hidden) {
         Matrix transfered = new Matrix(vector.getRowDimension(), 1);
 
-        for(int kol=0; kol < vector.getColumnDimension(); kol++) {
-            for(int row=0; row < vector.getRowDimension(); row++) {
-                if(noTransfer) {
+        if(noTransfer) {
+            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
+                for (int row = 0; row < vector.getRowDimension(); row++) {
                     transfered.set(row, kol, vector.get(row, kol));
-                } else {
-                    transfered.set(row, kol, sigmoid(vector.get(row, kol)));
                 }
             }
+            return transfered;
         }
+
+        if(hidden && leakyRelu) {
+            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
+                for (int row = 0; row < vector.getRowDimension(); row++) {
+                    if(vector.get(row, kol) >= 0) {
+                        transfered.set(row, kol, vector.get(row, kol));
+                    } else {
+                        transfered.set(row, kol, RELU_LEAKAGE * vector.get(row, kol));
+                    }
+                }
+            }
+            return transfered;
+        }
+
+        for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
+            for (int row = 0; row < vector.getRowDimension(); row++) {
+                transfered.set(row, kol, sigmoid(vector.get(row, kol)));
+            }
+        }
+
         return transfered;
     }
 
