@@ -7,7 +7,9 @@ import java.util.*;
 
 public class Network {
 
-    private double learningConstant = 0.5;
+    private final double GRADIENT_CLIPPING_TRESHOLD = 1;
+
+    private double learningConstant = 0.1;
 
     private final String name;
 
@@ -20,9 +22,9 @@ public class Network {
 
     private double error;
 
-    private boolean noTransfer=false, leakyRelu=false;
+    private boolean noTransfer=false, leakyRelu=false, gradientClipping=true;
 
-    private final double RELU_LEAKAGE = 0.0;
+    private final double RELU_LEAKAGE = 0.1;
 
     public Network(String name, int [] layerSizes) {
         this(name, layerSizes, false);
@@ -50,6 +52,10 @@ public class Network {
         }
     }
 
+    public void setGradientClipping(boolean gradientClipping) {
+        this.gradientClipping = gradientClipping;
+    }
+
     public void setNoTransfer() {
         noTransfer = true;
     }
@@ -67,17 +73,6 @@ public class Network {
             boolean hidden = layer < weights.values().size();
 
             Matrix outputVector = transfer(inputVector, hidden);
-
-            int noOfDeadNeurons=0;
-            for(int row=0; row < outputVector.getRowDimension(); row++) {
-                if(outputVector.get(row, 0) == 0) {
-                    noOfDeadNeurons++;
-                }
-            }
-
-            if(noOfDeadNeurons > 0) {
-                System.out.println(String.format("Layer - %d: %.2f percent is dead.", layer, (double)noOfDeadNeurons / outputVector.getRowDimension()));
-            }
 
             outputs.put(layer, outputVector);
 
@@ -178,6 +173,10 @@ public class Network {
             }
 
             for(int layer=weights.values().size(); layer > 0; layer--) {
+                if(leakyRelu && gradientClipping) {
+                    gradientClipping(gradientsPerLayer.get(layer));
+                    gradientClipping(biasGradientsPerLayer.get(layer));
+                }
                 weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
             }
@@ -196,6 +195,30 @@ public class Network {
 
     public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
         return learn(inputs, targets, errorLimit, 0);
+    }
+
+    private void gradientClipping(Matrix gradients) {
+
+        boolean clip = false;
+
+        for (int row = 0; !clip && row < gradients.getRowDimension(); row++) {
+            for (int col = 0; !clip && col < gradients.getColumnDimension(); col++) {
+                if (gradients.get(row, col) >= GRADIENT_CLIPPING_TRESHOLD) {
+                    clip = true;
+                    System.out.println(String.format("Gradient %.2f is too big.", gradients.get(row, col)));
+                }
+            }
+        }
+
+        if(!clip) {
+            return;
+        }
+
+        for (int row = 0; row < gradients.getRowDimension(); row++) {
+            for (int col = 0; col < gradients.getColumnDimension(); col++) {
+                gradients.set(row, col, (gradients.get(row, col) * GRADIENT_CLIPPING_TRESHOLD) / getL2Norm(gradients));
+            }
+        }
     }
 
     Matrix getGradients(int layer) {
@@ -274,6 +297,16 @@ public class Network {
 
     public double getError() {
         return error;
+    }
+
+    private double getL2Norm(Matrix matrix) {
+        double l2=0;
+        for(int row=0; row < matrix.getRowDimension(); row++) {
+            for(int col=0; col < matrix.getColumnDimension(); col++) {
+                l2 += (matrix.get(row, col) * matrix.get(row, col));
+            }
+        }
+        return Math.sqrt(l2);
     }
 
 
