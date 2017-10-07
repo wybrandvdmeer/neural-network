@@ -1,4 +1,4 @@
-package neuralnetwork;
+package nn;
 
 import Jama.Matrix;
 

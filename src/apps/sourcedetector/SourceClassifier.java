@@ -1,6 +1,6 @@
 package apps.sourcedetector;
 
-import neuralnetwork.Network;
+import nn.Network;
 
 import java.io.File;
 import java.util.*;

@@ -1,6 +1,6 @@
 package apps.meetpuntdetector.st4;
 
-import neuralnetwork.Network;
+import nn.Network;
 
 import java.io.*;
 import java.util.ArrayList;
