@@ -50,6 +50,9 @@ public class Network {
 
             weights.put(layer, weightsPerLayer);
             biasWeights.put(layer, biasWeightsPerLayer);
+
+            gradientsPerLayer.put(layer, weightsPerLayer.copy().times(0));
+            biasGradientsPerLayer.put(layer, new Matrix(weightsPerLayer.getRowDimension(), 1));
         }
 
         W = new Matrix(layerSizes[1], layerSizes[1]);
@@ -167,10 +170,58 @@ public class Network {
                 break;
             }
 
+            for(int layer : gradientsPerLayer.keySet()) {
+                gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).times(0));
+            }
 
+            for(int layer : gradientsPerLayer.keySet()) {
+                biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).times(0));
+            }
 
+            Matrix wGradients = W.copy().times(0);
 
+            Matrix thetaTime = null;
 
+            for(int timeStep=noOfTimeSteps - 1; timeStep >= 0; timeStep--) {
+
+                Matrix errorDeriv = getOutputVector().minus(new Matrix(targets[timeStep], targets[timeStep].length));
+                Matrix theta = null;
+
+                for (int layer = weights.values().size(); layer > 0; layer--) {
+                    Matrix transferDerivatives = transferDerivertivesPerTimestamp.get(timeStep).get(layer);
+                    if(theta == null) {
+                        theta = transferDerivatives.times(errorDeriv).transpose();
+                    } else {
+                        theta = theta.times(weights.get(layer).times(transferDerivatives));
+                    }
+
+                    Map<Integer, Matrix> outputs = outputsPerTimestamp.get(timeStep);
+
+                    if(layer > 1) {
+                        gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).plus(outputs.get(layer - 1).times(theta).transpose()));
+                        biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).plus(theta.transpose()));
+                    } else {
+                        if(thetaTime == null) {
+                            thetaTime = theta;
+                        } else {
+                            thetaTime = thetaTime.times(W);
+                        }
+
+                        gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).plus(outputs.get(layer - 1).times(thetaTime).transpose()));
+                        biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).plus(thetaTime.transpose()));
+
+                        if(timeStep > 0) {
+                            wGradients = wGradients.plus(thetaTime.times(outputsPerTimestamp.get(timeStep - 1).get(1)));
+                        }
+                    }
+                }
+            }
+
+            for(int layer=weights.values().size(); layer > 0; layer--) {
+                weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
+                biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
+                W = W.minus(wGradients.times(learningConstant));
+            }
 
             iterations++;
 
