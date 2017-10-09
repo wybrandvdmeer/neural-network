@@ -1,5 +1,6 @@
 package nn;
 
+import Jama.Matrix;
 import org.junit.Test;
 
 import java.io.File;
@@ -8,6 +9,48 @@ import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TestNetwork {
+
+
+    @Test
+    public void testGradientChecking() throws Exception {
+        Network network = new Network("test", new int[]{2,2,2,2});
+        double epsilon = 0.0001;
+
+        double [] input = new double[] {0.99, 0.01};
+        double [] target = new double[] {0.01, 0.99};
+
+        Matrix targetVector = new Matrix(target, target.length);
+        network.learn(input, target, 0.0000001, 1);
+
+        for(int layer=1; layer < 4; layer++) {
+            Matrix gradients = network.getGradients(layer);
+            Matrix nummericalGradients = gradients.copy();
+            Matrix weights = network.getWeights(layer);
+
+            for(int row=0; row < weights.getRowDimension(); row++) {
+                for(int col=0; col < weights.getColumnDimension(); col++) {
+                    double originalWeight = weights.get(row, col);
+
+                    weights.set(row, col, originalWeight + epsilon);
+                    network.passForward(input);
+                    double errorPlus = network.error(targetVector);
+
+                    weights.set(row, col, originalWeight - epsilon);
+                    network.passForward(input);
+                    double errorMin = network.error(targetVector);
+
+                    weights.set(row, col, originalWeight);
+
+                    double nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
+                    nummericalGradients.set(row, col, nummericalGradient);
+                    assertEquals(nummericalGradient, gradients.get(row, col), 0.001);
+                }
+            }
+
+            network.printMatrix(gradients, "gradients");
+            network.printMatrix(nummericalGradients, "nummericalGradients");
+        }
+    }
 
     @Test
     public void testReadWrite() throws Exception {
