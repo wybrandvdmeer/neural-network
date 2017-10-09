@@ -47,7 +47,7 @@ public class TestNetwork {
 
                     double nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
                     nummericalGradients.set(row, col, nummericalGradient);
-                    assertEquals(nummericalGradient, gradients.get(row, col), 0.001);
+                    assertEquals(nummericalGradient, gradients.get(row, col), 0.01);
 
                     if(col == 0) {
                         double originalBiasWeight = biasWeights.get(row, 0);
@@ -64,7 +64,7 @@ public class TestNetwork {
 
                         nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
                         nummericalBiasGradients.set(row, 0, nummericalGradient);
-                        assertEquals(nummericalGradient, biasGradients.get(row, 0), 0.001);
+                        assertEquals(nummericalGradient, biasGradients.get(row, 0), 0.01);
                     }
                 }
             }
