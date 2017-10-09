@@ -14,7 +14,7 @@ public class TestNetwork {
     @Test
     public void testGradientChecking() throws Exception {
         Network network = new Network("test", new int[]{2,2,2,2});
-        double epsilon = 0.00001;
+        double epsilon = 0.001;
 
         double [] input = new double[] {0.99, 0.01};
         double [] target = new double[] {0.01, 0.99};
@@ -49,6 +49,13 @@ public class TestNetwork {
                     nummericalGradients.set(row, col, nummericalGradient);
                     assertEquals(nummericalGradient, gradients.get(row, col), 0.01);
 
+                    double re = Math.abs(nummericalGradient - gradients.get(row, col))/
+                            (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
+
+                    if(re > 0.01) {
+                        System.out.println(String.format("Gradient %s - %s", nummericalGradient, gradients.get(row,0)));
+                    }
+
                     if(col == 0) {
                         double originalBiasWeight = biasWeights.get(row, 0);
 
@@ -65,15 +72,16 @@ public class TestNetwork {
                         nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
                         nummericalBiasGradients.set(row, 0, nummericalGradient);
                         assertEquals(nummericalGradient, biasGradients.get(row, 0), 0.01);
+
+                        re = Math.abs(nummericalGradient - biasGradients.get(row, col))/
+                                (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
+
+                        if(re > 0.01) {
+                            System.out.println(String.format("Bias gradient %s - %s", nummericalGradient, biasGradients.get(row,0)));
+                        }
                     }
                 }
             }
-
-            network.printMatrix(gradients, "gradients");
-            network.printMatrix(nummericalGradients, "nummericalGradients");
-
-            network.printMatrix(biasGradients, "biasGradients");
-            network.printMatrix(nummericalBiasGradients, "nummericalBiasGradients");
         }
     }
 
