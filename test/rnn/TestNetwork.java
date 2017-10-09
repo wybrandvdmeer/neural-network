@@ -5,9 +5,35 @@ import org.junit.Test;
 import static junit.framework.TestCase.assertEquals;
 
 public class TestNetwork {
+
+    @Test
+    public void testLearning() throws Exception {
+
+        Network network = new Network("test", new int []{2, 2, 2}, 5);
+
+        double [][] inputs = new double[][] {
+            new double[]{0, 0},
+            new double[]{1, 1},
+            new double[]{0, 0},
+            new double[]{1, 1},
+            new double[]{0, 0}
+        };
+
+        double [][] targets = new double[][] {
+                new double[]{1, 1},
+                new double[]{0, 0},
+                new double[]{1, 1},
+                new double[]{0, 0},
+                new double[]{1, 1}
+        };
+
+        network.learn(inputs, targets, 0.00001, 1);
+        System.out.println("Error: " + network.getError());
+    }
+
     @Test
     public void testPassForward() throws Exception {
-        Network network = new Network("test", new int []{2, 2, 2});
+        Network network = new Network("test", new int []{2, 2, 2}, 2);
 
         network.getWeights(1).set(0,0,1);
         network.getWeights(1).set(0,1,2);

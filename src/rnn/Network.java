@@ -9,11 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 public class Network {
-
-    private int noOfRecordedTimes=10;
     private int timeStamp=0;
 
-    private final double GRADIENT_CLIPPING_TRESHOLD = 1;
+    private int noOfTimeSteps;
 
     private double learningConstant = 0.1;
 
@@ -33,17 +31,13 @@ public class Network {
 
     private double error;
 
-    private boolean noTransfer=false, leakyRelu=false, gradientClipping=true;
+    private boolean noTransfer=false;
 
     private final double RELU_LEAKAGE = 0.1;
 
-    public Network(String name, int [] layerSizes) {
-        this(name, layerSizes, false);
-    }
-
-    public Network(String name, int [] layerSizes, boolean leakyRelu) {
+    public Network(String name, int [] layerSizes, int noOfTimeSteps) {
         this.name = name;
-        this.leakyRelu = leakyRelu;
+        this.noOfTimeSteps = noOfTimeSteps;
 
         for(int layer=0; layer < layerSizes.length - 1; layer++) {
             /* rows = neurons, columns = weights
@@ -62,22 +56,15 @@ public class Network {
         W = initializeWeights(W);
     }
 
-    public void setGradientClipping(boolean gradientClipping) {
-        this.gradientClipping = gradientClipping;
-    }
-
     public void setNoTransfer() {
         noTransfer = true;
     }
 
     public void passForward(double [] input) {
-
         Matrix inputVector = new Matrix(input, input.length);
-
         storePerTimestamp(0, inputVector, outputsPerTimestamp);
 
         for(int layer = 1; layer <= weights.values().size(); layer++) {
-
             inputVector = weights.get(layer - 1).times(inputVector);
             inputVector = inputVector.plus(biasWeights.get(layer - 1));
 
@@ -90,7 +77,6 @@ public class Network {
             Matrix outputVector = transfer(inputVector, hidden);
 
             storePerTimestamp(layer, outputVector, outputsPerTimestamp);
-
             storePerTimestamp(layer, get2Dim(transferDerivative(outputVector, hidden)), transferDerivertivesPerTimestamp);
 
             inputVector = outputVector;
@@ -107,7 +93,7 @@ public class Network {
             return v2;
         }
 
-        if(hidden && leakyRelu) {
+        if(hidden) {
             for(int row=0; row < vector.getRowDimension(); row++) {
                 if(vector.get(row, 0) >= 0) {
                     v2.set(row, 0, 1);
@@ -137,7 +123,7 @@ public class Network {
             return transfered;
         }
 
-        if(hidden && leakyRelu) {
+        if(hidden) {
             for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
                 for (int row = 0; row < vector.getRowDimension(); row++) {
                     if(vector.get(row, kol) >= 0) {
@@ -159,38 +145,43 @@ public class Network {
         return transfered;
     }
 
-    public int learn(double [] inputs, double [] targets, double errorLimit, int maxIterations) throws Exception {
+    public int learn(double [][] inputs, double [][] targets, double errorLimit, int maxIterations) throws Exception {
+
+        if(inputs.length != targets.length && inputs.length != noOfTimeSteps) {
+            throw new RuntimeException("Wrong dimensions.");
+        }
+
         int iterations=0;
 
+        while(true) {
+            error = 0;
+
+            for(int i=0; i < targets.length; i++) {
+                passForward(inputs[i]);
+                Matrix targetVector = new Matrix(targets[i], targets[i].length);
+                error += error(targetVector);
+                nextTimestamp();
+            }
+
+            if(error < errorLimit) {
+                break;
+            }
+
+
+
+
+
+
+            iterations++;
+
+            if(maxIterations > 0 && iterations >= maxIterations) {
+                String s = String.format("Max iterations exceeded for classifier %s.", name);
+                System.out.println(s);
+                return -1;
+            }
+        }
+
         return iterations;
-    }
-
-    public int learn(double [] inputs, double [] targets, double errorLimit) throws Exception {
-        return learn(inputs, targets, errorLimit, 0);
-    }
-
-    private void gradientClipping(Matrix gradients) {
-
-        boolean clip = false;
-
-        for (int row = 0; !clip && row < gradients.getRowDimension(); row++) {
-            for (int col = 0; !clip && col < gradients.getColumnDimension(); col++) {
-                if (gradients.get(row, col) >= GRADIENT_CLIPPING_TRESHOLD) {
-                    clip = true;
-                    System.out.println(String.format("Gradient %.2f is too big.", gradients.get(row, col)));
-                }
-            }
-        }
-
-        if(!clip) {
-            return;
-        }
-
-        for (int row = 0; row < gradients.getRowDimension(); row++) {
-            for (int col = 0; col < gradients.getColumnDimension(); col++) {
-                gradients.set(row, col, (gradients.get(row, col) * GRADIENT_CLIPPING_TRESHOLD) / getL2Norm(gradients));
-            }
-        }
     }
 
     Matrix getGradients(int layer) {
@@ -333,10 +324,10 @@ public class Network {
     }
 
     public void nextTimestamp() {
-        if(++timeStamp >= noOfRecordedTimes) {
+        if(++timeStamp >= noOfTimeSteps) {
             dropOffOneElement(outputsPerTimestamp);
             dropOffOneElement(transferDerivertivesPerTimestamp);
-            timeStamp = noOfRecordedTimes - 1;
+            timeStamp = noOfTimeSteps - 1;
         }
     }
 
