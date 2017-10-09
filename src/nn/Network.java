@@ -225,6 +225,10 @@ public class Network {
         return gradientsPerLayer.get(layer);
     }
 
+    Matrix getBiasGradients(int layer) {
+        return biasGradientsPerLayer.get(layer);
+    }
+
     double error(Matrix targets) {
         double error=0;
         Matrix m1 = targets.minus(getOutputVector());

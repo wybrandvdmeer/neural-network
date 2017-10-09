@@ -14,7 +14,7 @@ public class TestNetwork {
     @Test
     public void testGradientChecking() throws Exception {
         Network network = new Network("test", new int[]{2,2,2,2});
-        double epsilon = 0.0001;
+        double epsilon = 0.00001;
 
         double [] input = new double[] {0.99, 0.01};
         double [] target = new double[] {0.01, 0.99};
@@ -26,6 +26,10 @@ public class TestNetwork {
             Matrix gradients = network.getGradients(layer);
             Matrix nummericalGradients = gradients.copy();
             Matrix weights = network.getWeights(layer);
+
+            Matrix biasGradients = network.getBiasGradients(layer);
+            Matrix nummericalBiasGradients = biasGradients.copy();
+            Matrix biasWeights = network.getBiasWeights(layer);
 
             for(int row=0; row < weights.getRowDimension(); row++) {
                 for(int col=0; col < weights.getColumnDimension(); col++) {
@@ -44,11 +48,32 @@ public class TestNetwork {
                     double nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
                     nummericalGradients.set(row, col, nummericalGradient);
                     assertEquals(nummericalGradient, gradients.get(row, col), 0.001);
+
+                    if(col == 0) {
+                        double originalBiasWeight = biasWeights.get(row, 0);
+
+                        biasWeights.set(row, 0, originalBiasWeight + epsilon);
+                        network.passForward(input);
+                        errorPlus = network.error(targetVector);
+
+                        biasWeights.set(row, 0, originalBiasWeight - epsilon);
+                        network.passForward(input);
+                        errorMin = network.error(targetVector);
+
+                        biasWeights.set(row, 0, originalBiasWeight);
+
+                        nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
+                        nummericalBiasGradients.set(row, 0, nummericalGradient);
+                        assertEquals(nummericalGradient, biasGradients.get(row, 0), 0.001);
+                    }
                 }
             }
 
             network.printMatrix(gradients, "gradients");
             network.printMatrix(nummericalGradients, "nummericalGradients");
+
+            network.printMatrix(biasGradients, "biasGradients");
+            network.printMatrix(nummericalBiasGradients, "nummericalBiasGradients");
         }
     }
 
