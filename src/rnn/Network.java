@@ -51,8 +51,8 @@ public class Network {
             weights.put(layer, weightsPerLayer);
             biasWeights.put(layer, biasWeightsPerLayer);
 
-            gradientsPerLayer.put(layer, weightsPerLayer.copy().times(0));
-            biasGradientsPerLayer.put(layer, new Matrix(weightsPerLayer.getRowDimension(), 1));
+            gradientsPerLayer.put(layer + 1, weightsPerLayer.copy().times(0));
+            biasGradientsPerLayer.put(layer + 1, new Matrix(weightsPerLayer.getRowDimension(), 1));
         }
 
         W = new Matrix(layerSizes[1], layerSizes[1]);
@@ -211,7 +211,7 @@ public class Network {
                         biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).plus(thetaTime.transpose()));
 
                         if(timeStep > 0) {
-                            wGradients = wGradients.plus(thetaTime.times(outputsPerTimestamp.get(timeStep - 1).get(1)));
+                            wGradients = wGradients.plus(outputsPerTimestamp.get(timeStep - 1).get(0).times(thetaTime).transpose());
                         }
                     }
                 }
