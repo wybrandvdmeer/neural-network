@@ -12,23 +12,28 @@ public class TestNetwork {
         Network network = new Network("test", new int []{2, 2, 2}, 5);
 
         double [][] inputs = new double[][] {
-            new double[]{0, 0},
-            new double[]{1, 1},
-            new double[]{0, 0},
-            new double[]{1, 1},
-            new double[]{0, 0}
+            new double[]{0.01, 0.01},
+            new double[]{0.99, 0.99},
+            new double[]{0.01, 0.01},
+            new double[]{0.99, 0.99},
+            new double[]{0.01, 0.01}
         };
 
         double [][] targets = new double[][] {
-                new double[]{1, 1},
-                new double[]{0, 0},
-                new double[]{1, 1},
-                new double[]{0, 0},
-                new double[]{1, 1}
+                new double[]{0.99, 0.99},
+                new double[]{0.01, 0.01},
+                new double[]{0.99, 0.99},
+                new double[]{0.01, 0.01},
+                new double[]{0.99, 0.99}
         };
 
-        network.learn(inputs, targets, 0.00001, 1);
-        System.out.println("Error: " + network.getError());
+        int iterations = network.learn(inputs, targets, 0.0001, 10000);
+
+        System.out.println("Iterations: " + iterations);
+
+        network.passForward(inputs);
+        assertEquals(1, network.getOutput(0), 0.0001);
+        assertEquals(1, network.getOutput(1), 0.0001);
     }
 
     @Test

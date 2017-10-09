@@ -63,6 +63,19 @@ public class Network {
         noTransfer = true;
     }
 
+    public void passForward(double [][] inputs) {
+        if(inputs.length != noOfTimeSteps) {
+            throw new RuntimeException("Wrong dimensions.");
+        }
+
+        timeStamp = 0;
+
+        for(int i=0; i < inputs.length; i++) {
+            passForward(inputs[i]);
+            nextTimestamp();
+        }
+    }
+
     public void passForward(double [] input) {
         Matrix inputVector = new Matrix(input, input.length);
         storePerTimestamp(0, inputVector, outputsPerTimestamp);
@@ -165,6 +178,8 @@ public class Network {
                 error += error(targetVector);
                 nextTimestamp();
             }
+
+            System.out.println("Error: " + error);
 
             if(error < errorLimit) {
                 break;
