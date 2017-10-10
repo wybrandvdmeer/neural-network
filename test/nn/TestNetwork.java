@@ -12,6 +12,95 @@ import static org.junit.Assert.assertTrue;
 public class TestNetwork {
 
     @Test
+    public void testGradientCheckingRelu() throws Exception {
+
+        double FAULT_TOLERANCE = 0.001;
+
+        Network network = new Network("testGradientChecking", new int[]{2,2,2}, true);
+        network.write();
+
+        double epsilon = 0.001;
+
+        double [] input = new double[] {0.05, 0.1};
+        double [] target = new double[] {0.01, 0.99};
+
+        Matrix targetVector = new Matrix(target, target.length);
+        network.learn(input, target, 0.0000001, 1);
+
+        network.read();
+
+        for(int layer=1; layer < 3; layer++) {
+            Matrix gradients = network.getGradients(layer);
+            Matrix nummericalGradients = gradients.copy();
+            Matrix weights = network.getWeights(layer);
+
+            Matrix biasGradients = network.getBiasGradients(layer);
+            Matrix nummericalBiasGradients = biasGradients.copy();
+            Matrix biasWeights = network.getBiasWeights(layer);
+
+            for(int row=0; row < weights.getRowDimension(); row++) {
+                for(int col=0; col < weights.getColumnDimension(); col++) {
+                    double originalWeight = weights.get(row, col);
+
+                    weights.set(row, col, originalWeight + epsilon);
+                    network.passForward(input);
+                    double errorPlus = network.error(targetVector);
+
+                    weights.set(row, col, originalWeight - epsilon);
+                    network.passForward(input);
+                    double errorMin = network.error(targetVector);
+
+                    weights.set(row, col, originalWeight);
+
+                    double nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
+                    nummericalGradients.set(row, col, nummericalGradient);
+                    assertEquals(nummericalGradient, gradients.get(row, col), 0.01);
+
+                    double re = Math.abs(nummericalGradient - gradients.get(row, col))/
+                            (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
+
+                    if(re > FAULT_TOLERANCE) {
+                        fail(String.format("Gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, gradients.get(row,0)));
+                    }
+
+                    if(col == 0) {
+                        double originalBiasWeight = biasWeights.get(row, 0);
+
+                        biasWeights.set(row, 0, originalBiasWeight + epsilon);
+                        network.passForward(input);
+                        errorPlus = network.error(targetVector);
+
+                        biasWeights.set(row, 0, originalBiasWeight - epsilon);
+                        network.passForward(input);
+                        errorMin = network.error(targetVector);
+
+                        biasWeights.set(row, 0, originalBiasWeight);
+
+                        nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
+                        nummericalBiasGradients.set(row, 0, nummericalGradient);
+                        assertEquals(nummericalGradient, biasGradients.get(row, 0), 0.01);
+
+                        re = Math.abs(nummericalGradient - biasGradients.get(row, col))/
+                                (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
+
+                        if(re > FAULT_TOLERANCE) {
+                            fail(String.format("Bias gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, biasGradients.get(row,0)));
+                        }
+                    }
+                }
+            }
+
+            network.printMatrix(gradients, "grad");
+            network.printMatrix(nummericalGradients, "numGrad");
+            network.printMatrix(biasGradients, "biasGrad");
+            network.printMatrix(nummericalBiasGradients, "numBiasGrad");
+        }
+
+        File weights = new File("testGradientChecking");
+        weights.delete();
+    }
+
+    @Test
     public void testGradientChecking() throws Exception {
 
         double FAULT_TOLERANCE = 0.001;
