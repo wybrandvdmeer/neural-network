@@ -6,23 +6,30 @@ import org.junit.Test;
 import java.io.File;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertTrue;
 
 public class TestNetwork {
 
-
     @Test
     public void testGradientChecking() throws Exception {
-        Network network = new Network("test", new int[]{2,2,2,2});
+
+        double FAULT_TOLERANCE = 0.001;
+
+        Network network = new Network("testGradientChecking", new int[]{2,2,2});
+        network.write();
+
         double epsilon = 0.001;
 
-        double [] input = new double[] {0.99, 0.01};
+        double [] input = new double[] {0.05, 0.1};
         double [] target = new double[] {0.01, 0.99};
 
         Matrix targetVector = new Matrix(target, target.length);
         network.learn(input, target, 0.0000001, 1);
 
-        for(int layer=1; layer < 4; layer++) {
+        network.read();
+
+        for(int layer=1; layer < 3; layer++) {
             Matrix gradients = network.getGradients(layer);
             Matrix nummericalGradients = gradients.copy();
             Matrix weights = network.getWeights(layer);
@@ -52,8 +59,8 @@ public class TestNetwork {
                     double re = Math.abs(nummericalGradient - gradients.get(row, col))/
                             (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
-                    if(re > 0.01) {
-                        System.out.println(String.format("Gradient %s - %s", nummericalGradient, gradients.get(row,0)));
+                    if(re > FAULT_TOLERANCE) {
+                        fail(String.format("Gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, gradients.get(row,0)));
                     }
 
                     if(col == 0) {
@@ -76,13 +83,21 @@ public class TestNetwork {
                         re = Math.abs(nummericalGradient - biasGradients.get(row, col))/
                                 (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
 
-                        if(re > 0.01) {
-                            System.out.println(String.format("Bias gradient %s - %s", nummericalGradient, biasGradients.get(row,0)));
+                        if(re > FAULT_TOLERANCE) {
+                            fail(String.format("Bias gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, biasGradients.get(row,0)));
                         }
                     }
                 }
             }
+
+            network.printMatrix(gradients, "grad");
+            network.printMatrix(nummericalGradients, "numGrad");
+            network.printMatrix(biasGradients, "biasGrad");
+            network.printMatrix(nummericalBiasGradients, "numBiasGrad");
         }
+
+        File weights = new File("testGradientChecking");
+        weights.delete();
     }
 
     @Test
