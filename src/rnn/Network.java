@@ -211,7 +211,7 @@ public class Network {
                 Matrix thetaTime = null;
 
 
-                if(output == 0) {
+                if( output == 1) {
                     int a = 1;
                 }
 
@@ -237,7 +237,8 @@ public class Network {
                     if (thetaTime == null) {
                         thetaTime = theta;
                     } else {
-                        thetaTime = thetaTime.times(W);
+                        Matrix transferDerivatives = transferDerivertivesPerTimestamp.get(output - 1).get(1);
+                        thetaTime = thetaTime.times(W.times(transferDerivatives));
                     }
 
                     Map<Integer, Matrix> outputs = outputsPerTimestamp.get(output);
