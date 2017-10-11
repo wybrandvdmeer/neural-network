@@ -11,7 +11,7 @@ import java.util.Map;
 public class Network {
     private int timeStamp=0;
 
-    private int noOfTimeSteps;
+    private int noOfOutputs;
 
     private double learningConstant = 0.1;
 
@@ -23,8 +23,8 @@ public class Network {
     private List<Map<Integer, Matrix>> outputsPerTimestamp = new ArrayList<>();
     private List<Map<Integer, Matrix>> transferDerivertivesPerTimestamp = new ArrayList<>(); // E.g. dNout/dNin
 
-    private Map<Integer, Matrix> gradientsPerLayer = new HashMap<>();
-    private Map<Integer, Matrix> biasGradientsPerLayer = new HashMap<>();
+    private Map<Integer, Map<Integer, Matrix>> gradientsPerLayerPerOutput = new HashMap<>();
+    private Map<Integer, Map<Integer, Matrix>> biasGradientsPerLayerPerOutput = new HashMap<>();
 
     // Weights between the first hidden layer of different timestamps.
     private Matrix W;
@@ -37,7 +37,7 @@ public class Network {
 
     public Network(String name, int [] layerSizes, int noOfTimeSteps) {
         this.name = name;
-        this.noOfTimeSteps = noOfTimeSteps;
+        this.noOfOutputs = noOfTimeSteps;
 
         for(int layer=0; layer < layerSizes.length - 1; layer++) {
             /* rows = neurons, columns = weights
@@ -50,9 +50,15 @@ public class Network {
 
             weights.put(layer, weightsPerLayer);
             biasWeights.put(layer, biasWeightsPerLayer);
+        }
 
-            gradientsPerLayer.put(layer + 1, weightsPerLayer.copy().times(0));
-            biasGradientsPerLayer.put(layer + 1, new Matrix(weightsPerLayer.getRowDimension(), 1));
+        for(int output=0; output < noOfTimeSteps; output++) {
+            gradientsPerLayerPerOutput.put(output, new HashMap<>());
+            biasGradientsPerLayerPerOutput.put(output, new HashMap<>());
+            for (int layer = 0; layer < layerSizes.length - 1; layer++) {
+                gradientsPerLayerPerOutput.get(output).put(layer, weights.get(layer).copy().times(0));
+                biasGradientsPerLayerPerOutput.get(output).put(layer, biasWeights.get(layer).copy().times(0));
+            }
         }
 
         W = new Matrix(layerSizes[1], layerSizes[1]);
@@ -64,7 +70,7 @@ public class Network {
     }
 
     public void passForward(double [][] inputs) {
-        if(inputs.length != noOfTimeSteps) {
+        if(inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
         }
 
@@ -163,7 +169,7 @@ public class Network {
 
     public int learn(double [][] inputs, double [][] targets, double errorLimit, int maxIterations) throws Exception {
 
-        if(inputs.length != targets.length && inputs.length != noOfTimeSteps) {
+        if(inputs.length != targets.length && inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
         }
 
@@ -172,10 +178,10 @@ public class Network {
         while(true) {
             error = 0;
 
-            for(int i=0; i < targets.length; i++) {
-                passForward(inputs[i]);
-                Matrix targetVector = new Matrix(targets[i], targets[i].length);
-                error += error(targetVector);
+            for(int output=0; output < targets.length; output++) {
+                passForward(inputs[output]);
+                Matrix targetVector = new Matrix(targets[output], targets[output].length);
+                error += error(output, targetVector);
                 nextTimestamp();
             }
 
@@ -185,58 +191,86 @@ public class Network {
                 break;
             }
 
-            for(int layer : gradientsPerLayer.keySet()) {
-                gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).times(0));
-            }
+            for(int output = 0; output < noOfOutputs; output++) {
+                for (int layer : gradientsPerLayerPerOutput.get(output).keySet()) {
+                    gradientsPerLayerPerOutput.get(output).put(layer, gradientsPerLayerPerOutput.get(output).get(layer).times(0));
+                }
 
-            for(int layer : gradientsPerLayer.keySet()) {
-                biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).times(0));
+                for (int layer : biasGradientsPerLayerPerOutput.get(output).keySet()) {
+                    biasGradientsPerLayerPerOutput.get(output).put(layer, biasGradientsPerLayerPerOutput.get(output).get(layer).times(0));
+                }
             }
 
             Matrix wGradients = W.copy().times(0);
 
             Matrix thetaTime = null;
 
-            for(int timeStep=noOfTimeSteps - 1; timeStep >= 0; timeStep--) {
+            for(int output=targets.length - 1; output >= 0; output--) {
 
-                Matrix errorDeriv = getOutputVector().minus(new Matrix(targets[timeStep], targets[timeStep].length));
+                Matrix outputVector = outputsPerTimestamp.get(output).get(outputsPerTimestamp.get(output).size() - 1);
+                Matrix errorDeriv = outputVector.minus(new Matrix(targets[output], targets[output].length));
                 Matrix theta = null;
 
-                for (int layer = weights.values().size(); layer > 0; layer--) {
-                    Matrix transferDerivatives = transferDerivertivesPerTimestamp.get(timeStep).get(layer);
+                for (int layer = weights.values().size(); layer > 1; layer--) {
+                    Matrix transferDerivatives = transferDerivertivesPerTimestamp.get(output).get(layer);
                     if(theta == null) {
                         theta = transferDerivatives.times(errorDeriv).transpose();
                     } else {
                         theta = theta.times(weights.get(layer).times(transferDerivatives));
                     }
 
-                    Map<Integer, Matrix> outputs = outputsPerTimestamp.get(timeStep);
+                    Map<Integer, Matrix> outputs = outputsPerTimestamp.get(output);
 
-                    if(layer > 1) {
-                        gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).plus(outputs.get(layer - 1).times(theta).transpose()));
-                        biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).plus(theta.transpose()));
-                    } else {
-                        if(thetaTime == null) {
-                            thetaTime = theta;
+                    gradientsPerLayerPerOutput.get(output).put(layer - 1, gradientsPerLayerPerOutput.get(output).get(layer - 1).plus(outputs.get(layer - 1).times(theta).transpose()));
+                    biasGradientsPerLayerPerOutput.get(output).put(layer - 1, biasGradientsPerLayerPerOutput.get(output).get(layer - 1).plus(theta.transpose()));
+                }
+
+                /*
+
+                for(int timeStep=noOfOutputs - 1; timeStep >= 0; timeStep--) {
+
+                    Matrix errorDeriv = getOutputVector().minus(new Matrix(targets[timeStep], targets[timeStep].length));
+                    Matrix theta = null;
+
+                    for (int layer = weights.values().size(); layer > 0; layer--) {
+                        Matrix transferDerivatives = transferDerivertivesPerTimestamp.get(timeStep).get(layer);
+                        if(theta == null) {
+                            theta = transferDerivatives.times(errorDeriv).transpose();
                         } else {
-                            thetaTime = thetaTime.times(W);
+                            theta = theta.times(weights.get(layer).times(transferDerivatives));
                         }
 
-                        gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).plus(outputs.get(layer - 1).times(thetaTime).transpose()));
-                        biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).plus(thetaTime.transpose()));
+                        Map<Integer, Matrix> outputs = outputsPerTimestamp.get(timeStep);
 
-                        if(timeStep > 0) {
-                            wGradients = wGradients.plus(outputsPerTimestamp.get(timeStep - 1).get(0).times(thetaTime).transpose());
+                        if(layer > 1) {
+                            gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).plus(outputs.get(layer - 1).times(theta).transpose()));
+                            biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).plus(theta.transpose()));
+                        } else {
+                            if(thetaTime == null) {
+                                thetaTime = theta;
+                            } else {
+                                thetaTime = thetaTime.times(W);
+                            }
+
+                            gradientsPerLayer.put(layer, gradientsPerLayer.get(layer).plus(outputs.get(layer - 1).times(thetaTime).transpose()));
+                            biasGradientsPerLayer.put(layer, biasGradientsPerLayer.get(layer).plus(thetaTime.transpose()));
+
+                            if(timeStep > 0) {
+                                wGradients = wGradients.plus(outputsPerTimestamp.get(timeStep - 1).get(0).times(thetaTime).transpose());
+                            }
                         }
                     }
+                    */
+            }
+
+            for(int output = 0; output < noOfOutputs; output++) {
+                for (int layer = weights.values().size(); layer > 0; layer--) {
+                    weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayerPerOutput.get(output).get(layer - 1).times(learningConstant)));
+                    biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayerPerOutput.get(output).get(layer - 1).times(learningConstant)));
                 }
             }
 
-            for(int layer=weights.values().size(); layer > 0; layer--) {
-                weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayer.get(layer).times(learningConstant)));
-                biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayer.get(layer).times(learningConstant)));
-                W = W.minus(wGradients.times(learningConstant));
-            }
+            W = W.minus(wGradients.times(learningConstant));
 
             iterations++;
 
@@ -250,13 +284,17 @@ public class Network {
         return iterations;
     }
 
-    Matrix getGradients(int layer) {
-        return gradientsPerLayer.get(layer);
+    Map<Integer, Matrix> getGradients(int output) {
+        return gradientsPerLayerPerOutput.get(output);
     }
 
-    double error(Matrix targets) {
+    Map<Integer, Matrix> getBiasGradients(int output) {
+        return biasGradientsPerLayerPerOutput.get(output);
+    }
+
+    double error(int output, Matrix targets) {
         double error=0;
-        Matrix m1 = targets.minus(getOutputVector());
+        Matrix m1 = targets.minus(getOutputVector(output));
         for(int row=0; row < m1.getRowDimension(); row++) {
             error += m1.get(row, 0) * m1.get(row, 0) * 0.5;
         }
@@ -304,12 +342,12 @@ public class Network {
         return (1/( 1 + Math.pow(Math.E,(-1*x))));
     }
 
-    private Matrix getOutputVector() {
-        return outputsPerTimestamp.get(timeStamp).get(outputsPerTimestamp.get(timeStamp).size() - 1);
+    private Matrix getOutputVector(int output) {
+        return outputsPerTimestamp.get(output).get(outputsPerTimestamp.get(output).size() - 1);
     }
 
     public double getOutput(int index) {
-        return getOutputVector().get(index,0);
+        return getOutputVector(noOfOutputs - 1).get(index,0);
     }
 
     private Matrix get2Dim(Matrix vector) {
@@ -390,10 +428,10 @@ public class Network {
     }
 
     public void nextTimestamp() {
-        if(++timeStamp >= noOfTimeSteps) {
+        if(++timeStamp >= noOfOutputs) {
             dropOffOneElement(outputsPerTimestamp);
             dropOffOneElement(transferDerivertivesPerTimestamp);
-            timeStamp = noOfTimeSteps - 1;
+            timeStamp = noOfOutputs - 1;
         }
     }
 
