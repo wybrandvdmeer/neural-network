@@ -3,10 +3,43 @@ package rnn;
 import Jama.Matrix;
 import org.junit.Test;
 
+import java.io.File;
+
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertTrue;
 
 public class TestNetwork {
+
+    @Test
+    public void testReadWrite() throws Exception {
+        Network network = new Network("testReadWrite", new int[]{2, 200, 200, 2}, 5);
+        network.write();
+
+        double [][] inputs = new double[][] {
+                new double [] {0.05, 0.1},
+                new double [] {0.05, 0.1},
+                new double [] {0.05, 0.1},
+                new double [] {0.05, 0.1},
+                new double [] {0.05, 0.1}
+        };
+
+        network.passForward(inputs);
+
+        double o1 = network.getOutput(0);
+        double o2 = network.getOutput(1);
+
+        network = new Network("testReadWrite", new int[]{2, 200, 200, 2}, 5);
+        network.read();
+
+        network.passForward(inputs);
+
+        assertEquals(o1, network.getOutput(0), 0.0001);
+        assertEquals(o2, network.getOutput(1), 0.0001);
+
+        File weights = new File("testReadWrite");
+        assertTrue(weights.delete());
+    }
 
     @Test
     public void testGradientChecking() throws Exception {
@@ -98,7 +131,7 @@ public class TestNetwork {
                                 (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
                         if(re > FAULT_TOLERANCE) {
-                            System.out.println(String.format("Output: %d, Gradient[%d] %.2f %s - %s",
+                            fail(String.format("Output: %d, Gradient[%d] %.2f %s - %s",
                                     output, layer, re, nummericalGradient, gradients.get(row,0)));
                         }
 
@@ -122,7 +155,7 @@ public class TestNetwork {
                                     (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
 
                             if(re > FAULT_TOLERANCE) {
-                                System.out.println(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
+                                fail(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
                                         output, layer, re, nummericalGradient, biasGradients.get(row,0)));
                             }
                         }

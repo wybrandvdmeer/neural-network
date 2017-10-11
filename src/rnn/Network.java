@@ -386,6 +386,12 @@ public class Network {
                 weightsFile.write((String.format("%.8f", biasWeights.get(layer).get(row, 0)) + "\n").getBytes());
             }
         }
+
+        for(int row=0; row < W.getRowDimension(); row++) {
+            for (int col = 0; col < W.getColumnDimension(); col++) {
+                weightsFile.write((String.format("%.8f", W.get(row, col)) + "\n").getBytes());
+            }
+        }
     }
 
     public void read() throws Exception {
@@ -402,6 +408,12 @@ public class Network {
                     weights.get(layer).set(row, col, Double.parseDouble(weightReader.readLine()));
                 }
                 biasWeights.get(layer).set(row, 0, Double.parseDouble(weightReader.readLine()));
+            }
+        }
+
+        for(int row=0; row < W.getRowDimension(); row++) {
+            for (int col = 0; col < W.getColumnDimension(); col++) {
+                W.set(row, col, Double.parseDouble(weightReader.readLine()));
             }
         }
     }
