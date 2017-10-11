@@ -9,7 +9,7 @@ public class Network {
 
     private final double GRADIENT_CLIPPING_TRESHOLD = 1;
 
-    private double learningConstant = 0.1;
+    private double learningConstant = 0.5;
 
     private final String name;
 
