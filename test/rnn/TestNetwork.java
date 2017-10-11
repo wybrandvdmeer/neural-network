@@ -49,30 +49,6 @@ public class TestNetwork {
         int layers [] = {2, 2, 2};
 
         Network network = new Network("testGradientChecking", layers, 5);
-
-        network.getWeights(1).set(0, 0, 0.15);
-        network.getWeights(1).set(0, 1, 0.2);
-
-        network.getWeights(1).set(1, 0, 0.25);
-        network.getWeights(1).set(1, 1, 0.3);
-
-        network.getBiasWeights(1).set(0, 0, 0.35);
-        network.getBiasWeights(1).set(1, 0, 0.35);
-
-        network.getWeights(2).set(0, 0, 0.4);
-        network.getWeights(2).set(0, 1, 0.45);
-
-        network.getWeights(2).set(1, 0, 0.5);
-        network.getWeights(2).set(1, 1, 0.55);
-
-        network.getBiasWeights(2).set(0, 0, 0.6);
-        network.getBiasWeights(2).set(1, 0, 0.6);
-
-        network.getW().set(0, 0, 0.5);
-        network.getW().set(0, 1, 0.5);
-        network.getW().set(1, 0, 0.5);
-        network.getW().set(1, 1, 0.5);
-
         network.write();
 
         double epsilon = 0.001;
