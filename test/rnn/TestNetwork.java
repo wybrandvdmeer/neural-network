@@ -16,24 +16,43 @@ public class TestNetwork {
         int layers [] = {2, 2, 2};
 
         Network network = new Network("testGradientChecking", layers, 5);
+
+        network.getWeights(1).set(0, 0, 0.15);
+        network.getWeights(1).set(0, 1, 0.2);
+
+        network.getWeights(1).set(1, 0, 0.25);
+        network.getWeights(1).set(1, 1, 0.3);
+
+        network.getBiasWeights(1).set(0, 0, 0.35);
+        network.getBiasWeights(1).set(1, 0, 0.35);
+
+        network.getWeights(2).set(0, 0, 0.4);
+        network.getWeights(2).set(0, 1, 0.45);
+
+        network.getWeights(2).set(1, 0, 0.5);
+        network.getWeights(2).set(1, 1, 0.55);
+
+        network.getBiasWeights(2).set(0, 0, 0.6);
+        network.getBiasWeights(2).set(1, 0, 0.6);
+
         network.write();
 
         double epsilon = 0.001;
 
         double [][] inputs = new double[][] {
-                new double[]{0.01, 0.01},
-                new double[]{0.99, 0.99},
-                new double[]{0.01, 0.01},
-                new double[]{0.99, 0.99},
-                new double[]{0.01, 0.01}
+                new double [] {0.05, 0.1},
+                new double [] {0.1, 0.05},
+                new double [] {0.05, 0.1},
+                new double [] {0.1, 0.05},
+                new double [] {0.05, 0.1}
         };
 
         double [][] targets = new double[][] {
-                new double[]{0.99, 0.99},
-                new double[]{0.01, 0.01},
-                new double[]{0.99, 0.99},
-                new double[]{0.01, 0.01},
-                new double[]{0.99, 0.99}
+                new double [] {0.01, 0.99},
+                new double [] {0.99, 0.01},
+                new double [] {0.01, 0.99},
+                new double [] {0.99, 0.01},
+                new double [] {0.01, 0.99}
         };
 
         network.learn(inputs, targets, 0.0000001, 1);
@@ -41,7 +60,7 @@ public class TestNetwork {
         network.read();
 
         for(int output=0; output < targets.length; output++) {
-            for(int layer=2; layer < layers.length; layer++) {
+            for(int layer=1; layer < layers.length; layer++) {
 
                 Matrix gradients = network.getGradients(output).get(layer - 1);
                 Matrix nummericalGradients = gradients.copy();
@@ -69,13 +88,13 @@ public class TestNetwork {
 
                         double nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
                         nummericalGradients.set(row, col, nummericalGradient);
-                        assertEquals(nummericalGradient, gradients.get(row, col), 0.01);
 
                         double re = Math.abs(nummericalGradient - gradients.get(row, col))/
                                 (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
                         if(re > FAULT_TOLERANCE) {
-                            fail(String.format("Gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, gradients.get(row,0)));
+                            fail(String.format("Output: %d, Gradient[%d] %.2f %s - %s",
+                                    output, layer, re, nummericalGradient, gradients.get(row,0)));
                         }
 
                         if(col == 0) {
@@ -93,13 +112,13 @@ public class TestNetwork {
 
                             nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
                             nummericalBiasGradients.set(row, 0, nummericalGradient);
-                            assertEquals(nummericalGradient, biasGradients.get(row, 0), 0.01);
 
                             re = Math.abs(nummericalGradient - biasGradients.get(row, col))/
                                     (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
 
                             if(re > FAULT_TOLERANCE) {
-                                fail(String.format("Bias gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, biasGradients.get(row,0)));
+                                fail(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
+                                        output, layer, re, nummericalGradient, biasGradients.get(row,0)));
                             }
                         }
                     }
