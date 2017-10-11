@@ -16,7 +16,9 @@ public class TestNetwork {
 
         double FAULT_TOLERANCE = 0.001;
 
-        Network network = new Network("testGradientChecking", new int[]{2,2,2}, true);
+        int [] layers = new int[] {2, 2, 2, 2};
+
+        Network network = new Network("testGradientChecking", layers, true);
         network.write();
 
         double epsilon = 0.001;
@@ -29,7 +31,7 @@ public class TestNetwork {
 
         network.read();
 
-        for(int layer=1; layer < 3; layer++) {
+        for(int layer=1; layer < layers.length; layer++) {
             Matrix gradients = network.getGradients(layer);
             Matrix nummericalGradients = gradients.copy();
             Matrix weights = network.getWeights(layer);
@@ -105,7 +107,9 @@ public class TestNetwork {
 
         double FAULT_TOLERANCE = 0.001;
 
-        Network network = new Network("testGradientChecking", new int[]{2,2,2});
+        int [] layers = new int[] {2, 20, 30, 2};
+
+        Network network = new Network("testGradientChecking", layers);
         network.write();
 
         double epsilon = 0.001;
@@ -118,7 +122,7 @@ public class TestNetwork {
 
         network.read();
 
-        for(int layer=1; layer < 3; layer++) {
+        for(int layer=1; layer < layers.length; layer++) {
             Matrix gradients = network.getGradients(layer);
             Matrix nummericalGradients = gradients.copy();
             Matrix weights = network.getWeights(layer);
