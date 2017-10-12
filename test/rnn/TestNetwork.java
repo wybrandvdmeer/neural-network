@@ -74,8 +74,9 @@ public class TestNetwork {
         network.read();
 
         for(int output=0; output < targets.length; output++) {
-            for(int layer=1; layer < layers.length; layer++) {
+            Matrix targetVector = new Matrix(targets[output], targets[output].length);
 
+            for (int layer = 1; layer < layers.length; layer++) {
                 Matrix gradients = network.getGradients(output).get(layer - 1);
                 Matrix nummericalGradients = gradients.copy();
                 Matrix weights = network.getWeights(layer);
@@ -84,10 +85,8 @@ public class TestNetwork {
                 Matrix nummericalBiasGradients = biasGradients.copy();
                 Matrix biasWeights = network.getBiasWeights(layer);
 
-                Matrix targetVector = new Matrix(targets[output], targets[output].length);
-
-                for(int row=0; row < weights.getRowDimension(); row++) {
-                    for(int col=0; col < weights.getColumnDimension(); col++) {
+                for (int row = 0; row < weights.getRowDimension(); row++) {
+                    for (int col = 0; col < weights.getColumnDimension(); col++) {
                         double originalWeight = weights.get(row, col);
 
                         weights.set(row, col, originalWeight + epsilon);
@@ -100,18 +99,18 @@ public class TestNetwork {
 
                         weights.set(row, col, originalWeight);
 
-                        double nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
+                        double nummericalGradient = (errorPlus - errorMin) / (2 * epsilon);
                         nummericalGradients.set(row, col, nummericalGradient);
 
-                        double re = Math.abs(nummericalGradient - gradients.get(row, col))/
+                        double re = Math.abs(nummericalGradient - gradients.get(row, col)) /
                                 (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
-                        if(re > FAULT_TOLERANCE) {
+                        if (re > FAULT_TOLERANCE) {
                             fail(String.format("Output: %d, Gradient[%d] %.2f %s - %s",
-                                    output, layer, re, nummericalGradient, gradients.get(row,0)));
+                                    output, layer, re, nummericalGradient, gradients.get(row, 0)));
                         }
 
-                        if(col == 0) {
+                        if (col == 0) {
                             double originalBiasWeight = biasWeights.get(row, 0);
 
                             biasWeights.set(row, 0, originalBiasWeight + epsilon);
@@ -124,15 +123,15 @@ public class TestNetwork {
 
                             biasWeights.set(row, 0, originalBiasWeight);
 
-                            nummericalGradient = (errorPlus - errorMin)/(2 * epsilon);
+                            nummericalGradient = (errorPlus - errorMin) / (2 * epsilon);
                             nummericalBiasGradients.set(row, 0, nummericalGradient);
 
-                            re = Math.abs(nummericalGradient - biasGradients.get(row, col))/
+                            re = Math.abs(nummericalGradient - biasGradients.get(row, col)) /
                                     (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
 
-                            if(re > FAULT_TOLERANCE) {
+                            if (re > FAULT_TOLERANCE) {
                                 fail(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
-                                        output, layer, re, nummericalGradient, biasGradients.get(row,0)));
+                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
                             }
                         }
                     }
@@ -143,6 +142,40 @@ public class TestNetwork {
                 network.printMatrix(biasGradients, "biasGrad");
                 network.printMatrix(nummericalBiasGradients, "numBiasGrad");
             }
+
+            Matrix wGradients = network.getWGradients(output);
+            Matrix weights = network.getW();
+            Matrix nummericalGradients = weights.copy();
+
+            for (int row = 0; row < weights.getRowDimension(); row++) {
+                for (int col = 0; col < weights.getColumnDimension(); col++) {
+                    double originalWeight = weights.get(row, col);
+
+                    weights.set(row, col, originalWeight + epsilon);
+                    network.passForward(inputs);
+                    double errorPlus = network.error(output, targetVector);
+
+                    weights.set(row, col, originalWeight - epsilon);
+                    network.passForward(inputs);
+                    double errorMin = network.error(output, targetVector);
+
+                    weights.set(row, col, originalWeight);
+
+                    double nummericalGradient = (errorPlus - errorMin) / (2 * epsilon);
+                    nummericalGradients.set(row, col, nummericalGradient);
+
+                    double re = Math.abs(nummericalGradient - wGradients.get(row, col)) /
+                            (Math.abs(nummericalGradient) + Math.abs(wGradients.get(row, col)));
+
+                    if (re > FAULT_TOLERANCE) {
+                        fail(String.format("Output: %d, WGradient: %.2f %s - %s",
+                                output, re, nummericalGradient, wGradients.get(row, 0)));
+                    }
+                }
+            }
+
+            network.printMatrix(wGradients, "WGrad");
+            network.printMatrix(nummericalGradients, "numWGrad");
         }
     }
 

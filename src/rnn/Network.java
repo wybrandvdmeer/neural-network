@@ -25,6 +25,7 @@ public class Network {
 
     private Map<Integer, Map<Integer, Matrix>> gradientsPerLayerPerOutput = new HashMap<>();
     private Map<Integer, Map<Integer, Matrix>> biasGradientsPerLayerPerOutput = new HashMap<>();
+    private Map<Integer, Matrix> wGradientsPerOutput = new HashMap<>();
 
     // Weights between the first hidden layer of different timestamps.
     private Matrix W;
@@ -199,9 +200,9 @@ public class Network {
                 for (int layer : biasGradientsPerLayerPerOutput.get(output).keySet()) {
                     biasGradientsPerLayerPerOutput.get(output).put(layer, biasGradientsPerLayerPerOutput.get(output).get(layer).times(0));
                 }
-            }
 
-            Matrix wGradients = W.copy().times(0);
+                wGradientsPerOutput.put(output, W.copy().times(0));
+            }
 
             for(int output=targets.length - 1; output >= 0; output--) {
 
@@ -249,20 +250,19 @@ public class Network {
                             biasGradientsPerLayerPerOutput.get(output).get(0).plus(thetaTime.transpose()));
 
                     if (timeStep > 0) {
-                        wGradients = wGradients.plus(outputsPerTimestamp.get(timeStep - 1).get(1).times(thetaTime).transpose());
+                        wGradientsPerOutput.put(output, wGradientsPerOutput.get(output).plus(outputsPerTimestamp.get(timeStep - 1).get(1).times(thetaTime).transpose()));
                     }
                 }
             }
-
 
             for(int output = 0; output < noOfOutputs; output++) {
                 for (int layer = weights.values().size(); layer > 0; layer--) {
                     weights.put(layer - 1, weights.get(layer - 1).minus(gradientsPerLayerPerOutput.get(output).get(layer - 1).times(learningConstant)));
                     biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradientsPerLayerPerOutput.get(output).get(layer - 1).times(learningConstant)));
                 }
-            }
 
-            W = W.minus(wGradients.times(learningConstant));
+                W = W.minus(wGradientsPerOutput.get(output).times(learningConstant));
+            }
 
             iterations++;
 
@@ -278,6 +278,10 @@ public class Network {
 
     Map<Integer, Matrix> getGradients(int output) {
         return gradientsPerLayerPerOutput.get(output);
+    }
+
+    Matrix getWGradients(int output) {
+        return wGradientsPerOutput.get(output);
     }
 
     Map<Integer, Matrix> getBiasGradients(int output) {
