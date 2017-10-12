@@ -13,7 +13,7 @@ public class Network {
 
     private int noOfOutputs;
 
-    private double learningConstant = 0.1;
+    private double learningConstant = 0.5;
 
     private final String name;
 
@@ -210,12 +210,6 @@ public class Network {
                 Matrix errorDeriv = outputVector.minus(new Matrix(targets[output], targets[output].length));
                 Matrix theta = null;
                 Matrix thetaTime = null;
-
-
-                if( output == 1) {
-                    int a = 1;
-                }
-
 
                 for (int layer = weights.values().size(); layer > 0; layer--) {
                     Matrix transferDerivatives = transferDerivertivesPerTimestamp.get(output).get(layer);
