@@ -36,7 +36,7 @@ public class Network {
 
     private boolean noTransfer=false;
 
-    private final double RELU_LEAKAGE = 0.1;
+    private final double RELU_LEAKAGE = 0.0;
 
     public Network(String name, int [] layerSizes, int noOfTimeSteps) {
         this.name = name;

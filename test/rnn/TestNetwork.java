@@ -44,12 +44,12 @@ public class TestNetwork {
     @Test
     public void testGradientChecking() throws Exception {
 
-        double FAULT_TOLERANCE = 0.001;
+        double FAULT_TOLERANCE = 0.01;
 
         int layers [] = {2, 2, 2};
 
         Network network = new Network("testGradientChecking", layers, 5);
-        network.read();
+        network.write();
 
         double epsilon = 0.001;
 
@@ -106,6 +106,14 @@ public class TestNetwork {
                             double re = Math.abs(nummericalGradient - biasGradients.get(row, col)) /
                                     (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
 
+                            if (oppositeSign(nummericalGradient, biasGradients.get(row, col))) {
+                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
+                                network.printMatrix(biasGradients, "biasGrad");
+
+                                fail(String.format("Opposite signs - Output: %d, Bias gradient[%d] %.2f %s - %s",
+                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
+                            }
+
                             if (re > FAULT_TOLERANCE) {
                                 network.printMatrix(nummericalBiasGradients, "numBiasGrad");
                                 network.printMatrix(biasGradients, "biasGrad");
@@ -133,8 +141,14 @@ public class TestNetwork {
                         double re = Math.abs(nummericalGradient - gradients.get(row, col)) /
                                 (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
-                        if (re > FAULT_TOLERANCE) {
+                        if (oppositeSign(nummericalGradient, gradients.get(row, col))) {
+                            network.printMatrix(nummericalGradients, "numGrad");
+                            network.printMatrix(gradients, "grad");
 
+                            fail(String.format("Opposite signs - Output: %d, Gradient[%d] %.2f %s - %s",
+                                    output, layer, re, nummericalGradient, gradients.get(row, 0)));                        }
+
+                        if (re > FAULT_TOLERANCE) {
                             network.printMatrix(nummericalGradients, "numGrad");
                             network.printMatrix(gradients, "grad");
 
@@ -172,6 +186,14 @@ public class TestNetwork {
 
                     double re = Math.abs(nummericalGradient - wGradients.get(row, col)) /
                             (Math.abs(nummericalGradient) + Math.abs(wGradients.get(row, col)));
+
+                    if (oppositeSign(nummericalGradient, wGradients.get(row, col))) {
+                        network.printMatrix(wGradients, "WGrad");
+                        network.printMatrix(nummericalGradients, "numWGrad");
+
+                        fail(String.format("Opposite signs - Output: %d, WGradient: %.2f %s - %s",
+                                output, re, nummericalGradient, wGradients.get(row, 0)));
+                    }
 
                     if (re > FAULT_TOLERANCE) {
 
@@ -250,5 +272,12 @@ public class TestNetwork {
 
         assertEquals(334.5, network.getOutput(0));
         assertEquals(454.5, network.getOutput(1));
+    }
+
+    private boolean oppositeSign(double d1, double d2) {
+        if((d1 < 0 && d2 > 0) || (d1 > 0 && d2 < 0)) {
+            return true;
+        }
+        return false;
     }
 }
