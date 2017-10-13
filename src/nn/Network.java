@@ -94,7 +94,7 @@ public class Network {
 
         if(hidden && leakyRelu) {
             for(int row=0; row < vector.getRowDimension(); row++) {
-                if(vector.get(row, 0) >= 0) {
+                if(vector.get(row, 0) > 0) {
                     v2.set(row, 0, 1);
                 } else {
                     v2.set(row, 0, RELU_LEAKAGE);
@@ -125,7 +125,7 @@ public class Network {
         if(hidden && leakyRelu) {
             for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
                 for (int row = 0; row < vector.getRowDimension(); row++) {
-                    if(vector.get(row, kol) >= 0) {
+                    if(vector.get(row, kol) > 0) {
                         transfered.set(row, kol, vector.get(row, kol));
                     } else {
                         transfered.set(row, kol, RELU_LEAKAGE * vector.get(row, kol));

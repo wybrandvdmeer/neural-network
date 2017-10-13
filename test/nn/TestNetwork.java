@@ -16,7 +16,7 @@ public class TestNetwork {
 
         double FAULT_TOLERANCE = 0.001;
 
-        int [] layers = new int[] {2, 2, 2, 2};
+        int [] layers = new int[] {2, 20, 30, 2};
 
         Network network = new Network("testGradientChecking", layers, true);
         network.write();
