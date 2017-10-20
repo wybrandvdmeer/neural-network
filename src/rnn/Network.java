@@ -15,7 +15,7 @@ public class Network {
     private double learningConstant = 0.005;
     private final double GRADIENT_CLIPPING_TRESHOLD = 1;
 
-    private boolean leakyRelu = true;
+    private boolean leakyRelu = false;
 
     private final String name;
 
@@ -38,9 +38,14 @@ public class Network {
 
     private final double RELU_LEAKAGE = 0.0;
 
-    public Network(String name, int [] layerSizes, int noOfTimeSteps) {
+    public Network(String name, int [] layerSizes, int noOfOutputs) {
+        this(name, layerSizes, noOfOutputs, false);
+    }
+
+    public Network(String name, int [] layerSizes, int noOfOutputs, boolean leakyRelu) {
         this.name = name;
-        this.noOfOutputs = noOfTimeSteps;
+        this.noOfOutputs = noOfOutputs;
+        this.leakyRelu = leakyRelu;
 
         for(int layer=0; layer < layerSizes.length - 1; layer++) {
             /* rows = neurons, columns = weights
@@ -58,7 +63,7 @@ public class Network {
         W = new Matrix(layerSizes[1], layerSizes[1]);
         W = initializeWeights(W);
 
-        for(int output=0; output < noOfTimeSteps; output++) {
+        for(int output=0; output < noOfOutputs; output++) {
             gradientsPerLayerPerOutput.put(output, new HashMap<>());
             biasGradientsPerLayerPerOutput.put(output, new HashMap<>());
 
