@@ -211,20 +211,26 @@ public class TestNetwork {
     @Test
     public void testLearning() throws Exception {
 
-        Network network = new Network("testRnnLearning", new int []{2, 20, 2}, 2, true);
-        network.setLearningConstant(0.5);
+        Network network = new Network("testRnnLearning", new int []{2, 20, 2}, 5, true);
+        network.setLearningConstant(0.1);
 
         double [][] inputs = new double[][] {
+            new double[]{0.01, 0.01},
+            new double[]{0.99, 0.99},
+            new double[]{0.01, 0.01},
+            new double[]{0.99, 0.99},
+            new double[]{0.01, 0.01}
+        };
+
+        double [][] targets = new double[][] {
+            new double[]{0.99, 0.99},
+            new double[]{0.01, 0.01},
+            new double[]{0.99, 0.99},
             new double[]{0.01, 0.01},
             new double[]{0.99, 0.99}
         };
 
-        double [][] targets = new double[][] {
-                new double[]{0.99, 0.99},
-                new double[]{0.01, 0.01}
-        };
-
-        int iterations = network.learn(inputs, targets, 0.00001, 0);
+        int iterations = network.learn(inputs, targets, 0.0001, 0);
 
         System.out.println("Iterations: " + iterations);
 
@@ -232,8 +238,18 @@ public class TestNetwork {
 
         assertEquals(0.99, network.getOutputVector(0).get(0, 0), 0.01);
         assertEquals(0.99, network.getOutputVector(0).get(1, 0), 0.01);
+
         assertEquals(0.01, network.getOutputVector(1).get(0, 0), 0.01);
         assertEquals(0.01, network.getOutputVector(1).get(1, 0), 0.01);
+
+        assertEquals(0.99, network.getOutputVector(2).get(0, 0), 0.01);
+        assertEquals(0.99, network.getOutputVector(2).get(1, 0), 0.01);
+
+        assertEquals(0.01, network.getOutputVector(3).get(0, 0), 0.01);
+        assertEquals(0.01, network.getOutputVector(3).get(1, 0), 0.01);
+
+        assertEquals(0.99, network.getOutputVector(4).get(0, 0), 0.01);
+        assertEquals(0.99, network.getOutputVector(4).get(1, 0), 0.01);
     }
 
     @Test
