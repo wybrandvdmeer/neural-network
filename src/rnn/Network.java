@@ -198,11 +198,10 @@ public class Network {
         while(true) {
             error = 0;
 
+            passForward(inputs);
+
             for(int output=0; output < targets.length; output++) {
-                passForward(inputs[output]);
-                Matrix targetVector = new Matrix(targets[output], targets[output].length);
-                error += error(output, targetVector);
-                nextTimestamp();
+                error += error(output, new Matrix(targets[output], targets[output].length));
             }
 
             System.out.println("Error: " + error);
@@ -380,12 +379,12 @@ public class Network {
         return (1/( 1 + Math.pow(Math.E,(-1*x))));
     }
 
-    private Matrix getOutputVector(int output) {
+    public Matrix getOutputVector(int output) {
         return outputsPerTimestamp.get(output).get(outputsPerTimestamp.get(output).size() - 1);
     }
 
     public double getOutput(int index) {
-        return getOutputVector(noOfOutputs - 1).get(index,0);
+        return getOutputVector(noOfOutputs - 1).get(index, 0);
     }
 
     private Matrix get2Dim(Matrix vector) {

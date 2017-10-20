@@ -211,7 +211,8 @@ public class TestNetwork {
     @Test
     public void testLearning() throws Exception {
 
-        Network network = new Network("testRnnLearning", new int []{2, 10, 2}, 2);
+        Network network = new Network("testRnnLearning", new int []{2, 20, 2}, 2, true);
+        network.setLearningConstant(0.5);
 
         double [][] inputs = new double[][] {
             new double[]{0.01, 0.01},
@@ -223,13 +224,16 @@ public class TestNetwork {
                 new double[]{0.01, 0.01}
         };
 
-        int iterations = network.learn(inputs, targets, 0.000001, 100000000);
+        int iterations = network.learn(inputs, targets, 0.00001, 0);
 
         System.out.println("Iterations: " + iterations);
 
         network.passForward(inputs);
-        assertEquals(0.99, network.getOutput(0), 0.01);
-        assertEquals(0.99, network.getOutput(1), 0.01);
+
+        assertEquals(0.99, network.getOutputVector(0).get(0, 0), 0.01);
+        assertEquals(0.99, network.getOutputVector(0).get(1, 0), 0.01);
+        assertEquals(0.01, network.getOutputVector(1).get(0, 0), 0.01);
+        assertEquals(0.01, network.getOutputVector(1).get(1, 0), 0.01);
     }
 
     @Test
