@@ -211,7 +211,7 @@ public class Network {
                 }
 
                 for (int layer : biasGradientsPerLayerPerOutput.get(output).keySet()) {
-                    biasGradientsPerLayerPerOutput.get(output).put(layer, initMatrix(biasGradientsPerLayerPerOutput.get(output).get(layer).times(0)));
+                    biasGradientsPerLayerPerOutput.get(output).put(layer, initMatrix(biasGradientsPerLayerPerOutput.get(output).get(layer)));
                 }
 
                 wGradientsPerOutput.put(output, initMatrix(W.copy()));
@@ -263,8 +263,8 @@ public class Network {
             }
 
             for (int layer = weights.values().size(); layer > 0; layer--) {
-                Matrix gradients = weights.get(layer - 1).copy().times(0);
-                Matrix biasGradients = biasWeights.get(layer - 1).copy().times(0);
+                Matrix gradients = initMatrix(weights.get(layer - 1).copy());
+                Matrix biasGradients = initMatrix(biasWeights.get(layer - 1).copy());
 
                 for(int output = 0; output < noOfOutputs; output++) {
                     gradients = gradients.plus(gradientsPerLayerPerOutput.get(output).get(layer - 1));
@@ -280,7 +280,7 @@ public class Network {
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradients.times(learningConstant)));
             }
 
-            Matrix wGradients = W.copy().times(0);
+            Matrix wGradients = initMatrix(W.copy());
             for(int output = 0; output < noOfOutputs; output++) {
                 wGradients = wGradients.plus(wGradientsPerOutput.get(output));
             }
