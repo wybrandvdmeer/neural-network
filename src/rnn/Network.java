@@ -79,6 +79,10 @@ public class Network {
         }
     }
 
+    public void setLearningConstant(double learningConstant) {
+        this.learningConstant = learningConstant;
+    }
+
     public void setNoTransfer() {
         noTransfer = true;
     }
@@ -183,7 +187,9 @@ public class Network {
 
     public int learn(double [][] inputs, double [][] targets, double errorLimit, int maxIterations) throws Exception {
 
-        if(inputs.length != targets.length && inputs.length != noOfOutputs) {
+        double previousError=100;
+
+        if(inputs.length != targets.length || inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
         }
 
@@ -204,6 +210,15 @@ public class Network {
             if(error < errorLimit) {
                 break;
             }
+
+            if(previousError < error) {
+                System.out.println(String.format("Error is getting bigger (%f -> %f): adjusted learningRate (%f -> %f)",
+                        previousError, error, learningConstant, learningConstant * 0.5));
+
+                learningConstant *= 0.5;
+            }
+
+            previousError = error;
 
             for(int output = 0; output < noOfOutputs; output++) {
                 for (int layer : gradientsPerLayerPerOutput.get(output).keySet()) {
