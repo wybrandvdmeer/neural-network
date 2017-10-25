@@ -34,6 +34,9 @@ public class Network {
 
     private double error;
 
+    // Var indicates from which output (timestamp) to count the error.
+    private int beginErrorOutput=0;
+
     private boolean noTransfer=false;
 
     private final double RELU_LEAKAGE = 0.0;
@@ -77,6 +80,10 @@ public class Network {
 
             wGradientsPerOutput.put(output, new Matrix(W.getRowDimension(), W.getColumnDimension()));
         }
+    }
+
+    public void setBeginErrorOutput(int beginErrorOutput) {
+        this.beginErrorOutput = beginErrorOutput;
     }
 
     public void setLearningConstant(double learningConstant) {
@@ -200,11 +207,9 @@ public class Network {
 
             passForward(inputs);
 
-            for(int output=0; output < targets.length; output++) {
+            for(int output=beginErrorOutput; output < targets.length; output++) {
                 error += error(output, new Matrix(targets[output], targets[output].length));
             }
-
-            System.out.println("Error: " + error);
 
             if(error < errorLimit) {
                 break;
