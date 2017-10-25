@@ -14,7 +14,7 @@ public class TestNetwork {
     @Test
     public void testGradientCheckingRelu() throws Exception {
 
-        double FAULT_TOLERANCE = 0.001;
+        double FAULT_TOLERANCE = 0.0001;
 
         int [] layers = new int[] {2, 20, 30, 2};
 
@@ -33,11 +33,11 @@ public class TestNetwork {
 
         for(int layer=1; layer < layers.length; layer++) {
             Matrix gradients = network.getGradients(layer);
-            Matrix nummericalGradients = gradients.copy();
+            Matrix nummericalGradients = gradients.copy().times(0);
             Matrix weights = network.getWeights(layer);
 
             Matrix biasGradients = network.getBiasGradients(layer);
-            Matrix nummericalBiasGradients = biasGradients.copy();
+            Matrix nummericalBiasGradients = biasGradients.copy().times(0);
             Matrix biasWeights = network.getBiasWeights(layer);
 
             for(int row=0; row < weights.getRowDimension(); row++) {
@@ -62,7 +62,7 @@ public class TestNetwork {
                             (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
                     if(re > FAULT_TOLERANCE) {
-                        fail(String.format("Gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, gradients.get(row,0)));
+                        fail(String.format("Gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, gradients.get(row, col)));
                     }
 
                     if(col == 0) {
@@ -86,7 +86,7 @@ public class TestNetwork {
                                 (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
 
                         if(re > FAULT_TOLERANCE) {
-                            fail(String.format("Bias gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, biasGradients.get(row,0)));
+                            fail(String.format("Bias gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, biasGradients.get(row, col)));
                         }
                     }
                 }
@@ -105,7 +105,7 @@ public class TestNetwork {
     @Test
     public void testGradientChecking() throws Exception {
 
-        double FAULT_TOLERANCE = 0.001;
+        double FAULT_TOLERANCE = 0.0001;
 
         int [] layers = new int[] {2, 20, 30, 2};
 
@@ -124,11 +124,11 @@ public class TestNetwork {
 
         for(int layer=1; layer < layers.length; layer++) {
             Matrix gradients = network.getGradients(layer);
-            Matrix nummericalGradients = gradients.copy();
+            Matrix nummericalGradients = gradients.copy().times(0);
             Matrix weights = network.getWeights(layer);
 
             Matrix biasGradients = network.getBiasGradients(layer);
-            Matrix nummericalBiasGradients = biasGradients.copy();
+            Matrix nummericalBiasGradients = biasGradients.copy().times(0);
             Matrix biasWeights = network.getBiasWeights(layer);
 
             for(int row=0; row < weights.getRowDimension(); row++) {
@@ -153,7 +153,7 @@ public class TestNetwork {
                             (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
                     if(re > FAULT_TOLERANCE) {
-                        fail(String.format("Gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, gradients.get(row,0)));
+                        fail(String.format("Gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, gradients.get(row,col)));
                     }
 
                     if(col == 0) {
@@ -177,7 +177,7 @@ public class TestNetwork {
                                 (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
 
                         if(re > FAULT_TOLERANCE) {
-                            fail(String.format("Bias gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, biasGradients.get(row,0)));
+                            fail(String.format("Bias gradient[%d] %.2f %s - %s", layer, re, nummericalGradient, biasGradients.get(row,col)));
                         }
                     }
                 }
