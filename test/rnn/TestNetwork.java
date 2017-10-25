@@ -44,11 +44,11 @@ public class TestNetwork {
     @Test
     public void testGradientChecking() throws Exception {
 
-        double FAULT_TOLERANCE = 0.01;
+        double FAULT_TOLERANCE = 0.001;
 
         int layers [] = {2, 2, 2};
 
-        Network network = new Network("testGradientChecking", layers, 5);
+        Network network = new Network("testGradientChecking", layers, 5, true);
         network.write();
 
         double epsilon = 0.001;
@@ -87,42 +87,6 @@ public class TestNetwork {
 
                 for (int row = 0; row < weights.getRowDimension(); row++) {
                     for (int col = 0; col < weights.getColumnDimension(); col++) {
-                        if (col == 0) {
-                            double originalBiasWeight = biasWeights.get(row, 0);
-
-                            biasWeights.set(row, 0, originalBiasWeight + epsilon);
-                            network.passForward(inputs);
-                            double errorPlus = network.error(output, targetVector);
-
-                            biasWeights.set(row, 0, originalBiasWeight - epsilon);
-                            network.passForward(inputs);
-                            double errorMin = network.error(output, targetVector);
-
-                            biasWeights.set(row, 0, originalBiasWeight);
-
-                            double nummericalGradient = (errorPlus - errorMin) / (2 * epsilon);
-                            nummericalBiasGradients.set(row, 0, nummericalGradient);
-
-                            double re = Math.abs(nummericalGradient - biasGradients.get(row, col)) /
-                                    (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
-
-                            if (oppositeSign(nummericalGradient, biasGradients.get(row, col))) {
-                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
-                                network.printMatrix(biasGradients, "biasGrad");
-
-                                fail(String.format("Opposite signs - Output: %d, Bias gradient[%d] %.2f %s - %s",
-                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
-                            }
-
-                            if (re > FAULT_TOLERANCE) {
-                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
-                                network.printMatrix(biasGradients, "biasGrad");
-
-                                fail(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
-                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
-                            }
-                        }
-
                         double originalWeight = weights.get(row, col);
 
                         weights.set(row, col, originalWeight + epsilon);
@@ -154,6 +118,42 @@ public class TestNetwork {
 
                             fail(String.format("Output: %d, Gradient[%d] %.2f %s - %s",
                                     output, layer, re, nummericalGradient, gradients.get(row, 0)));
+                        }
+
+                        if (col == 0) {
+                            double originalBiasWeight = biasWeights.get(row, 0);
+
+                            biasWeights.set(row, 0, originalBiasWeight + epsilon);
+                            network.passForward(inputs);
+                            errorPlus = network.error(output, targetVector);
+
+                            biasWeights.set(row, 0, originalBiasWeight - epsilon);
+                            network.passForward(inputs);
+                            errorMin = network.error(output, targetVector);
+
+                            biasWeights.set(row, 0, originalBiasWeight);
+
+                            nummericalGradient = (errorPlus - errorMin) / (2 * epsilon);
+                            nummericalBiasGradients.set(row, 0, nummericalGradient);
+
+                            re = Math.abs(nummericalGradient - biasGradients.get(row, col)) /
+                                    (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
+
+                            if (oppositeSign(nummericalGradient, biasGradients.get(row, col))) {
+                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
+                                network.printMatrix(biasGradients, "biasGrad");
+
+                                fail(String.format("Opposite signs - Output: %d, Bias gradient[%d] %.2f %s - %s",
+                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
+                            }
+
+                            if (re > FAULT_TOLERANCE) {
+                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
+                                network.printMatrix(biasGradients, "biasGrad");
+
+                                fail(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
+                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
+                            }
                         }
                     }
                 }
