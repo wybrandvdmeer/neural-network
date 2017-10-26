@@ -12,7 +12,8 @@ public class Network {
     private int timeStamp=0;
     private int noOfOutputs;
 
-    private double learningConstant = 0.005;
+    private double learningRate;
+
     private final double GRADIENT_CLIPPING_TRESHOLD = 1;
 
     private boolean leakyRelu = false;
@@ -39,7 +40,7 @@ public class Network {
 
     private boolean noTransfer=false;
 
-    private final double RELU_LEAKAGE = 0.0;
+    private final double RELU_LEAKAGE = 0.1;
 
     public Network(String name, int [] layerSizes, int noOfOutputs) {
         this(name, layerSizes, noOfOutputs, false);
@@ -86,8 +87,8 @@ public class Network {
         this.beginErrorOutput = beginErrorOutput;
     }
 
-    public void setLearningConstant(double learningConstant) {
-        this.learningConstant = learningConstant;
+    public void setLearningRate(double learningRate) {
+        this.learningRate = learningRate;
     }
 
     public void setNoTransfer() {
@@ -194,11 +195,15 @@ public class Network {
 
     public int learn(double [][] inputs, double [][] targets, double errorLimit, int maxIterations) throws Exception {
 
-        double previousError=100;
-
         if(inputs.length != targets.length || inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
         }
+
+        int iterationsWhenErrorIsIncreasing=0;
+        int learningConstantReductions=0;
+        double previousError=100;
+
+        learningRate = 0.1;
 
         int iterations=0;
 
@@ -216,10 +221,26 @@ public class Network {
             }
 
             if(previousError < error) {
-                System.out.println(String.format("Error is getting bigger (%f -> %f): adjusted learningRate (%f -> %f)",
-                        previousError, error, learningConstant, learningConstant * 0.5));
+                iterationsWhenErrorIsIncreasing = iterations;
 
-                learningConstant *= 0.5;
+                if(learningRate > 0.005) {
+                    System.out.println(String.format("Error is getting bigger (%f -> %f): adjusted learningRate (%f -> %f)",
+                            previousError, error, learningRate, learningRate * 0.5));
+
+                    learningConstantReductions++;
+                    learningRate *= 0.5;
+                }
+            }
+
+            if(learningConstantReductions > 0 && iterations - iterationsWhenErrorIsIncreasing > 100000) {
+                System.out.println("Increasing learning rate: " + learningRate * 2);
+                learningRate *= 2;
+                learningConstantReductions--;
+                iterationsWhenErrorIsIncreasing = iterations - 50000;
+            }
+
+            if(iterations%10000 == 0) {
+                System.out.println("Error: " + error);
             }
 
             previousError = error;
@@ -295,8 +316,8 @@ public class Network {
                     gradientClipping(biasGradients);
                 }
 
-                weights.put(layer - 1, weights.get(layer - 1).minus(gradients.times(learningConstant)));
-                biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradients.times(learningConstant)));
+                weights.put(layer - 1, weights.get(layer - 1).minus(gradients.times(learningRate)));
+                biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradients.times(learningRate)));
             }
 
             Matrix wGradients = initMatrix(W.copy());
@@ -308,7 +329,7 @@ public class Network {
                 gradientClipping(wGradients);
             }
 
-            W = W.minus(wGradients.times(learningConstant));
+            W = W.minus(wGradients.times(learningRate));
 
             iterations++;
 

@@ -38,8 +38,8 @@ public class Predictor {
         this.exchange = exchange;
         this.stock = stock;
 
-        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 4}, WINDOW_SIZE, true);
-        network.setLearningConstant(0.1);
+        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 4}, WINDOW_SIZE);
+        network.setLearningRate(0.1);
         network.read();
 
         // Ignore the first output (since it has no previous input).
@@ -54,14 +54,14 @@ public class Predictor {
 
         int idx1=0;
 
-        while(idx1 + WINDOW_SIZE < priceRecords.size() - 1) {
+        while(idx1 + WINDOW_SIZE < priceRecords.size()) {
             for(int idx2=0; idx2 < WINDOW_SIZE; idx2++) {
                 PriceRecord priceRecord = priceRecords.get(idx1 + idx2);
 
-                inputs[idx1][INPUT_DATE] = scaleDate(priceRecord.date);
-                inputs[idx1][INPUT_OPEN] = scalePrice(priceRecord.open);
-                inputs[idx1][INPUT_CLOSE] = scalePrice(priceRecord.close);
-                inputs[idx1][INPUT_VOLUME] = scaleVolume(priceRecord.volume);
+                inputs[idx2][INPUT_DATE] = scaleDate(priceRecord.date);
+                inputs[idx2][INPUT_OPEN] = scalePrice(priceRecord.open);
+                inputs[idx2][INPUT_CLOSE] = scalePrice(priceRecord.close);
+                inputs[idx2][INPUT_VOLUME] = scaleVolume(priceRecord.volume);
             }
 
             initArray(targets);
@@ -85,9 +85,9 @@ public class Predictor {
 
             System.out.println("Begin training: " + timeFormatter.format(new Date()));
 
-            network.learn(inputs, targets, ERROR_LIMIT, 0);
+            int iterations = network.learn(inputs, targets, ERROR_LIMIT, 0);
 
-            System.out.println("End training: " + timeFormatter.format(new Date()));
+            System.out.println(String.format("End training: %s, iterations: %d.", timeFormatter.format(new Date()), iterations));
 
             idx1++;
         }
