@@ -355,6 +355,10 @@ public class Network {
         return biasGradientsPerLayerPerOutput.get(output);
     }
 
+    List<Map<Integer, Matrix>> getTransferDerivertivesPerTimestamp() {
+        return transferDerivertivesPerTimestamp;
+    }
+
     double error(int output, Matrix targets) {
         double error=0;
         Matrix m1 = targets.minus(getOutputVector(output));

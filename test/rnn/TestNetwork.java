@@ -4,6 +4,10 @@ import Jama.Matrix;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.fail;
@@ -42,14 +46,41 @@ public class TestNetwork {
     }
 
     @Test
+    public void test() throws Exception {
+        while(true) {
+            testGradientChecking();
+        }
+    }
+
+    @Test
     public void testGradientChecking() throws Exception {
 
-        double FAULT_TOLERANCE = 0.001;
+        double FAULT_TOLERANCE = 0.0001;
 
         int layers [] = {2, 2, 2};
 
-        Network network = new Network("testGradientChecking", layers, 5, true);
-        network.write();
+        boolean leakyRelu = true;
+
+        Network network = new Network("testGradientChecking", layers, 5, leakyRelu);
+        network.getWeights(1).set(0, 0, 0.15);
+        network.getWeights(1).set(0, 1, 0.2);
+
+        network.getWeights(1).set(1, 0, 0.25);
+        network.getWeights(1).set(1, 1, 0.3);
+
+        network.getBiasWeights(1).set(0, 0, 0.35);
+        network.getBiasWeights(1).set(1, 0, 0.35);
+
+        network.getWeights(2).set(0, 0, 0.4);
+        network.getWeights(2).set(0, 1, 0.45);
+
+        network.getWeights(2).set(1, 0, 0.5);
+        network.getWeights(2).set(1, 1, 0.55);
+
+        network.getBiasWeights(2).set(0, 0, 0.6);
+        network.getBiasWeights(2).set(1, 0, 0.6);
+
+        network.read();
 
         double epsilon = 0.001;
 
@@ -71,30 +102,89 @@ public class TestNetwork {
 
         network.learn(inputs, targets, 0.0000001, 1);
 
+        List<Map<Integer, Matrix>> transferDerivativesPerTimeStamp = copyTD(network.getTransferDerivertivesPerTimestamp());
+
         network.read();
+
+        Matrix gradients, nummericalGradients;
+
+        boolean kinks1, kinks2;
 
         for(int output=0; output < targets.length; output++) {
             Matrix targetVector = new Matrix(targets[output], targets[output].length);
 
             for (int layer = layers.length - 1; layer >= 1; layer--) {
-                Matrix gradients = network.getGradients(output).get(layer - 1);
-                Matrix nummericalGradients = gradients.copy();
+                gradients = network.getGradients(output).get(layer - 1);
+                nummericalGradients = gradients.copy().times(0);
                 Matrix weights = network.getWeights(layer);
 
                 Matrix biasGradients = network.getBiasGradients(output).get(layer - 1);
-                Matrix nummericalBiasGradients = biasGradients.copy();
+                Matrix nummericalBiasGradients = biasGradients.copy().times(0);
                 Matrix biasWeights = network.getBiasWeights(layer);
 
                 for (int row = 0; row < weights.getRowDimension(); row++) {
                     for (int col = 0; col < weights.getColumnDimension(); col++) {
+
+                        kinks1 = false;
+                        kinks2 = false;
+
+                        if (col == 0) {
+                            double originalBiasWeight = biasWeights.get(row, 0);
+
+                            biasWeights.set(row, 0, originalBiasWeight + epsilon);
+                            network.passForward(inputs);
+
+                            if(leakyRelu) {
+                                kinks1 = checkForKinks(output, transferDerivativesPerTimeStamp, network.getTransferDerivertivesPerTimestamp());
+                            }
+
+                            double errorPlus = network.error(output, targetVector);
+
+                            biasWeights.set(row, 0, originalBiasWeight - epsilon);
+                            network.passForward(inputs);
+
+                            if(leakyRelu) {
+                                kinks2 = checkForKinks(output, transferDerivativesPerTimeStamp, network.getTransferDerivertivesPerTimestamp());
+                            }
+
+                            double errorMin = network.error(output, targetVector);
+
+                            biasWeights.set(row, 0, originalBiasWeight);
+
+                            double nummericalGradient = (errorPlus - errorMin) / (2 * epsilon);
+                            nummericalBiasGradients.set(row, 0, nummericalGradient);
+
+                            double re = Math.abs(nummericalGradient - biasGradients.get(row, col)) /
+                                    (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
+
+                            if (!kinks1 && !kinks2 && re > FAULT_TOLERANCE) {
+                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
+                                network.printMatrix(biasGradients, "biasGrad");
+
+                                fail(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
+                                        output, layer, re, nummericalGradient, biasGradients.get(row, col)));
+                            }
+                        }
+
+                        kinks1 = false;
+                        kinks2 = false;
+
                         double originalWeight = weights.get(row, col);
 
                         weights.set(row, col, originalWeight + epsilon);
                         network.passForward(inputs);
+                        if(leakyRelu) {
+                            kinks1 = checkForKinks(output, transferDerivativesPerTimeStamp, network.getTransferDerivertivesPerTimestamp());
+                        }
+
                         double errorPlus = network.error(output, targetVector);
 
                         weights.set(row, col, originalWeight - epsilon);
                         network.passForward(inputs);
+                        if(leakyRelu) {
+                            kinks2 = checkForKinks(output, transferDerivativesPerTimeStamp, network.getTransferDerivertivesPerTimestamp());
+                        }
+
                         double errorMin = network.error(output, targetVector);
 
                         weights.set(row, col, originalWeight);
@@ -105,78 +195,46 @@ public class TestNetwork {
                         double re = Math.abs(nummericalGradient - gradients.get(row, col)) /
                                 (Math.abs(nummericalGradient) + Math.abs(gradients.get(row, col)));
 
-                        if (oppositeSign(nummericalGradient, gradients.get(row, col))) {
-                            network.printMatrix(nummericalGradients, "numGrad");
-                            network.printMatrix(gradients, "grad");
-
-                            fail(String.format("Opposite signs - Output: %d, Gradient[%d] %.2f %s - %s",
-                                    output, layer, re, nummericalGradient, gradients.get(row, 0)));                        }
-
-                        if (re > FAULT_TOLERANCE) {
+                        if (!kinks1 && !kinks2 && re > FAULT_TOLERANCE) {
                             network.printMatrix(nummericalGradients, "numGrad");
                             network.printMatrix(gradients, "grad");
 
                             fail(String.format("Output: %d, Gradient[%d] %.2f %s - %s",
-                                    output, layer, re, nummericalGradient, gradients.get(row, 0)));
-                        }
-
-                        if (col == 0) {
-                            double originalBiasWeight = biasWeights.get(row, 0);
-
-                            biasWeights.set(row, 0, originalBiasWeight + epsilon);
-                            network.passForward(inputs);
-                            errorPlus = network.error(output, targetVector);
-
-                            biasWeights.set(row, 0, originalBiasWeight - epsilon);
-                            network.passForward(inputs);
-                            errorMin = network.error(output, targetVector);
-
-                            biasWeights.set(row, 0, originalBiasWeight);
-
-                            nummericalGradient = (errorPlus - errorMin) / (2 * epsilon);
-                            nummericalBiasGradients.set(row, 0, nummericalGradient);
-
-                            re = Math.abs(nummericalGradient - biasGradients.get(row, col)) /
-                                    (Math.abs(nummericalGradient) + Math.abs(biasGradients.get(row, col)));
-
-                            if (oppositeSign(nummericalGradient, biasGradients.get(row, col))) {
-                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
-                                network.printMatrix(biasGradients, "biasGrad");
-
-                                fail(String.format("Opposite signs - Output: %d, Bias gradient[%d] %.2f %s - %s",
-                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
-                            }
-
-                            if (re > FAULT_TOLERANCE) {
-                                network.printMatrix(nummericalBiasGradients, "numBiasGrad");
-                                network.printMatrix(biasGradients, "biasGrad");
-
-                                fail(String.format("Output: %d, Bias gradient[%d] %.2f %s - %s",
-                                        output, layer, re, nummericalGradient, biasGradients.get(row, 0)));
-                            }
+                                    output, layer, re, nummericalGradient, gradients.get(row, col)));
                         }
                     }
                 }
             }
 
-            if(output ==0) {
+            if(output == 0) {
                 continue;
             }
 
             Matrix wGradients = network.getWGradients(output);
             Matrix weights = network.getW();
-            Matrix nummericalGradients = weights.copy();
+            nummericalGradients = weights.copy().times(0);
 
             for (int row = 0; row < weights.getRowDimension(); row++) {
                 for (int col = 0; col < weights.getColumnDimension(); col++) {
+                    kinks1 = false;
+                    kinks2 = false;
+
                     double originalWeight = weights.get(row, col);
 
                     weights.set(row, col, originalWeight + epsilon);
                     network.passForward(inputs);
+                    if(leakyRelu) {
+                        kinks1 = checkForKinks(output, transferDerivativesPerTimeStamp, network.getTransferDerivertivesPerTimestamp());
+                    }
+
                     double errorPlus = network.error(output, targetVector);
 
                     weights.set(row, col, originalWeight - epsilon);
                     network.passForward(inputs);
+                    if(leakyRelu) {
+                        kinks2 = checkForKinks(output, transferDerivativesPerTimeStamp, network.getTransferDerivertivesPerTimestamp());
+                    }
+
                     double errorMin = network.error(output, targetVector);
 
                     weights.set(row, col, originalWeight);
@@ -187,32 +245,66 @@ public class TestNetwork {
                     double re = Math.abs(nummericalGradient - wGradients.get(row, col)) /
                             (Math.abs(nummericalGradient) + Math.abs(wGradients.get(row, col)));
 
-                    if (oppositeSign(nummericalGradient, wGradients.get(row, col))) {
-                        network.printMatrix(wGradients, "WGrad");
-                        network.printMatrix(nummericalGradients, "numWGrad");
-
-                        fail(String.format("Opposite signs - Output: %d, WGradient: %.2f %s - %s",
-                                output, re, nummericalGradient, wGradients.get(row, 0)));
-                    }
-
-                    if (re > FAULT_TOLERANCE) {
+                    if (!kinks1 && !kinks2 && re > FAULT_TOLERANCE) {
 
                         network.printMatrix(wGradients, "WGrad");
                         network.printMatrix(nummericalGradients, "numWGrad");
 
                         fail(String.format("Output: %d, WGradient: %.2f %s - %s",
-                                output, re, nummericalGradient, wGradients.get(row, 0)));
+                                output, re, nummericalGradient, wGradients.get(row, col)));
                     }
                 }
             }
         }
     }
 
+    private boolean checkForKinks(int maxOutput, List<Map<Integer, Matrix>> td1, List<Map<Integer, Matrix>> td2) {
+        for(int output=0; output <= maxOutput; output++) {
+            for(int layer=1; layer < td1.get(output).keySet().size(); layer++) {
+                Matrix m1 = td1.get(output).get(layer);
+                Matrix m2 = td2.get(output).get(layer);
+                if(!equals(m1, m2)) {
+                    System.out.println("Detected kinks.");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean equals(Matrix m1, Matrix m2) {
+        if(m1.getRowDimension() != m2.getRowDimension() || m1.getColumnDimension() != m2.getColumnDimension()) {
+            return false;
+        }
+
+        for(int row=0; row < m1.getRowDimension(); row++) {
+            for(int col=0; col < m1.getColumnDimension(); col++)  {
+                if(Math.abs(m1.get(row, col) - m2.get(row, col)) > 0.00001) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private List<Map<Integer,Matrix>> copyTD(List<Map<Integer, Matrix>> transferDerivertivesPerTimestamp) {
+        List<Map<Integer,Matrix>> tPTS = new ArrayList<>();
+        for(Map<Integer, Matrix> map : transferDerivertivesPerTimestamp) {
+            Map<Integer, Matrix> newMap = new HashMap<>();
+            for(int layer : map.keySet()) {
+                newMap.put(layer, map.get(layer));
+            }
+            tPTS.add(newMap);
+        }
+
+        return tPTS;
+    }
+
     @Test
     public void testLearning() throws Exception {
 
         Network network = new Network("testRnnLearning", new int []{2, 20, 2}, 5, true);
-        network.setLearningConstant(0.1);
+        network.setLearningRate(0.1);
 
         double [][] inputs = new double[][] {
             new double[]{0.01, 0.01},
