@@ -46,41 +46,16 @@ public class TestNetwork {
     }
 
     @Test
-    public void test() throws Exception {
-        while(true) {
-            testGradientChecking();
-        }
-    }
-
-    @Test
     public void testGradientChecking() throws Exception {
 
-        double FAULT_TOLERANCE = 0.0001;
+        double FAULT_TOLERANCE = 0.001;
 
         int layers [] = {2, 2, 2};
 
         boolean leakyRelu = true;
 
         Network network = new Network("testGradientChecking", layers, 5, leakyRelu);
-        network.getWeights(1).set(0, 0, 0.15);
-        network.getWeights(1).set(0, 1, 0.2);
-
-        network.getWeights(1).set(1, 0, 0.25);
-        network.getWeights(1).set(1, 1, 0.3);
-
-        network.getBiasWeights(1).set(0, 0, 0.35);
-        network.getBiasWeights(1).set(1, 0, 0.35);
-
-        network.getWeights(2).set(0, 0, 0.4);
-        network.getWeights(2).set(0, 1, 0.45);
-
-        network.getWeights(2).set(1, 0, 0.5);
-        network.getWeights(2).set(1, 1, 0.55);
-
-        network.getBiasWeights(2).set(0, 0, 0.6);
-        network.getBiasWeights(2).set(1, 0, 0.6);
-
-        network.read();
+        network.write();
 
         double epsilon = 0.001;
 
