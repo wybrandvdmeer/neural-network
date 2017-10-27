@@ -1,5 +1,7 @@
 package apps.stockprediction;
 
+import apps.stockprediction.atm.Predictor;
+import apps.stockprediction.atm.StockDownloader;
 import org.junit.Test;
 
 import java.io.BufferedReader;

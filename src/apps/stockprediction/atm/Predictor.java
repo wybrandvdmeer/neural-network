@@ -1,12 +1,8 @@
-package apps.stockprediction;
+package apps.stockprediction.atm;
 
 import rnn.Network;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -28,7 +24,6 @@ public class Predictor {
     private static final SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm:ss");
 
     private final String exchange, stock;
-    private List<PriceRecord> priceRecords;
 
     private static final double ERROR_LIMIT = 0.0001;
 
@@ -38,7 +33,7 @@ public class Predictor {
         this.exchange = exchange;
         this.stock = stock;
 
-        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 4}, WINDOW_SIZE);
+        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 10, 4}, WINDOW_SIZE);
         network.setLearningRate(0.1);
         network.read();
 
@@ -46,9 +41,17 @@ public class Predictor {
         network.setBeginErrorOutput(1);
     }
 
-    public void train() throws Exception {
-        priceRecords = readPrices();
+    public void predict(PriceRecord priceRecord, double [] previousState) {
+        double [] input = new double[4];
+        input[INPUT_DATE] = scaleDate(priceRecord.date);
+        input[INPUT_OPEN] = scalePrice(priceRecord.open);
+        input[INPUT_CLOSE] = scalePrice(priceRecord.close);
+        input[INPUT_VOLUME] = scaleVolume(priceRecord.volume);
 
+        network.passForward(input, previousState);
+    }
+
+    public void train(List<PriceRecord> priceRecords, double [] previousState) throws Exception {
         double [][] inputs = new double[WINDOW_SIZE][4];
         double [][] targets = new double[WINDOW_SIZE][4];
 
@@ -85,7 +88,7 @@ public class Predictor {
 
             System.out.println("Begin training: " + timeFormatter.format(new Date()));
 
-            int iterations = network.learn(inputs, targets, ERROR_LIMIT, 0);
+            int iterations = network.learn(inputs, targets, previousState, ERROR_LIMIT, 0);
 
             System.out.println(String.format("End training: %s, iterations: %d.", timeFormatter.format(new Date()), iterations));
 
@@ -93,6 +96,10 @@ public class Predictor {
         }
 
         network.write();
+    }
+
+    public double [] getPreviousState() {
+        return network.getPreviousState();
     }
 
     private void initArray(double [][] array) {
@@ -115,39 +122,5 @@ public class Predictor {
 
     private double scaleVolume(double volume) {
         return volume / 5000000;
-    }
-
-    private List<PriceRecord> readPrices() throws Exception {
-        List<PriceRecord> priceRecords = new ArrayList<>();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(String.format("%s-%s-avg", exchange, stock))));
-
-        String line;
-        boolean header = true;
-
-        while((line = br.readLine()) != null) {
-            if(header) {
-                header = false;
-                continue;
-            }
-
-            String [] columns = line.split("\t");
-            priceRecords.add(new PriceRecord(formatter.parse(columns[0]), new Double(columns[4]), new Double(columns[1]), new Double((columns[5]))));
-        }
-
-        return priceRecords;
-    }
-
-    private class PriceRecord {
-        public Date date;
-        public double open;
-        public double close;
-        public double volume;
-        public PriceRecord(Date date, double open, double close, double volume) {
-            this.date = date;
-            this.open = open;
-            this.close = close;
-            this.volume = volume;
-        }
     }
 }
