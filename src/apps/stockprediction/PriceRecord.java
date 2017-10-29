@@ -60,7 +60,7 @@ public class PriceRecord {
     }
 
     public String toString() {
-        return String.format("%s\t%f\t%f\t%f\t%f",
+        return String.format("%s\t%f\t%f\t%f\t%f\t%f",
                 formatter.format(date),
                 close,
                 high,

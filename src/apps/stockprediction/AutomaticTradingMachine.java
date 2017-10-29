@@ -7,45 +7,55 @@ import java.util.List;
 
 public class AutomaticTradingMachine {
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-hh24-mm-ss");
-    private StockDownloader stockDownloader = new StockDownloader();
+    private StockDownloader stockDownloader;
 
     private static List<String> stocks = new ArrayList<>();
     private static final String META_FILE="meta-data";
 
-    public AutomaticTradingMachine() {
-        stocks.add("AMS/PHIA");
+    public void setStockDownloader(StockDownloader stockDownloader) {
+        this.stockDownloader = stockDownloader;
+    }
+
+    public void getStockPrices(String exchange, String stock) throws Exception {
+        MetaData metaData;
+
+        File dir = new File(exchange + "-" + stock);
+        if (!dir.exists()) {
+            if (!dir.mkdir()) {
+                throw new RuntimeException("Could not create dir: " + dir.getAbsolutePath());
+            }
+        }
+
+        if (!dir.isDirectory()) {
+            throw new RuntimeException(String.format("Dir %s is not a directory.", dir.getAbsolutePath()));
+        }
+
+        metaData = MetaData.parse(dir);
+
+        PriceRecordDB priceRecordDBPrices = new PriceRecordDB(dir.getName(), "prices");
+        PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB(dir.getName(), "avgPrices");
+
+        priceRecordDBPrices.read();
+        priceRecordDBAVGPrices.read();
+
+        List<PriceRecord> priceRecords = stockDownloader.get(exchange, stock);
+        priceRecordDBPrices.add(priceRecords);
+        priceRecordDBPrices.write();
+
+        MovingAverageCalculator movingAverageCalculator = new MovingAverageCalculator(metaData.latestStockDate);
+        List<PriceRecord> avgPriceRecords = movingAverageCalculator.average(priceRecordDBPrices.getPriceRecords());
+
+        priceRecordDBAVGPrices.add(avgPriceRecords);
+        priceRecordDBAVGPrices.write();
+
+        metaData.latestStockDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
+        metaData.write(dir);
+
     }
 
     public void trade() throws Exception {
+        /*
         for(String exchangeAndStock : stocks) {
-            String exchange = exchangeAndStock.split("/")[0];
-            String stock = exchangeAndStock.split("/")[1];
-            MetaData metaData;
-            PriceRecordDB priceRecordDBPrices = new PriceRecordDB("prices");
-            PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB("avgPrices");
-
-            File dir = new File(exchange + "-" + stock);
-            if(!dir.exists()) {
-                if(!dir.mkdir()) {
-                    throw new RuntimeException("Could not create dir: " + dir.getAbsolutePath());
-                }
-            }
-
-            metaData = MetaData.parse();
-
-            priceRecordDBPrices.read();
-            priceRecordDBAVGPrices.read();
-
-            List<PriceRecord> priceRecords = stockDownloader.get(exchange, stock);
-
-            priceRecords = priceRecordDBPrices.add(priceRecords);
-            priceRecordDBPrices.write();
-
-            MovingAverageCalculator movingAverageCalculator = new MovingAverageCalculator(metaData.latestStockDate);
-            List<PriceRecord> avgPriceRecords = movingAverageCalculator.average(priceRecords);
-
-            priceRecordDBAVGPrices.add(avgPriceRecords);
-            priceRecordDBAVGPrices.write();
 
             Predictor predictor = new Predictor(exchange, stock);
             predictor.train(avgPriceRecords, readPreviousState());
@@ -55,6 +65,7 @@ public class AutomaticTradingMachine {
             metaData.latestStockDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
             metaData.write();
         }
+        */
     }
 
     private double [] readPreviousState() throws Exception {
@@ -80,18 +91,5 @@ public class AutomaticTradingMachine {
         }
 
         return previousStateArr;
-    }
-
-
-
-    private void copy(File original, File copy) throws Exception {
-        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(original)));
-        FileOutputStream out = new FileOutputStream(copy);
-        String line;
-        while((line = br.readLine()) != null) {
-            out.write(line.getBytes());
-        }
-        br.close();
-        out.close();
     }
 }

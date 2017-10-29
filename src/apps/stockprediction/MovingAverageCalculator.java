@@ -29,7 +29,7 @@ public class MovingAverageCalculator {
     public List<PriceRecord> average(List<PriceRecord> priceRecords) {
         List<PriceRecord> avgPriceRecords = new ArrayList<>();
 
-        int posLastProcessedPrice=0;
+        int posLastProcessedPrice=-1;
         for(int idx=0; idx < priceRecords.size(); idx++) {
             if(priceRecords.get(idx).date.equals(lastAVGDate)) {
                 posLastProcessedPrice = idx;
@@ -37,16 +37,18 @@ public class MovingAverageCalculator {
             }
         }
 
-        int idx=posLastProcessedPrice - MOVING_AVG_WINDOW_SIZE > 0 ? posLastProcessedPrice - MOVING_AVG_WINDOW_SIZE : 0;
-        for(; idx <= posLastProcessedPrice; idx++) {
-            add2MovingAvg(movingAverages.get(CLOSE_POS), priceRecords.get(idx).close);
-            add2MovingAvg(movingAverages.get(OPEN_POS), priceRecords.get(idx).open);
-            add2MovingAvg(movingAverages.get(HIGH_POS), priceRecords.get(idx).high);
-            add2MovingAvg(movingAverages.get(LOW_POS), priceRecords.get(idx).low);
-            add2MovingAvg(movingAverages.get(VOLUME_POS), priceRecords.get(idx).volume);
+        if(posLastProcessedPrice >= 0) {
+            int idx = posLastProcessedPrice - MOVING_AVG_WINDOW_SIZE > 0 ? posLastProcessedPrice - MOVING_AVG_WINDOW_SIZE : 0;
+            for (; idx <= posLastProcessedPrice; idx++) {
+                add2MovingAvg(movingAverages.get(CLOSE_POS), priceRecords.get(idx).close);
+                add2MovingAvg(movingAverages.get(OPEN_POS), priceRecords.get(idx).open);
+                add2MovingAvg(movingAverages.get(HIGH_POS), priceRecords.get(idx).high);
+                add2MovingAvg(movingAverages.get(LOW_POS), priceRecords.get(idx).low);
+                add2MovingAvg(movingAverages.get(VOLUME_POS), priceRecords.get(idx).volume);
+            }
         }
 
-        for(idx = posLastProcessedPrice + 1; idx < priceRecords.size(); idx++) {
+        for(int idx = posLastProcessedPrice + 1; idx < priceRecords.size(); idx++) {
             add2MovingAvg(movingAverages.get(CLOSE_POS), priceRecords.get(idx).close);
             add2MovingAvg(movingAverages.get(OPEN_POS), priceRecords.get(idx).open);
             add2MovingAvg(movingAverages.get(HIGH_POS), priceRecords.get(idx).high);
@@ -57,7 +59,7 @@ public class MovingAverageCalculator {
             avgPriceRecord.date = priceRecords.get(idx).date;
             avgPriceRecord.close = calculateMovingAvg(movingAverages.get(CLOSE_POS));
             avgPriceRecord.open = calculateMovingAvg(movingAverages.get(OPEN_POS));
-            avgPriceRecord.high = calculateMovingAvg(movingAverages.get(OPEN_POS));
+            avgPriceRecord.high = calculateMovingAvg(movingAverages.get(HIGH_POS));
             avgPriceRecord.low = calculateMovingAvg(movingAverages.get(LOW_POS));
             avgPriceRecord.volume = calculateMovingAvg(movingAverages.get(VOLUME_POS));
             avgPriceRecords.add(avgPriceRecord);

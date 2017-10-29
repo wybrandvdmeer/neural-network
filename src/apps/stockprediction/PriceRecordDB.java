@@ -11,8 +11,8 @@ public class PriceRecordDB {
     private final List<PriceRecord> priceRecords = new ArrayList<>();
     private static final String HEADER = "DATE\tCLOSE\tHIGH\tLOW\tOPEN\tVOLUME";
 
-    public PriceRecordDB(String name) {
-        db = new File(name);
+    public PriceRecordDB(String dir, String name) {
+        db = new File(dir, name);
     }
 
     public List<PriceRecord> read() throws Exception {
@@ -26,6 +26,7 @@ public class PriceRecordDB {
         boolean header = true;
         while((line = br.readLine()) != null) {
             if(header) {
+                header = false;
                 continue;
             }
             priceRecords.add(PriceRecord.parse(line));
@@ -34,21 +35,23 @@ public class PriceRecordDB {
         return priceRecords;
     }
 
-    public List<PriceRecord> add(List<PriceRecord> priceRecords) {
+    public void add(List<PriceRecord> priceRecords) {
         for(PriceRecord priceRecord : priceRecords) {
-            if(!priceRecords.contains(priceRecord)) {
-                priceRecords.add(priceRecord);
+            if(!this.priceRecords.contains(priceRecord)) {
+                this.priceRecords.add(priceRecord);
             }
         }
 
-        Collections.sort(priceRecords, (d1, d2) -> (int)(d1.date.getTime() - d2.date.getTime()));
+        Collections.sort(this.priceRecords, (d1, d2) -> (int)(d1.date.getTime() - d2.date.getTime()));
+    }
 
+    public List<PriceRecord> getPriceRecords() {
         return priceRecords;
     }
 
     public void write() throws Exception {
         FileOutputStream out = new FileOutputStream(db);
-        out.write(HEADER.getBytes());
+        out.write((HEADER + "\n").getBytes());
         for(PriceRecord priceRecord : priceRecords) {
             out.write((priceRecord.toString() + "\n").getBytes());
         }

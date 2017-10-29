@@ -12,11 +12,11 @@ public class MetaData {
 
     private final static String NAME = "meta-data";
 
-    public static MetaData parse() throws Exception {
+    public static MetaData parse(File dir) throws Exception {
 
         MetaData metaData = new MetaData();
 
-        File metaFile = new File(NAME);
+        File metaFile = new File(dir, NAME);
         if(!metaFile.exists()) {
             return metaData;
         }
@@ -42,9 +42,11 @@ public class MetaData {
         out.write((tag + value + "\n").getBytes());
     }
 
-    public void write() throws Exception {
-        FileOutputStream out = new FileOutputStream(NAME);
-        writeTag(LATEST_STOCK_DATA_DATE_TAG, formatter.format(latestStockDate), out);
+    public void write(File dir) throws Exception {
+        FileOutputStream out = new FileOutputStream(new File(dir, NAME));
+        if(latestStockDate != null) {
+            writeTag(LATEST_STOCK_DATA_DATE_TAG, formatter.format(latestStockDate), out);
+        }
         out.close();
     }
 }
