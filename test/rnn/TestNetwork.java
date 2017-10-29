@@ -350,8 +350,8 @@ public class TestNetwork {
 
         network.passForward(new double[] {0.5, 1});
 
-        assertEquals(70.5, network.getOutput(0));
-        assertEquals(94.5, network.getOutput(1));
+        assertEquals(70.5, network.getOutputVector(0).get(0,0));
+        assertEquals(94.5, network.getOutputVector(0).get(1,0));
 
         network.nextTimestamp();
 
@@ -359,12 +359,5 @@ public class TestNetwork {
 
         assertEquals(334.5, network.getOutput(0));
         assertEquals(454.5, network.getOutput(1));
-    }
-
-    private boolean oppositeSign(double d1, double d2) {
-        if((d1 < 0 && d2 > 0) || (d1 > 0 && d2 < 0)) {
-            return true;
-        }
-        return false;
     }
 }

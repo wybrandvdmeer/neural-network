@@ -95,6 +95,10 @@ public class Network {
         noTransfer = true;
     }
 
+    public void passForward(double [][] inputs) {
+        passForward(inputs, null);
+    }
+
     public void passForward(double [][] inputs, double [] previousState) {
         if(inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
@@ -110,6 +114,10 @@ public class Network {
             }
             nextTimestamp();
         }
+    }
+
+    public void passForward(double [] input) {
+        passForward(input, null);
     }
 
     public void passForward(double [] input, double [] previousState) {
