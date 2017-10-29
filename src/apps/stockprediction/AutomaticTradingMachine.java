@@ -9,9 +9,6 @@ public class AutomaticTradingMachine {
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-hh24-mm-ss");
     private StockDownloader stockDownloader;
 
-    private static List<String> stocks = new ArrayList<>();
-    private static final String META_FILE="meta-data";
-
     public void setStockDownloader(StockDownloader stockDownloader) {
         this.stockDownloader = stockDownloader;
     }
