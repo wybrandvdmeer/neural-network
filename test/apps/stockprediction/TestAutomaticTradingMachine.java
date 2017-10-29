@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -164,7 +165,7 @@ public class TestAutomaticTradingMachine {
         pricesDB = new PriceRecordDB("AMS-PHIA", "prices");
         avgPricesDB = new PriceRecordDB("AMS-PHIA", "avgPrices");
 
-        prices = pricesDB.read();
+        List<PriceRecord> pricesInDB = pricesDB.read();
         avgPrices = avgPricesDB.read();
 
         metaData = MetaData.parse(dir);
@@ -175,10 +176,19 @@ public class TestAutomaticTradingMachine {
 
         assertEquals(2200, avgPrices.get(avgPrices.size() - 2).volume, 0.0001);
         assertEquals(2400, avgPrices.get(avgPrices.size() - 1).volume, 0.0001);
+
+        prices.add(p2);
+        prices.add(p3);
+
+        equalPrices(prices, pricesInDB);
     }
 
     private void equalPrices(List<PriceRecord> prices1, List<PriceRecord> prices2) {
         assertTrue(prices1.size() == prices2.size());
+
+        Collections.sort(prices1, (d1, d2) -> (int)(d1.date.getTime() - d2.date.getTime()));
+        Collections.sort(prices2, (d1, d2) -> (int)(d1.date.getTime() - d2.date.getTime()));
+
         for(int idx=0; idx < prices1.size(); idx++) {
             equalPrice(prices1.get(idx), prices2.get(idx));
         }
