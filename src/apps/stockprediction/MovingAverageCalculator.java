@@ -1,4 +1,4 @@
-package apps.stockprediction.atm;
+package apps.stockprediction;
 
 import java.util.ArrayList;
 import java.util.Date;

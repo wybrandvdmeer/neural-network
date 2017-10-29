@@ -1,7 +1,5 @@
 package apps.stockprediction;
 
-import apps.stockprediction.atm.Predictor;
-import apps.stockprediction.atm.StockDownloader;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -9,25 +7,6 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
 public class TestPredictor {
-
-    @Test
-    public void testPredictor() throws Exception {
-        Predictor predictor = new Predictor("AMS", "PHIA");
-        predictor.train();
-    }
-
-    @Test
-    public void testStockDownloader() throws Exception {
-        StockDownloader stockDownloader = new StockDownloader();
-        stockDownloader.get("AMS", "PHIA");
-    }
-
-    @Test
-    public void testMovingAvgCalculator() throws Exception {
-        MovingAvgCalculator movingAvgCalculator = new MovingAvgCalculator();
-        movingAvgCalculator.calculateMovingAvg("AMS", "PHIA");
-    }
-
     @Test
     public void analysePhia() throws Exception {
         String exchange = "AMS";

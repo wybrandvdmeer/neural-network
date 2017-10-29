@@ -1,4 +1,4 @@
-package apps.stockprediction.atm;
+package apps.stockprediction;
 
 import java.io.*;
 import java.text.SimpleDateFormat;

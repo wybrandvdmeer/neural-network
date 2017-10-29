@@ -1,4 +1,4 @@
-package apps.stockprediction.atm;
+package apps.stockprediction;
 
 import rnn.Network;
 
