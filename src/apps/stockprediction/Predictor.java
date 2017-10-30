@@ -140,7 +140,7 @@ public class Predictor {
     }
 
     private double scaleDate(LocalDate date) {
-        return date.getDayOfWeek() / 5 - 0.01;
+        return (double)date.getDayOfWeek() / 5 - 0.01;
     }
 
     private double scalePrice(double price) {
