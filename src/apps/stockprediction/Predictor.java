@@ -1,6 +1,7 @@
 package apps.stockprediction;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import rnn.Network;
@@ -28,6 +29,7 @@ public class Predictor {
 
     public Predictor(String exchange, String stock) throws Exception {
         network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 10, 4}, WINDOW_SIZE);
+        network.setWeightFileDir(exchange + "-" + stock);
         network.setLearningRate(0.1);
         network.read();
 
@@ -35,14 +37,16 @@ public class Predictor {
         network.setBeginErrorOutput(1);
     }
 
-    public void predict(PriceRecord priceRecord, double [] previousState) {
-        double [] input = new double[4];
-        input[INPUT_DATE] = scaleDate(priceRecord.date);
-        input[INPUT_OPEN] = scalePrice(priceRecord.open);
-        input[INPUT_CLOSE] = scalePrice(priceRecord.close);
-        input[INPUT_VOLUME] = scaleVolume(priceRecord.volume);
+    public void predict(List<PriceRecord> priceRecords, double [] previousState) {
 
-        network.passForward(input, previousState);
+        double [][] inputs = new double[WINDOW_SIZE][4];
+        for(int idx=0; idx < priceRecords.size(); idx++) {
+            inputs[idx][INPUT_DATE] = scaleDate(priceRecords.get(idx).date);
+            inputs[idx][INPUT_OPEN] = scalePrice(priceRecords.get(idx).open);
+            inputs[idx][INPUT_CLOSE] = scalePrice(priceRecords.get(idx).close);
+            inputs[idx][INPUT_VOLUME] = scaleVolume(priceRecords.get(idx).volume);
+        }
+        network.passForward(inputs, previousState);
     }
 
     public void train(List<PriceRecord> priceRecords, double [] previousState) throws Exception {
@@ -80,11 +84,11 @@ public class Predictor {
                 }
             }
 
-            System.out.println("Begin training: " + formatter.print(new LocalDate()));
+            System.out.println("Begin training: " + formatter.print(new LocalDateTime()));
 
             int iterations = network.learn(inputs, targets, previousState, ERROR_LIMIT, 0);
 
-            System.out.println(String.format("End training: %s, iterations: %d.", formatter.print(new LocalDate()), iterations));
+            System.out.println(String.format("End training: %s, iterations: %d.", formatter.print(new LocalDateTime()), iterations));
 
             idx1++;
         }
@@ -93,11 +97,11 @@ public class Predictor {
     }
 
     public double [] getHiddenStateLastOutput() {
-        return network.getHiddenState(WINDOW_SIZE - 1).getArray()[0];
+        return network.getHiddenState(WINDOW_SIZE - 1).getRowPackedCopy();
     }
 
     public double [] getHiddenStateFirstOutput() {
-        return network.getHiddenState(0).getArray()[0];
+        return network.getHiddenState(0).getRowPackedCopy();
     }
 
     private void initArray(double [][] array) {

@@ -19,6 +19,37 @@ public class TestAutomaticTradingMachine {
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     @Test
+    public void testTraining() throws Exception {
+        List<PriceRecord> priceRecords = new ArrayList<>();
+
+        LocalDate firstDate = formatter.parseLocalDate("2017-01-01");
+        for(int idx=0; idx < 6; idx++) {
+            PriceRecord priceRecord = new PriceRecord();
+            priceRecord.date = firstDate.plusDays(idx);
+            priceRecord.open = 10;
+            priceRecord.close = 15;
+            priceRecord.low = 8;
+            priceRecord.high = 16;
+            priceRecord.volume = 2000;
+            priceRecords.add(priceRecord);
+        }
+
+        String exchange = "AMS";
+        String stock = "PHIA";
+
+        File dir = new File(exchange + "-" + stock);
+        dir.mkdir();
+
+        AutomaticTradingMachine atm = new AutomaticTradingMachine();
+        atm.setStockDownloader((e, s) -> {
+            return priceRecords;
+        });
+
+        atm.getStockPrices(exchange, stock);
+        atm.trainAndPredict(exchange, stock);
+    }
+
+    @Test
     public void testDownloadFirstTimePrices() throws Exception {
         PriceRecord p0 = new PriceRecord();
         p0.date = formatter.parseLocalDate("2017-01-01");

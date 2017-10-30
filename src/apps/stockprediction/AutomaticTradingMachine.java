@@ -45,7 +45,7 @@ public class AutomaticTradingMachine {
 
         PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB(dir, "avgPrices");
 
-        LocalDate minDate = metaData.mostRecentTrainedDate.minusDays(Predictor.WINDOW_SIZE);
+        LocalDate minDate = metaData.mostRecentTrainedDate != null ? metaData.mostRecentTrainedDate.minusDays(Predictor.WINDOW_SIZE) : null;
         List<PriceRecord> avgPriceRecords = priceRecordDBAVGPrices.read(minDate);
         if(avgPriceRecords.size() < Predictor.WINDOW_SIZE + 1) {
             return;
@@ -55,15 +55,17 @@ public class AutomaticTradingMachine {
         avgPriceRecords.remove(mostRecentRecord);
 
         Predictor predictor = new Predictor(exchange, stock);
-        predictor.train(avgPriceRecords, readHiddenState());
+        predictor.train(avgPriceRecords, readHiddenState(dir));
 
-        writeHiddenState(predictor.getHiddenStateFirstOutput());
+        writeHiddenState(dir, predictor.getHiddenStateFirstOutput());
 
         metaData.mostRecentTrainedDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
         metaData.write(dir);
 
-        predictor.predict(mostRecentRecord, predictor.getHiddenStateLastOutput());
-        metaData.write(dir);
+        avgPriceRecords.remove(avgPriceRecords.get(0));
+        avgPriceRecords.add(mostRecentRecord);
+
+        predictor.predict(avgPriceRecords, predictor.getHiddenStateLastOutput());
     }
 
     private MetaData getMetaData(String dirName) throws Exception {
@@ -81,20 +83,20 @@ public class AutomaticTradingMachine {
         return MetaData.parse(dir);
     }
 
-    private void writeHiddenState(double [] hiddenState) throws Exception {
-        File hiddenStateFile = new File(HIDDEN_STATE_FILE);
+    private void writeHiddenState(String dir, double [] hiddenState) throws Exception {
+        File hiddenStateFile = new File(dir, HIDDEN_STATE_FILE);
         FileOutputStream out = new FileOutputStream(hiddenStateFile);
 
         for(int idx=0; idx < hiddenState.length; idx++) {
             out.write(String.format("%f", hiddenState[idx]).getBytes());
-            if(idx < hiddenState.length - 2) {
+            if(idx < hiddenState.length) {
                 out.write("\t".getBytes());
             }
         }
     }
 
-    private double [] readHiddenState() throws Exception {
-        File hiddenState = new File(HIDDEN_STATE_FILE);
+    private double [] readHiddenState(String dir) throws Exception {
+        File hiddenState = new File(dir, HIDDEN_STATE_FILE);
         if(!hiddenState.exists()) {
             return null;
         }

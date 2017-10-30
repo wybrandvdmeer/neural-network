@@ -42,6 +42,8 @@ public class Network {
 
     private final double RELU_LEAKAGE = 0.1;
 
+    private String weightFileDir=null;
+
     public Network(String name, int [] layerSizes, int noOfOutputs) {
         this(name, layerSizes, noOfOutputs, false);
     }
@@ -81,6 +83,10 @@ public class Network {
 
             wGradientsPerOutput.put(output, new Matrix(W.getRowDimension(), W.getColumnDimension()));
         }
+    }
+
+    public void setWeightFileDir(String weightFileDir) {
+        this.weightFileDir = weightFileDir;
     }
 
     public void setBeginErrorOutput(int beginErrorOutput) {
@@ -502,25 +508,26 @@ public class Network {
     we only store a mantissa of 8 digits.
     */
     public void write() throws Exception {
-        FileOutputStream weightsFile = new FileOutputStream(name);
+        File weightsFile = new File(weightFileDir, name);
+        FileOutputStream out = new FileOutputStream(weightsFile);
         for(int layer : weights.keySet()) {
             for(int row=0; row < weights.get(layer).getRowDimension(); row++) {
                 for(int col=0; col < weights.get(layer).getColumnDimension(); col++) {
-                    weightsFile.write((String.format("%.8f", weights.get(layer).get(row,col)) + "\n").getBytes());
+                    out.write((String.format("%.8f", weights.get(layer).get(row,col)) + "\n").getBytes());
                 }
-                weightsFile.write((String.format("%.8f", biasWeights.get(layer).get(row, 0)) + "\n").getBytes());
+                out.write((String.format("%.8f", biasWeights.get(layer).get(row, 0)) + "\n").getBytes());
             }
         }
 
         for(int row=0; row < W.getRowDimension(); row++) {
             for (int col = 0; col < W.getColumnDimension(); col++) {
-                weightsFile.write((String.format("%.8f", W.get(row, col)) + "\n").getBytes());
+                out.write((String.format("%.8f", W.get(row, col)) + "\n").getBytes());
             }
         }
     }
 
     public void read() throws Exception {
-        File file = new File(name);
+        File file = new File(weightFileDir, name);
         if(!file.exists()) {
             return;
         }
