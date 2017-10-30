@@ -106,8 +106,8 @@ public class TestAutomaticTradingMachine {
         PriceRecordDB pricesDB = new PriceRecordDB("AMS-PHIA", "prices");
         PriceRecordDB avgPricesDB = new PriceRecordDB("AMS-PHIA", "avgPrices");
 
-        List<PriceRecord> prices = pricesDB.read();
-        List<PriceRecord> avgPrices = avgPricesDB.read();
+        List<PriceRecord> prices = pricesDB.get();
+        List<PriceRecord> avgPrices = avgPricesDB.get();
 
         equalPrices(prices, priceRecords);
         equalPrices(avgPrices, priceRecords);
@@ -200,8 +200,8 @@ public class TestAutomaticTradingMachine {
         pricesDB = new PriceRecordDB("AMS-PHIA", "prices");
         avgPricesDB = new PriceRecordDB("AMS-PHIA", "avgPrices");
 
-        List<PriceRecord> pricesInDB = pricesDB.read();
-        avgPrices = avgPricesDB.read();
+        List<PriceRecord> pricesInDB = pricesDB.get();
+        avgPrices = avgPricesDB.get();
 
         metaData = MetaData.parse(dir);
         assertEquals(formatter.parseLocalDate("2017-01-13"), metaData.mostRecentDate);

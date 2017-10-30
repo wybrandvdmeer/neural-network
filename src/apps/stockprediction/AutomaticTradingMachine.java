@@ -28,9 +28,6 @@ public class AutomaticTradingMachine {
         PriceRecordDB priceRecordDBPrices = new PriceRecordDB(dir, "prices");
         PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB(dir, "avgPrices");
 
-        priceRecordDBPrices.read();
-        priceRecordDBAVGPrices.read();
-
         List<PriceRecord> priceRecords = stockDownloader.get(exchange, stock);
         priceRecordDBPrices.add(priceRecords);
         priceRecordDBPrices.write();
@@ -38,11 +35,13 @@ public class AutomaticTradingMachine {
         MovingAverageCalculator movingAverageCalculator = new MovingAverageCalculator(metaData.mostRecentDate);
         List<PriceRecord> avgPriceRecords = movingAverageCalculator.average(priceRecordDBPrices.getPriceRecords());
 
-        priceRecordDBAVGPrices.add(avgPriceRecords);
-        priceRecordDBAVGPrices.write();
+        if(avgPriceRecords.size() > 0) {
+            priceRecordDBAVGPrices.add(avgPriceRecords);
+            priceRecordDBAVGPrices.write();
 
-        metaData.mostRecentDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
-        metaData.write(dir);
+            metaData.mostRecentDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
+            metaData.write(dir);
+        }
     }
 
     public void trainAndPredict(String exchange, String stock) throws Exception {
@@ -50,29 +49,50 @@ public class AutomaticTradingMachine {
         MetaData metaData = getMetaData(dir);
 
         PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB(dir, "avgPrices");
+        List<PriceRecord> avgPriceRecords = priceRecordDBAVGPrices.get();
 
-        LocalDate minDate = metaData.mostRecentTrainedDate != null ? metaData.mostRecentTrainedDate.minusDays(Predictor.WINDOW_SIZE) : null;
-        List<PriceRecord> avgPriceRecords = priceRecordDBAVGPrices.read(minDate);
-        if(avgPriceRecords.size() < Predictor.WINDOW_SIZE + 1) {
+        /* We always train until (inclusive) the most recent record minus 1.
+        */
+        if(avgPriceRecords.get(avgPriceRecords.size() - 2).date.equals(metaData.mostRecentTrainedDate)) {
             return;
         }
 
-        PriceRecord mostRecentRecord = avgPriceRecords.get(avgPriceRecords.size() - 1);
-        avgPriceRecords.remove(mostRecentRecord);
+        LocalDate minDate = determineFirstDateTrainingBatch(avgPriceRecords, metaData.mostRecentTrainedDate);
+        if(minDate == null) {
+            return;
+        }
+
+        List<PriceRecord> trainingInput = priceRecordDBAVGPrices.get(minDate);
+
+        PriceRecord mostRecentRecord = trainingInput.get(trainingInput.size() - 1);
+        trainingInput.remove(mostRecentRecord);
 
         Predictor predictor = new Predictor(exchange, stock);
-        predictor.train(avgPriceRecords, readHiddenState(dir));
+        predictor.train(trainingInput, readHiddenState(dir));
 
         writeHiddenState(dir, predictor.getHiddenStateFirstOutput());
 
-        metaData.mostRecentTrainedDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
+        metaData.mostRecentTrainedDate = trainingInput.get(trainingInput.size() - 1).date;
         metaData.write(dir);
 
-        avgPriceRecords.remove(avgPriceRecords.get(0));
-        avgPriceRecords.add(mostRecentRecord);
+        trainingInput.remove(0);
+        trainingInput.add(mostRecentRecord);
 
-        Prediction prediction = predictor.predict(avgPriceRecords, predictor.getHiddenStateLastOutput());
+        Prediction prediction = predictor.predict(trainingInput, predictor.getHiddenStateLastOutput());
         writePrediction(dir, prediction, mostRecentRecord);
+    }
+
+    private LocalDate determineFirstDateTrainingBatch(List<PriceRecord> priceRecords, LocalDate mostRecentTrainedDate) {
+        if(mostRecentTrainedDate == null) {
+            return priceRecords.get(0).date;
+        }
+
+        for(int idx=0; idx < priceRecords.size(); idx++) {
+            if(priceRecords.get(idx).date.equals(mostRecentTrainedDate)) {
+                return idx > Predictor.WINDOW_SIZE ? priceRecords.get(idx - Predictor.WINDOW_SIZE).date : null;
+            }
+        }
+        return null;
     }
 
     private LocalDate nextWorkingDay(LocalDate localDate) {

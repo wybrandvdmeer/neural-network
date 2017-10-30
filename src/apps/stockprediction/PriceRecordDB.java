@@ -13,17 +13,30 @@ public class PriceRecordDB {
     private final List<PriceRecord> priceRecords = new ArrayList<>();
     private static final String HEADER = "DATE\tCLOSE\tHIGH\tLOW\tOPEN\tVOLUME";
 
-    public PriceRecordDB(String dir, String name) {
+    public PriceRecordDB(String dir, String name) throws Exception {
         db = new File(dir, name);
+        read();
     }
 
-    public List<PriceRecord> read() throws Exception {
-        return read(null);
+    public List<PriceRecord> get() {
+        return get(null);
     }
 
-    public List<PriceRecord> read(LocalDate fromDate) throws Exception {
+    public List<PriceRecord> get(LocalDate fromDate) {
+        List<PriceRecord> result = new ArrayList<>();
+
+        for(PriceRecord priceRecord : this.priceRecords) {
+            if(fromDate != null && priceRecord.date.isBefore(fromDate)) {
+                continue;
+            }
+            result.add(priceRecord);
+        }
+        return result;
+    }
+
+    private void read() throws Exception {
         if(!db.exists()) {
-            return null;
+            return;
         }
 
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(db)));
@@ -35,16 +48,9 @@ public class PriceRecordDB {
                 header = false;
                 continue;
             }
-            PriceRecord priceRecord = PriceRecord.parse(line);
 
-            if(fromDate != null && fromDate.isBefore(priceRecord.date)) {
-                continue;
-            }
-
-            priceRecords.add(priceRecord);
+            priceRecords.add(PriceRecord.parse(line));
         }
-
-        return priceRecords;
     }
 
     public void add(List<PriceRecord> priceRecords) {
