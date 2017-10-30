@@ -127,10 +127,6 @@ public class Predictor {
         network.write();
     }
 
-    public double [] getHiddenStateLastOutput() {
-        return network.getHiddenState(WINDOW_SIZE - 1).getRowPackedCopy();
-    }
-
     public double [] getHiddenStateFirstOutput() {
         return network.getHiddenState(0).getRowPackedCopy();
     }

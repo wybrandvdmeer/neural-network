@@ -17,11 +17,15 @@ public class AutomaticTradingMachine {
 
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
-    public void setStockDownloader(StockDownloader stockDownloader) {
+    public AutomaticTradingMachine() {
+        setStockDownloader(new StockDownloaderImpl());
+    }
+
+    void setStockDownloader(StockDownloader stockDownloader) {
         this.stockDownloader = stockDownloader;
     }
 
-    public void getStockPrices(String exchange, String stock) throws Exception {
+    void getStockPrices(String exchange, String stock) throws Exception {
         String dir = exchange + "-" + stock;
         MetaData metaData = getMetaData(dir);
 
@@ -44,7 +48,7 @@ public class AutomaticTradingMachine {
         }
     }
 
-    public void trainAndPredict(String exchange, String stock) throws Exception {
+    void trainAndPredict(String exchange, String stock) throws Exception {
         String dir = exchange + "-" + stock;
         MetaData metaData = getMetaData(dir);
 
@@ -75,11 +79,8 @@ public class AutomaticTradingMachine {
         metaData.mostRecentTrainedDate = trainingInput.get(trainingInput.size() - 1).date;
         metaData.write(dir);
 
-        trainingInput.remove(0);
-        trainingInput.add(mostRecentRecord);
-
-        Prediction prediction = predictor.predict(trainingInput, predictor.getHiddenStateLastOutput());
-        writePrediction(dir, prediction, mostRecentRecord);
+        Prediction prediction = predictor.predict(priceRecordDBAVGPrices.get(Predictor.WINDOW_SIZE), readHiddenState(dir));
+        writePrediction(dir, prediction, trainingInput.get(trainingInput.size() - 1));
     }
 
     private LocalDate determineFirstDateTrainingBatch(List<PriceRecord> priceRecords, LocalDate mostRecentTrainedDate) {
@@ -198,5 +199,11 @@ public class AutomaticTradingMachine {
         }
 
         return previousStateArr;
+    }
+
+    public static void main(String [] args) throws Exception {
+        AutomaticTradingMachine atm = new AutomaticTradingMachine();
+        atm.getStockPrices(args[0], args[1]);
+        atm.trainAndPredict(args[0], args[1]);
     }
 }

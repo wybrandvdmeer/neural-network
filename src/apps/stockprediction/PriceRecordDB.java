@@ -18,6 +18,17 @@ public class PriceRecordDB {
         read();
     }
 
+    public List<PriceRecord> get(int size) {
+        if(priceRecords.size() >= size) {
+            List<PriceRecord> results = new ArrayList<>();
+            for(int idx=priceRecords.size() - size; idx < priceRecords.size(); idx++) {
+                results.add(priceRecords.get(idx));
+            }
+            return results;
+        }
+        return null;
+    }
+
     public List<PriceRecord> get() {
         return get(null);
     }
@@ -25,7 +36,7 @@ public class PriceRecordDB {
     public List<PriceRecord> get(LocalDate fromDate) {
         List<PriceRecord> result = new ArrayList<>();
 
-        for(PriceRecord priceRecord : this.priceRecords) {
+        for(PriceRecord priceRecord : priceRecords) {
             if(fromDate != null && priceRecord.date.isBefore(fromDate)) {
                 continue;
             }
