@@ -1,12 +1,14 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public class AutomaticTradingMachine {
-    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd-hh24-mm-ss");
+
+    private static final String HIDDEN_STATE_FILE="hiddenStateFile";
+
     private StockDownloader stockDownloader;
 
     public void setStockDownloader(StockDownloader stockDownloader) {
@@ -14,9 +16,58 @@ public class AutomaticTradingMachine {
     }
 
     public void getStockPrices(String exchange, String stock) throws Exception {
-        MetaData metaData;
+        String dir = exchange + "-" + stock;
+        MetaData metaData = getMetaData(dir);
 
-        File dir = new File(exchange + "-" + stock);
+        PriceRecordDB priceRecordDBPrices = new PriceRecordDB(dir, "prices");
+        PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB(dir, "avgPrices");
+
+        priceRecordDBPrices.read();
+        priceRecordDBAVGPrices.read();
+
+        List<PriceRecord> priceRecords = stockDownloader.get(exchange, stock);
+        priceRecordDBPrices.add(priceRecords);
+        priceRecordDBPrices.write();
+
+        MovingAverageCalculator movingAverageCalculator = new MovingAverageCalculator(metaData.mostRecentDate);
+        List<PriceRecord> avgPriceRecords = movingAverageCalculator.average(priceRecordDBPrices.getPriceRecords());
+
+        priceRecordDBAVGPrices.add(avgPriceRecords);
+        priceRecordDBAVGPrices.write();
+
+        metaData.mostRecentDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
+        metaData.write(dir);
+    }
+
+    public void trainAndPredict(String exchange, String stock) throws Exception {
+        String dir = exchange + "-" + stock;
+        MetaData metaData = getMetaData(dir);
+
+        PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB(dir, "avgPrices");
+
+        LocalDate minDate = metaData.mostRecentTrainedDate.minusDays(Predictor.WINDOW_SIZE);
+        List<PriceRecord> avgPriceRecords = priceRecordDBAVGPrices.read(minDate);
+        if(avgPriceRecords.size() < Predictor.WINDOW_SIZE + 1) {
+            return;
+        }
+
+        PriceRecord mostRecentRecord = avgPriceRecords.get(avgPriceRecords.size() - 1);
+        avgPriceRecords.remove(mostRecentRecord);
+
+        Predictor predictor = new Predictor(exchange, stock);
+        predictor.train(avgPriceRecords, readHiddenState());
+
+        writeHiddenState(predictor.getHiddenStateFirstOutput());
+
+        metaData.mostRecentTrainedDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
+        metaData.write(dir);
+
+        predictor.predict(mostRecentRecord, predictor.getHiddenStateLastOutput());
+        metaData.write(dir);
+    }
+
+    private MetaData getMetaData(String dirName) throws Exception {
+        File dir = new File(dirName);
         if (!dir.exists()) {
             if (!dir.mkdir()) {
                 throw new RuntimeException("Could not create dir: " + dir.getAbsolutePath());
@@ -27,52 +78,28 @@ public class AutomaticTradingMachine {
             throw new RuntimeException(String.format("Dir %s is not a directory.", dir.getAbsolutePath()));
         }
 
-        metaData = MetaData.parse(dir);
-
-        PriceRecordDB priceRecordDBPrices = new PriceRecordDB(dir.getName(), "prices");
-        PriceRecordDB priceRecordDBAVGPrices = new PriceRecordDB(dir.getName(), "avgPrices");
-
-        priceRecordDBPrices.read();
-        priceRecordDBAVGPrices.read();
-
-        List<PriceRecord> priceRecords = stockDownloader.get(exchange, stock);
-        priceRecordDBPrices.add(priceRecords);
-        priceRecordDBPrices.write();
-
-        MovingAverageCalculator movingAverageCalculator = new MovingAverageCalculator(metaData.latestStockDate);
-        List<PriceRecord> avgPriceRecords = movingAverageCalculator.average(priceRecordDBPrices.getPriceRecords());
-
-        priceRecordDBAVGPrices.add(avgPriceRecords);
-        priceRecordDBAVGPrices.write();
-
-        metaData.latestStockDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
-        metaData.write(dir);
-
+        return MetaData.parse(dir);
     }
 
-    public void trade() throws Exception {
-        /*
-        for(String exchangeAndStock : stocks) {
+    private void writeHiddenState(double [] hiddenState) throws Exception {
+        File hiddenStateFile = new File(HIDDEN_STATE_FILE);
+        FileOutputStream out = new FileOutputStream(hiddenStateFile);
 
-            Predictor predictor = new Predictor(exchange, stock);
-            predictor.train(avgPriceRecords, readPreviousState());
-
-            predictor.predict(avgPriceRecords.get(avgPriceRecords.size() - 1), predictor.getPreviousState());
-
-            metaData.latestStockDate = avgPriceRecords.get(avgPriceRecords.size() - 1).date;
-            metaData.write();
+        for(int idx=0; idx < hiddenState.length; idx++) {
+            out.write(String.format("%f", hiddenState[idx]).getBytes());
+            if(idx < hiddenState.length - 2) {
+                out.write("\t".getBytes());
+            }
         }
-        */
     }
 
-    private double [] readPreviousState() throws Exception {
-
-        File previousState = new File("previousState");
-        if(!previousState.exists()) {
+    private double [] readHiddenState() throws Exception {
+        File hiddenState = new File(HIDDEN_STATE_FILE);
+        if(!hiddenState.exists()) {
             return null;
         }
 
-        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(previousState)));
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(hiddenState)));
 
         String line;
         if((line = br.readLine()) == null) {

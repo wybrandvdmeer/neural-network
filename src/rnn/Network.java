@@ -365,11 +365,6 @@ public class Network {
         return iterations;
     }
 
-    public double [] getPreviousState() {
-        // Assuming its an row-vector.
-        return outputsPerTimestamp.get(outputsPerTimestamp.size() - 1).get(1).getArray()[0];
-    }
-
     Map<Integer, Matrix> getGradients(int output) {
         return gradientsPerLayerPerOutput.get(output);
     }
@@ -442,6 +437,10 @@ public class Network {
 
     public double getOutput(int index) {
         return getOutputVector(noOfOutputs - 1).get(index, 0);
+    }
+
+    public Matrix getHiddenState(int output) {
+        return outputsPerTimestamp.get(output).get(1);
     }
 
     private Matrix get2Dim(Matrix vector) {

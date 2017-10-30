@@ -1,7 +1,8 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class MovingAverageCalculator {
@@ -12,11 +13,11 @@ public class MovingAverageCalculator {
     private static final int OPEN_POS=3;
     private static final int VOLUME_POS=4;
 
-    private final Date lastAVGDate;
+    private final LocalDate lastAVGDate;
     private static final int MOVING_AVG_WINDOW_SIZE=10;
     private List<List<Double>> movingAverages = new ArrayList<>();
 
-    public MovingAverageCalculator(Date lastAVGDate) {
+    public MovingAverageCalculator(LocalDate lastAVGDate) {
         this.lastAVGDate = lastAVGDate;
         for(int col=0; col < 5; col++) {
             movingAverages.add(col, new ArrayList<>());

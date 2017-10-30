@@ -1,14 +1,18 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class MetaData {
-    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-    private static final String LATEST_STOCK_DATA_DATE_TAG="latestStockDataDate=";
+    private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
+    private static final String MOST_RECENT_DATE_TAG ="mostRecentDate=";
+    private static final String MOST_RECENT_TRAINED_DATE_TAG="mostRecentTrainedDate";
 
-    public Date latestStockDate;
+    public LocalDate mostRecentDate;
+    public LocalDate mostRecentTrainedDate;
 
     private final static String NAME = "meta-data";
 
@@ -25,15 +29,16 @@ public class MetaData {
 
         String line;
         while((line = br.readLine()) != null) {
-            metaData.latestStockDate = getDate(LATEST_STOCK_DATA_DATE_TAG, line);
+            metaData.mostRecentDate = getDate(MOST_RECENT_DATE_TAG, line);
+            metaData.mostRecentTrainedDate = getDate(MOST_RECENT_TRAINED_DATE_TAG, line);
         }
 
         return metaData;
     }
 
-    private static Date getDate(String tag, String line)throws Exception {
+    private static LocalDate getDate(String tag, String line)throws Exception {
         if(line.startsWith(tag)) {
-            return formatter.parse(line.replaceFirst(tag,""));
+            return formatter.parseLocalDate(line.replaceFirst(tag,""));
         }
         return null;
     }
@@ -42,10 +47,13 @@ public class MetaData {
         out.write((tag + value + "\n").getBytes());
     }
 
-    public void write(File dir) throws Exception {
+    public void write(String dir) throws Exception {
         FileOutputStream out = new FileOutputStream(new File(dir, NAME));
-        if(latestStockDate != null) {
-            writeTag(LATEST_STOCK_DATA_DATE_TAG, formatter.format(latestStockDate), out);
+        if(mostRecentDate != null) {
+            writeTag(MOST_RECENT_DATE_TAG, formatter.print(mostRecentDate), out);
+        }
+        if(mostRecentTrainedDate != null) {
+            writeTag(MOST_RECENT_TRAINED_DATE_TAG, formatter.print(mostRecentTrainedDate), out);
         }
         out.close();
     }

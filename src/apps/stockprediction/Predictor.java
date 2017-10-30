@@ -1,10 +1,10 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import rnn.Network;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 public class Predictor {
@@ -18,21 +18,15 @@ public class Predictor {
     private static final int BETWEEN_0_AND_05_PERCENT_NEG=2;
     private static final int HIGHER_05_PERCENT_NEG=3;
 
-    private static final int WINDOW_SIZE=5;
+    public static final int WINDOW_SIZE=5;
 
-    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-    private static final SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm:ss");
-
-    private final String exchange, stock;
+    private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("hh:mm:ss");
 
     private static final double ERROR_LIMIT = 0.0001;
 
     private Network network;
 
     public Predictor(String exchange, String stock) throws Exception {
-        this.exchange = exchange;
-        this.stock = stock;
-
         network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 10, 4}, WINDOW_SIZE);
         network.setLearningRate(0.1);
         network.read();
@@ -57,7 +51,7 @@ public class Predictor {
 
         int idx1=0;
 
-        while(idx1 + WINDOW_SIZE < priceRecords.size()) {
+        while(idx1 + WINDOW_SIZE <= priceRecords.size()) {
             for(int idx2=0; idx2 < WINDOW_SIZE; idx2++) {
                 PriceRecord priceRecord = priceRecords.get(idx1 + idx2);
 
@@ -86,11 +80,11 @@ public class Predictor {
                 }
             }
 
-            System.out.println("Begin training: " + timeFormatter.format(new Date()));
+            System.out.println("Begin training: " + formatter.print(new LocalDate()));
 
             int iterations = network.learn(inputs, targets, previousState, ERROR_LIMIT, 0);
 
-            System.out.println(String.format("End training: %s, iterations: %d.", timeFormatter.format(new Date()), iterations));
+            System.out.println(String.format("End training: %s, iterations: %d.", formatter.print(new LocalDate()), iterations));
 
             idx1++;
         }
@@ -98,8 +92,12 @@ public class Predictor {
         network.write();
     }
 
-    public double [] getPreviousState() {
-        return network.getPreviousState();
+    public double [] getHiddenStateLastOutput() {
+        return network.getHiddenState(WINDOW_SIZE - 1).getArray()[0];
+    }
+
+    public double [] getHiddenStateFirstOutput() {
+        return network.getHiddenState(0).getArray()[0];
     }
 
     private void initArray(double [][] array) {
@@ -110,10 +108,8 @@ public class Predictor {
         }
     }
 
-    private double scaleDate(Date date) {
-        Calendar c = Calendar.getInstance();
-        c.setTime(date);
-        return (c.get(Calendar.DAY_OF_WEEK) - Calendar.MONDAY) / 5 + 0.01;
+    private double scaleDate(LocalDate date) {
+        return date.getDayOfWeek() / 5 - 0.01;
     }
 
     private double scalePrice(double price) {

@@ -1,10 +1,11 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class StockDownloaderImpl implements StockDownloader {
@@ -50,7 +51,7 @@ public class StockDownloaderImpl implements StockDownloader {
 
     private PriceRecord getPriceRecord(long date, int interval, long noOfDay, String [] columns) {
         return new PriceRecord(
-                new Date(date * 1000 + noOfDay * interval * 1000),
+                new LocalDate(date * 1000 + noOfDay * interval * 1000),
                 new Double(columns[1]),
                 new Double(columns[2]),
                 new Double(columns[3]),

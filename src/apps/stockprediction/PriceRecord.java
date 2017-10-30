@@ -1,10 +1,13 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class PriceRecord {
-    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+    private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     private static final int DATE_POS=0;
     private static final int CLOSE_POS=1;
@@ -13,7 +16,7 @@ public class PriceRecord {
     private static final int OPEN_POS=4;
     private static final int VOLUME_POS=5;
 
-    public Date date;
+    public LocalDate date;
     public double open;
     public double close;
     public double volume;
@@ -23,7 +26,7 @@ public class PriceRecord {
     public PriceRecord() {
     }
 
-    public PriceRecord(Date date, double close, double high, double low, double open, double volume) {
+    public PriceRecord(LocalDate date, double close, double high, double low, double open, double volume) {
         this.date = date;
         this.open = open;
         this.close = close;
@@ -35,7 +38,7 @@ public class PriceRecord {
     public static PriceRecord parse(String line) throws Exception {
         String columns [] = line.split("\t");
         PriceRecord priceRecord = new PriceRecord();
-        priceRecord.date = formatter.parse(columns[DATE_POS]);
+        priceRecord.date = formatter.parseLocalDate(columns[DATE_POS]);
         priceRecord.open = new Double(columns[OPEN_POS]);
         priceRecord.close = new Double(columns[CLOSE_POS]);
         priceRecord.volume = new Double(columns[VOLUME_POS]);
@@ -61,7 +64,7 @@ public class PriceRecord {
 
     public String toString() {
         return String.format("%s\t%f\t%f\t%f\t%f\t%f",
-                formatter.format(date),
+                formatter.print(date),
                 close,
                 high,
                 low,

@@ -1,16 +1,14 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.junit.After;
 import org.junit.Test;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -18,12 +16,12 @@ import static org.junit.Assert.assertTrue;
 
 public class TestAutomaticTradingMachine {
 
-    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+    private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     @Test
     public void testDownloadFirstTimePrices() throws Exception {
         PriceRecord p0 = new PriceRecord();
-        p0.date = formatter.parse("2017-01-01");
+        p0.date = formatter.parseLocalDate("2017-01-01");
         p0.open = 10;
         p0.close = 15;
         p0.low = 8;
@@ -31,7 +29,7 @@ public class TestAutomaticTradingMachine {
         p0.volume = 2000;
 
         PriceRecord p1 = new PriceRecord();
-        p1.date = formatter.parse("2017-01-02");
+        p1.date = formatter.parseLocalDate("2017-01-02");
         p1.open = 10;
         p1.close = 15;
         p1.low = 8;
@@ -39,7 +37,7 @@ public class TestAutomaticTradingMachine {
         p1.volume = 2000;
 
         PriceRecord p2 = new PriceRecord();
-        p2.date = formatter.parse("2017-01-03");
+        p2.date = formatter.parseLocalDate("2017-01-03");
         p2.open = 10;
         p2.close = 15;
         p2.low = 8;
@@ -77,18 +75,17 @@ public class TestAutomaticTradingMachine {
         equalPrices(avgPrices, priceRecords);
 
         MetaData metaData = MetaData.parse(dir);
-        assertEquals(formatter.parse("2017-01-03"), metaData.latestStockDate);
+        assertEquals(formatter.parseLocalDate("2017-01-03"), metaData.mostRecentDate);
     }
 
     @Test
     public void testDownloadSecondTimePrices() throws Exception {
         List<PriceRecord> prices = new ArrayList<>();
 
-        Date firstDate = formatter.parse("2017-01-01");
-        long dayInterval = 24 * 60 * 60 * 1000;
+        LocalDate firstDate = formatter.parseLocalDate("2017-01-01");
         for(int idx=0; idx < 11; idx++) {
             PriceRecord priceRecord = new PriceRecord();
-            priceRecord.date = new Date(firstDate.getTime() + idx * dayInterval);
+            priceRecord.date = firstDate.plusDays(idx);
             priceRecord.open = 10;
             priceRecord.close = 15;
             priceRecord.low = 8;
@@ -113,12 +110,12 @@ public class TestAutomaticTradingMachine {
         avgPricesDB.write();
 
         MetaData metaData = MetaData.parse(dir);
-        metaData.latestStockDate = avgPrices.get(avgPrices.size() - 1).date;
-        metaData.write(dir);
+        metaData.mostRecentDate = avgPrices.get(avgPrices.size() - 1).date;
+        metaData.write(dir.getName());
 
         /* New download: overlaps existing data. */
         PriceRecord p0 = new PriceRecord();
-        p0.date = formatter.parse("2017-01-10");
+        p0.date = formatter.parseLocalDate("2017-01-10");
         p0.open = 10;
         p0.close = 15;
         p0.low = 8;
@@ -126,7 +123,7 @@ public class TestAutomaticTradingMachine {
         p0.volume = 2000;
 
         PriceRecord p1 = new PriceRecord();
-        p1.date = formatter.parse("2017-01-11");
+        p1.date = formatter.parseLocalDate("2017-01-11");
         p1.open = 10;
         p1.close = 15;
         p1.low = 8;
@@ -134,7 +131,7 @@ public class TestAutomaticTradingMachine {
         p1.volume = 2000;
 
         PriceRecord p2 = new PriceRecord();
-        p2.date = formatter.parse("2017-01-12");
+        p2.date = formatter.parseLocalDate("2017-01-12");
         p2.open = 20;
         p2.close = 30;
         p2.low = 16;
@@ -142,7 +139,7 @@ public class TestAutomaticTradingMachine {
         p2.volume = 4000;
 
         PriceRecord p3 = new PriceRecord();
-        p3.date = formatter.parse("2017-01-13");
+        p3.date = formatter.parseLocalDate("2017-01-13");
         p3.open = 20;
         p3.close = 30;
         p3.low = 16;
@@ -169,7 +166,7 @@ public class TestAutomaticTradingMachine {
         avgPrices = avgPricesDB.read();
 
         metaData = MetaData.parse(dir);
-        assertEquals(formatter.parse("2017-01-13"), metaData.latestStockDate);
+        assertEquals(formatter.parseLocalDate("2017-01-13"), metaData.mostRecentDate);
 
         assertEquals(11, avgPrices.get(avgPrices.size() - 2).open, 0.0001);
         assertEquals(12, avgPrices.get(avgPrices.size() - 1).open, 0.0001);
@@ -186,8 +183,8 @@ public class TestAutomaticTradingMachine {
     private void equalPrices(List<PriceRecord> prices1, List<PriceRecord> prices2) {
         assertTrue(prices1.size() == prices2.size());
 
-        Collections.sort(prices1, (d1, d2) -> (int)(d1.date.getTime() - d2.date.getTime()));
-        Collections.sort(prices2, (d1, d2) -> (int)(d1.date.getTime() - d2.date.getTime()));
+        Collections.sort(prices1, (d1, d2) -> d1.date.compareTo(d2.date));
+        Collections.sort(prices2, (d1, d2) -> d1.date.compareTo(d2.date));
 
         for(int idx=0; idx < prices1.size(); idx++) {
             equalPrice(prices1.get(idx), prices2.get(idx));

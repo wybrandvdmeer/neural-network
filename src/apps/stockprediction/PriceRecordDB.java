@@ -1,5 +1,7 @@
 package apps.stockprediction;
 
+import org.joda.time.LocalDate;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,6 +18,10 @@ public class PriceRecordDB {
     }
 
     public List<PriceRecord> read() throws Exception {
+        return read(null);
+    }
+
+    public List<PriceRecord> read(LocalDate fromDate) throws Exception {
         if(!db.exists()) {
             return null;
         }
@@ -29,7 +35,13 @@ public class PriceRecordDB {
                 header = false;
                 continue;
             }
-            priceRecords.add(PriceRecord.parse(line));
+            PriceRecord priceRecord = PriceRecord.parse(line);
+
+            if(fromDate != null && fromDate.isBefore(priceRecord.date)) {
+                continue;
+            }
+
+            priceRecords.add(priceRecord);
         }
 
         return priceRecords;
@@ -42,7 +54,7 @@ public class PriceRecordDB {
             }
         }
 
-        Collections.sort(this.priceRecords, (d1, d2) -> (int)(d1.date.getTime() - d2.date.getTime()));
+        Collections.sort(this.priceRecords, (d1, d2) -> d1.date.compareTo(d2.date));
     }
 
     public List<PriceRecord> getPriceRecords() {
