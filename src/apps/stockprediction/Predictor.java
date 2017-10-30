@@ -14,10 +14,12 @@ public class Predictor {
     private static final int INPUT_CLOSE=2;
     private static final int INPUT_VOLUME=3;
 
-    private static final int HIGHER_05_PERCENT=0;
-    private static final int BETWEEN_0_AND_05_PERCENT=1;
-    private static final int BETWEEN_0_AND_05_PERCENT_NEG=2;
-    private static final int HIGHER_05_PERCENT_NEG=3;
+    private static final int HIGHER_2_PERCENT_POS=0;
+    private static final int BETWEEN_1_AND_2_PERCENT_POS=1;
+    private static final int BETWEEN_0_AND_1_PERCENT_POS=2;
+    private static final int BETWEEN_0_AND_1_PERCENT_NEG_POS=3;
+    private static final int BETWEEN_1_AND_2_PERCENT_NEG_POS=4;
+    private static final int HIGHER_2_PERCENT_NEG_POS=5;
 
     public static final int WINDOW_SIZE=5;
 
@@ -37,8 +39,7 @@ public class Predictor {
         network.setBeginErrorOutput(1);
     }
 
-    public void predict(List<PriceRecord> priceRecords, double [] previousState) {
-
+    public Prediction predict(List<PriceRecord> priceRecords, double [] previousState) {
         double [][] inputs = new double[WINDOW_SIZE][4];
         for(int idx=0; idx < priceRecords.size(); idx++) {
             inputs[idx][INPUT_DATE] = scaleDate(priceRecords.get(idx).date);
@@ -47,6 +48,32 @@ public class Predictor {
             inputs[idx][INPUT_VOLUME] = scaleVolume(priceRecords.get(idx).volume);
         }
         network.passForward(inputs, previousState);
+
+        if(network.getOutput(HIGHER_2_PERCENT_POS) > 0.9) {
+            return Prediction.HIGHER_2_PERCENT;
+        }
+
+        if(network.getOutput(BETWEEN_1_AND_2_PERCENT_POS) > 0.9) {
+            return Prediction.BETWEEN_1_AND_2_PERCENT;
+        }
+
+        if(network.getOutput(BETWEEN_0_AND_1_PERCENT_POS) > 0.9) {
+            return Prediction.BETWEEN_0_AND_1_PERCENT;
+        }
+
+        if(network.getOutput(BETWEEN_0_AND_1_PERCENT_NEG_POS) > 0.9) {
+            return Prediction.BETWEEN_0_AND_1_PERCENT_NEG;
+        }
+
+        if(network.getOutput(BETWEEN_1_AND_2_PERCENT_NEG_POS) > 0.9) {
+            return Prediction.BETWEEN_1_AND_2_PERCENT_NEG;
+        }
+
+        if(network.getOutput(HIGHER_2_PERCENT_NEG_POS) > 0.9) {
+            return Prediction.HIGHER_2_PERCENT_NEG;
+        }
+
+        return Prediction.NO_PREDICTION;
     }
 
     public void train(List<PriceRecord> priceRecords, double [] previousState) throws Exception {
@@ -73,14 +100,18 @@ public class Predictor {
                 double previousClose = priceRecords.get(idx1 + idx2 - 1).close;
                 double delta = (close / previousClose - 1) * 100;
 
-                if(delta > 0.5) {
-                    targets[idx2][HIGHER_05_PERCENT] = 0.99;
+                if(delta >= 2) {
+                    targets[idx2][HIGHER_2_PERCENT_POS] = 0.99;
+                } else if(delta >= 1) {
+                    targets[idx2][BETWEEN_1_AND_2_PERCENT_POS] = 0.99;
                 } else if(delta >= 0) {
-                    targets[idx2][BETWEEN_0_AND_05_PERCENT] = 0.99;
-                } else if(delta >= -0.5) {
-                    targets[idx2][BETWEEN_0_AND_05_PERCENT_NEG] = 0.99;
+                    targets[idx2][BETWEEN_0_AND_1_PERCENT_POS] = 0.99;
+                } else if(delta >= -1){
+                    targets[idx2][BETWEEN_0_AND_1_PERCENT_NEG_POS] = 0.99;
+                } else if(delta >= -2) {
+                    targets[idx2][BETWEEN_1_AND_2_PERCENT_NEG_POS] = 0.99;
                 } else {
-                    targets[idx2][HIGHER_05_PERCENT_NEG] = 0.99;
+                    targets[idx2][HIGHER_2_PERCENT_NEG_POS] = 0.99;
                 }
             }
 

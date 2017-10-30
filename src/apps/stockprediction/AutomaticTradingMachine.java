@@ -1,15 +1,21 @@
 package apps.stockprediction;
 
+import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.io.*;
 import java.util.List;
 
 public class AutomaticTradingMachine {
 
-    private static final String HIDDEN_STATE_FILE="hiddenStateFile";
+    public static final String HIDDEN_STATE_FILE="hiddenStateFile";
+    public static final String PREDICTION_FILE="predictions";
 
     private StockDownloader stockDownloader;
+
+    private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
 
     public void setStockDownloader(StockDownloader stockDownloader) {
         this.stockDownloader = stockDownloader;
@@ -65,7 +71,62 @@ public class AutomaticTradingMachine {
         avgPriceRecords.remove(avgPriceRecords.get(0));
         avgPriceRecords.add(mostRecentRecord);
 
-        predictor.predict(avgPriceRecords, predictor.getHiddenStateLastOutput());
+        Prediction prediction = predictor.predict(avgPriceRecords, predictor.getHiddenStateLastOutput());
+        writePrediction(dir, prediction, mostRecentRecord);
+    }
+
+    private LocalDate nextWorkingDay(LocalDate localDate) {
+        LocalDate nextWorkingDay = localDate;
+        while(true) {
+            nextWorkingDay = nextWorkingDay.plusDays(1);
+            if(nextWorkingDay.getDayOfWeek() >= DateTimeConstants.MONDAY && nextWorkingDay.getDayOfWeek() <= DateTimeConstants.FRIDAY) {
+                return nextWorkingDay;
+            }
+        }
+    }
+
+    private void writePrediction(String dir, Prediction prediction, PriceRecord priceRecord) throws Exception {
+        LocalDate predictionDate = nextWorkingDay(priceRecord.date);
+        BufferedWriter bw = new BufferedWriter(new FileWriter(dir + "/" + PREDICTION_FILE, true));
+
+        double lower=0, upper=0;
+        switch (prediction) {
+            case BETWEEN_0_AND_1_PERCENT:
+                lower = priceRecord.close;
+                upper = priceRecord.close * 1.01;
+                break;
+
+            case BETWEEN_1_AND_2_PERCENT:
+                lower = priceRecord.close * 1.01;
+                upper = priceRecord.close * 1.02;
+                break;
+
+            case HIGHER_2_PERCENT:
+                upper = priceRecord.close * 1.02;
+                lower = 0;
+                break;
+
+            case BETWEEN_0_AND_1_PERCENT_NEG:
+                upper = priceRecord.close;
+                lower = priceRecord.close * 0.99;
+                break;
+
+            case BETWEEN_1_AND_2_PERCENT_NEG:
+                upper = priceRecord.close * 0.99;
+                lower = priceRecord.close * 0.98;
+                break;
+
+            case HIGHER_2_PERCENT_NEG:
+                upper = 0;
+                lower = priceRecord.close * 0.98;
+                break;
+        }
+
+        bw.write(String.format("%s: %s %.3f %.3f\n", formatter.print(predictionDate),
+                                        prediction,
+                                        lower,
+                                        upper));
+        bw.close();
     }
 
     private MetaData getMetaData(String dirName) throws Exception {

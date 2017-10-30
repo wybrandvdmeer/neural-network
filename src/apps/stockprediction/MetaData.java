@@ -8,7 +8,7 @@ import java.io.*;
 
 public class MetaData {
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd");
-    private static final String MOST_RECENT_DATE_TAG ="mostRecentDate=";
+    private static final String MOST_RECENT_DATE_TAG ="mostRecentDate";
     private static final String MOST_RECENT_TRAINED_DATE_TAG="mostRecentTrainedDate";
 
     public LocalDate mostRecentDate;
@@ -29,22 +29,25 @@ public class MetaData {
 
         String line;
         while((line = br.readLine()) != null) {
-            metaData.mostRecentDate = getDate(MOST_RECENT_DATE_TAG, line);
-            metaData.mostRecentTrainedDate = getDate(MOST_RECENT_TRAINED_DATE_TAG, line);
+            if(metaData.mostRecentDate == null) {
+                metaData.mostRecentDate = getDate(MOST_RECENT_DATE_TAG, line);
+            }
+            if(metaData.mostRecentTrainedDate == null) {
+                metaData.mostRecentTrainedDate = getDate(MOST_RECENT_TRAINED_DATE_TAG, line);
+            }
         }
-
         return metaData;
     }
 
-    private static LocalDate getDate(String tag, String line)throws Exception {
+    private static LocalDate getDate(String tag, String line) throws Exception {
         if(line.startsWith(tag)) {
-            return formatter.parseLocalDate(line.replaceFirst(tag,""));
+            return formatter.parseLocalDate(line.replaceFirst(tag + "=", ""));
         }
         return null;
     }
 
     private void writeTag(String tag, String value, FileOutputStream out) throws Exception {
-        out.write((tag + value + "\n").getBytes());
+        out.write((tag + "=" + value + "\n").getBytes());
     }
 
     public void write(String dir) throws Exception {

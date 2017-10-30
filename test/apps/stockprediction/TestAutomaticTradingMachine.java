@@ -41,12 +41,19 @@ public class TestAutomaticTradingMachine {
         dir.mkdir();
 
         AutomaticTradingMachine atm = new AutomaticTradingMachine();
-        atm.setStockDownloader((e, s) -> {
-            return priceRecords;
-        });
+        atm.setStockDownloader((e, s) -> priceRecords);
 
         atm.getStockPrices(exchange, stock);
         atm.trainAndPredict(exchange, stock);
+
+        assertTrue(new File(dir, AutomaticTradingMachine.HIDDEN_STATE_FILE).exists());
+        assertTrue(new File(dir, exchange + "-" + stock + "-network").exists());
+        assertTrue(new File(dir, AutomaticTradingMachine.PREDICTION_FILE).exists());
+
+        MetaData metaData = MetaData.parse(dir);
+
+        assertEquals(formatter.parseLocalDate("2017-01-06"), metaData.mostRecentDate);
+        assertEquals(formatter.parseLocalDate("2017-01-05"), metaData.mostRecentTrainedDate);
     }
 
     @Test
