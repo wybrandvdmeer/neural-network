@@ -79,8 +79,10 @@ public class AutomaticTradingMachine {
         metaData.mostRecentTrainedDate = trainingInput.get(trainingInput.size() - 1).date;
         metaData.write(dir);
 
-        Prediction prediction = predictor.predict(priceRecordDBAVGPrices.get(Predictor.WINDOW_SIZE), readHiddenState(dir));
-        writePrediction(dir, prediction, trainingInput.get(trainingInput.size() - 1));
+        List<PriceRecord> predictionSet = priceRecordDBAVGPrices.get(Predictor.WINDOW_SIZE);
+
+        Prediction prediction = predictor.predict(predictionSet, readHiddenState(dir));
+        writePrediction(dir, prediction, predictionSet.get(predictionSet.size() - 1));
     }
 
     private LocalDate determineFirstDateTrainingBatch(List<PriceRecord> priceRecords, LocalDate mostRecentTrainedDate) {
