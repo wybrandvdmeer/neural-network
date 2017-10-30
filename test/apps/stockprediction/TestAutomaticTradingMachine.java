@@ -23,7 +23,7 @@ public class TestAutomaticTradingMachine {
         List<PriceRecord> priceRecords = new ArrayList<>();
 
         LocalDate firstDate = formatter.parseLocalDate("2017-01-01");
-        for(int idx=0; idx < 6; idx++) {
+        for(int idx=0; idx < Predictor.WINDOW_SIZE + 1; idx++) {
             PriceRecord priceRecord = new PriceRecord();
             priceRecord.date = firstDate.plusDays(idx);
             priceRecord.open = 10;
@@ -52,8 +52,8 @@ public class TestAutomaticTradingMachine {
 
         MetaData metaData = MetaData.parse(dir);
 
-        assertEquals(formatter.parseLocalDate("2017-01-06"), metaData.mostRecentDate);
-        assertEquals(formatter.parseLocalDate("2017-01-05"), metaData.mostRecentTrainedDate);
+        assertEquals(firstDate.plusDays(Predictor.WINDOW_SIZE), metaData.mostRecentDate);
+        assertEquals(firstDate.plusDays(Predictor.WINDOW_SIZE - 1), metaData.mostRecentTrainedDate);
     }
 
     @Test
@@ -191,9 +191,7 @@ public class TestAutomaticTradingMachine {
         priceRecords.add(p3);
 
         AutomaticTradingMachine atm = new AutomaticTradingMachine();
-        atm.setStockDownloader((exchange, stock) -> {
-            return priceRecords;
-        });
+        atm.setStockDownloader((exchange, stock) -> priceRecords);
 
         atm.getStockPrices("AMS", "PHIA");
 
@@ -204,6 +202,7 @@ public class TestAutomaticTradingMachine {
         avgPrices = avgPricesDB.get();
 
         metaData = MetaData.parse(dir);
+
         assertEquals(formatter.parseLocalDate("2017-01-13"), metaData.mostRecentDate);
 
         assertEquals(11, avgPrices.get(avgPrices.size() - 2).open, 0.0001);

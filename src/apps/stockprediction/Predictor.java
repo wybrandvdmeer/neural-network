@@ -21,7 +21,7 @@ public class Predictor {
     private static final int BETWEEN_1_AND_2_PERCENT_NEG_POS=4;
     private static final int HIGHER_2_PERCENT_NEG_POS=5;
 
-    public static final int WINDOW_SIZE=5;
+    public static final int WINDOW_SIZE=10;
 
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("hh:mm:ss");
 
@@ -77,6 +77,10 @@ public class Predictor {
     }
 
     public void train(List<PriceRecord> priceRecords, double [] previousState) throws Exception {
+        if(priceRecords.size() < WINDOW_SIZE) {
+            throw new RuntimeException("Window rnn is biggen than training batch.");
+        }
+
         double [][] inputs = new double[WINDOW_SIZE][4];
         double [][] targets = new double[WINDOW_SIZE][4];
 
