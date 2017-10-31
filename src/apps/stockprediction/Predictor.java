@@ -21,8 +21,9 @@ public class Predictor {
     private static final int BETWEEN_1_AND_2_PERCENT_NEG_POS=4;
     private static final int HIGHER_2_PERCENT_NEG_POS=5;
 
-    public static final int WINDOW_SIZE=10;
+    public static final int WINDOW_SIZE=5;
 
+    private static final DateTimeFormatter yyyymmdd = DateTimeFormat.forPattern("yyyy-MM-dd");
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("hh:mm:ss");
 
     private static final double ERROR_LIMIT = 0.0001;
@@ -40,6 +41,8 @@ public class Predictor {
     }
 
     public Prediction predict(List<PriceRecord> priceRecords, double [] previousState) {
+        System.out.println("Last date prediction set: " + yyyymmdd.print(priceRecords.get(priceRecords.size() - 1).date));
+
         double [][] inputs = new double[WINDOW_SIZE][4];
         for(int idx=0; idx < priceRecords.size(); idx++) {
             inputs[idx][INPUT_DATE] = scaleDate(priceRecords.get(idx).date);
@@ -78,7 +81,7 @@ public class Predictor {
 
     public void train(List<PriceRecord> priceRecords, double [] previousState) throws Exception {
         if(priceRecords.size() < WINDOW_SIZE) {
-            throw new RuntimeException("Window rnn is biggen than training batch.");
+            throw new RuntimeException("Window rnn is bigger than training batch.");
         }
 
         double [][] inputs = new double[WINDOW_SIZE][4];
@@ -87,6 +90,7 @@ public class Predictor {
         int idx1=0;
 
         while(idx1 + WINDOW_SIZE <= priceRecords.size()) {
+            System.out.println("Train window: " + yyyymmdd.print(priceRecords.get(idx1).date));
             for(int idx2=0; idx2 < WINDOW_SIZE; idx2++) {
                 PriceRecord priceRecord = priceRecords.get(idx1 + idx2);
 
@@ -120,10 +124,10 @@ public class Predictor {
             }
 
             System.out.println("Begin training: " + formatter.print(new LocalDateTime()));
-
             int iterations = network.learn(inputs, targets, previousState, ERROR_LIMIT, 0);
-
             System.out.println(String.format("End training: %s, iterations: %d.", formatter.print(new LocalDateTime()), iterations));
+
+            previousState = getHiddenStateFirstOutput();
 
             idx1++;
         }
