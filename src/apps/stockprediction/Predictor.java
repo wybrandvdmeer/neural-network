@@ -40,7 +40,7 @@ public class Predictor {
         network.setBeginErrorOutput(1);
     }
 
-    public Prediction predict(List<PriceRecord> priceRecords, double [] previousState) {
+    public Prediction predict(List<PriceRecord> priceRecords) {
         System.out.println("Last date prediction set: " + yyyymmdd.print(priceRecords.get(priceRecords.size() - 1).date));
 
         double [][] inputs = new double[WINDOW_SIZE][4];
@@ -50,7 +50,7 @@ public class Predictor {
             inputs[idx][INPUT_CLOSE] = scalePrice(priceRecords.get(idx).close);
             inputs[idx][INPUT_VOLUME] = scaleVolume(priceRecords.get(idx).volume);
         }
-        network.passForward(inputs, previousState);
+        network.passForward(inputs);
 
         if(network.getOutput(HIGHER_2_PERCENT_POS) > 0.9) {
             return Prediction.HIGHER_2_PERCENT;
@@ -79,7 +79,7 @@ public class Predictor {
         return Prediction.NO_PREDICTION;
     }
 
-    public void train(List<PriceRecord> priceRecords, double [] previousState) throws Exception {
+    public void train(List<PriceRecord> priceRecords) throws Exception {
         if(priceRecords.size() < WINDOW_SIZE) {
             throw new RuntimeException("Window rnn is bigger than training batch.");
         }
@@ -124,19 +124,13 @@ public class Predictor {
             }
 
             System.out.println("Begin training: " + formatter.print(new LocalDateTime()));
-            int iterations = network.learn(inputs, targets, previousState, ERROR_LIMIT, 0);
+            int iterations = network.learn(inputs, targets, ERROR_LIMIT, 0);
             System.out.println(String.format("End training: %s, iterations: %d.", formatter.print(new LocalDateTime()), iterations));
-
-            previousState = getHiddenStateFirstOutput();
 
             idx1++;
         }
 
         network.write();
-    }
-
-    public double [] getHiddenStateFirstOutput() {
-        return network.getHiddenState(0).getRowPackedCopy();
     }
 
     private void initArray(double [][] array) {

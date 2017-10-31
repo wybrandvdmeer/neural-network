@@ -102,10 +102,6 @@ public class Network {
     }
 
     public void passForward(double [][] inputs) {
-        passForward(inputs, null);
-    }
-
-    public void passForward(double [][] inputs, double [] previousState) {
         if(inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
         }
@@ -114,19 +110,15 @@ public class Network {
 
         for(int i=0; i < inputs.length; i++) {
             if(i == 0) {
-                passForward(inputs[i], previousState);
+                passForward(inputs[i]);
             } else {
-                passForward(inputs[i], null);
+                passForward(inputs[i]);
             }
             nextTimestamp();
         }
     }
 
     public void passForward(double [] input) {
-        passForward(input, null);
-    }
-
-    public void passForward(double [] input, double [] previousState) {
         Matrix inputVector = new Matrix(input, input.length);
         storePerTimestamp(0, inputVector, outputsPerTimestamp);
 
@@ -134,14 +126,8 @@ public class Network {
             inputVector = weights.get(layer - 1).times(inputVector);
             inputVector = inputVector.plus(biasWeights.get(layer - 1));
 
-            if(layer == 1) {
-                if(timeStamp == 0 && previousState != null) {
-                        Matrix previousStateVector = new Matrix(previousState, previousState.length);
-                        inputVector = inputVector.plus(W.times(previousStateVector));
-                }
-                if(timeStamp > 0){
-                    inputVector = inputVector.plus(W.times(outputsPerTimestamp.get(timeStamp - 1).get(1)));
-                }
+            if(layer == 1 && timeStamp > 0){
+                inputVector = inputVector.plus(W.times(outputsPerTimestamp.get(timeStamp - 1).get(1)));
             }
 
             boolean hidden = layer < weights.values().size();
@@ -218,10 +204,6 @@ public class Network {
     }
 
     public int learn(double [][] inputs, double [][] targets, double errorLimit, int maxIterations) throws Exception {
-        return learn(inputs, targets, null, errorLimit, maxIterations);
-    }
-
-    public int learn(double [][] inputs, double [][] targets, double [] previousState, double errorLimit, int maxIterations) throws Exception {
 
         if(inputs.length != targets.length || inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
@@ -238,7 +220,7 @@ public class Network {
         while(true) {
             error = 0;
 
-            passForward(inputs, previousState);
+            passForward(inputs);
 
             for(int output=beginErrorOutput; output < targets.length; output++) {
                 error += error(output, new Matrix(targets[output], targets[output].length));

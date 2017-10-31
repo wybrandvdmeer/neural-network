@@ -73,16 +73,14 @@ public class AutomaticTradingMachine {
         trainingInput.remove(mostRecentRecord);
 
         Predictor predictor = new Predictor(exchange, stock);
-        predictor.train(trainingInput, readHiddenState(dir));
-
-        writeHiddenState(dir, predictor.getHiddenStateFirstOutput());
+        predictor.train(trainingInput);
 
         metaData.mostRecentTrainedDate = trainingInput.get(trainingInput.size() - 1).date;
         metaData.write(dir);
 
         List<PriceRecord> predictionSet = priceRecordDBAVGPrices.get(Predictor.WINDOW_SIZE);
 
-        Prediction prediction = predictor.predict(predictionSet, readHiddenState(dir));
+        Prediction prediction = predictor.predict(predictionSet);
         writePrediction(dir, prediction, predictionSet.get(predictionSet.size() - 1));
     }
 
@@ -166,42 +164,6 @@ public class AutomaticTradingMachine {
         }
 
         return MetaData.parse(dir);
-    }
-
-    private void writeHiddenState(String dir, double [] hiddenState) throws Exception {
-        File hiddenStateFile = new File(dir, HIDDEN_STATE_FILE);
-        FileOutputStream out = new FileOutputStream(hiddenStateFile);
-
-        for(int idx=0; idx < hiddenState.length; idx++) {
-            out.write(String.format("%f", hiddenState[idx]).getBytes());
-            if(idx < hiddenState.length) {
-                out.write("\t".getBytes());
-            }
-        }
-    }
-
-    private double [] readHiddenState(String dir) throws Exception {
-        File hiddenState = new File(dir, HIDDEN_STATE_FILE);
-        if(!hiddenState.exists()) {
-            return null;
-        }
-
-        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(hiddenState)));
-
-        String line;
-        if((line = br.readLine()) == null) {
-            throw new RuntimeException("Corrupt previous state.");
-        }
-
-        String [] columns = line.split("\t");
-
-        double [] previousStateArr = new double[columns.length];
-
-        for(int idx=0; idx < columns.length; idx++) {
-            previousStateArr[idx] = Double.parseDouble(columns[idx]);
-        }
-
-        return previousStateArr;
     }
 
     public static void main(String [] args) throws Exception {
