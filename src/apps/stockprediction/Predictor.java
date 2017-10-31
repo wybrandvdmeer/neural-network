@@ -21,7 +21,7 @@ public class Predictor {
     private static final int BETWEEN_1_AND_2_PERCENT_NEG_POS=4;
     private static final int HIGHER_2_PERCENT_NEG_POS=5;
 
-    public static final int WINDOW_SIZE=3;
+    public static final int WINDOW_SIZE=10;
 
     private static final DateTimeFormatter yyyymmdd = DateTimeFormat.forPattern("yyyy-MM-dd");
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("hh:mm:ss");
@@ -31,7 +31,7 @@ public class Predictor {
     private Network network;
 
     public Predictor(String exchange, String stock) throws Exception {
-        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 10, 4}, WINDOW_SIZE);
+        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 10, 10, 4}, WINDOW_SIZE, true);
         network.setWeightFileDir(exchange + "-" + stock);
         network.setLearningRate(0.1);
         network.read();
