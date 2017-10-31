@@ -32,17 +32,16 @@ public class StockDownloaderImpl implements StockDownloader {
         for(String line : lines) {
             String [] arr = line.split(",");
 
-            if(line.startsWith(INTERVAL_TAG)) {
+            if(line.startsWith("TIMEZONE_OFFSET")) {
+                parsingPrices = false;
+            } else if(line.startsWith(INTERVAL_TAG)) {
                 interval = new Integer(line.replaceFirst(INTERVAL_TAG, ""));
-            }
-
-            if(parsingPrices) {
+            } else if(parsingPrices) {
                 priceRecords.add(getPriceRecord(beginDate, interval, new Integer(arr[0]), arr));
-            }
-
-            if(line.startsWith("a15")) {
+            } else if(line.startsWith("a15")) {
                 parsingPrices = true;
                 beginDate = new Long(arr[0].substring(1));
+                priceRecords.add(getPriceRecord(beginDate, interval, 0, arr));
             }
         }
 
