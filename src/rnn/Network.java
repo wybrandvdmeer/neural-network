@@ -16,8 +16,6 @@ public class Network {
 
     private final double GRADIENT_CLIPPING_TRESHOLD = 1;
 
-    private boolean leakyRelu = false;
-
     private final String name;
 
     private Map<Integer, Matrix> weights = new HashMap<>();
@@ -40,18 +38,11 @@ public class Network {
 
     private boolean noTransfer=false;
 
-    private final double RELU_LEAKAGE = 0.1;
-
     private String weightFileDir=null;
 
     public Network(String name, int [] layerSizes, int noOfOutputs) {
-        this(name, layerSizes, noOfOutputs, false);
-    }
-
-    public Network(String name, int [] layerSizes, int noOfOutputs, boolean leakyRelu) {
         this.name = name;
         this.noOfOutputs = noOfOutputs;
-        this.leakyRelu = leakyRelu;
 
         for(int layer=0; layer < layerSizes.length - 1; layer++) {
             /* rows = neurons, columns = weights
@@ -130,34 +121,21 @@ public class Network {
                 inputVector = inputVector.plus(W.times(outputsPerTimestamp.get(timeStamp - 1).get(1)));
             }
 
-            boolean hidden = layer < weights.values().size();
-
-            Matrix outputVector = transfer(inputVector, hidden);
+            Matrix outputVector = transfer(inputVector);
 
             storePerTimestamp(layer, outputVector, outputsPerTimestamp);
-            storePerTimestamp(layer, get2Dim(transferDerivative(outputVector, hidden)), transferDerivertivesPerTimestamp);
+            storePerTimestamp(layer, get2Dim(transferDerivative(outputVector)), transferDerivertivesPerTimestamp);
 
             inputVector = outputVector;
         }
     }
 
-    private Matrix transferDerivative(Matrix vector, boolean hidden) {
+    private Matrix transferDerivative(Matrix vector) {
         Matrix v2 = vector.copy();
 
         if(noTransfer) {
             for(int row=0; row < vector.getRowDimension(); row++) {
                 v2.set(row, 0, 1);
-            }
-            return v2;
-        }
-
-        if(hidden && leakyRelu) {
-            for(int row=0; row < vector.getRowDimension(); row++) {
-                if(vector.get(row, 0) > 0) {
-                    v2.set(row, 0, 1);
-                } else {
-                    v2.set(row, 0, RELU_LEAKAGE);
-                }
             }
             return v2;
         }
@@ -169,26 +147,13 @@ public class Network {
         return v2;
     }
 
-    private Matrix transfer(Matrix vector, boolean hidden) {
+    private Matrix transfer(Matrix vector) {
         Matrix transfered = new Matrix(vector.getRowDimension(), 1);
 
         if(noTransfer) {
             for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
                 for (int row = 0; row < vector.getRowDimension(); row++) {
                     transfered.set(row, kol, vector.get(row, kol));
-                }
-            }
-            return transfered;
-        }
-
-        if(hidden && leakyRelu) {
-            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
-                for (int row = 0; row < vector.getRowDimension(); row++) {
-                    if(vector.get(row, kol) > 0) {
-                        transfered.set(row, kol, vector.get(row, kol));
-                    } else {
-                        transfered.set(row, kol, RELU_LEAKAGE * vector.get(row, kol));
-                    }
                 }
             }
             return transfered;
@@ -321,11 +286,6 @@ public class Network {
                     biasGradients = biasGradients.plus(biasGradientsPerLayerPerOutput.get(output).get(layer - 1));
                 }
 
-                if(leakyRelu) {
-                    gradientClipping(gradients);
-                    gradientClipping(biasGradients);
-                }
-
                 weights.put(layer - 1, weights.get(layer - 1).minus(gradients.times(learningRate)));
                 biasWeights.put(layer - 1, biasWeights.get(layer - 1).minus(biasGradients.times(learningRate)));
             }
@@ -333,10 +293,6 @@ public class Network {
             Matrix wGradients = initMatrix(W.copy());
             for(int output = 0; output < noOfOutputs; output++) {
                 wGradients = wGradients.plus(wGradientsPerOutput.get(output));
-            }
-
-            if(leakyRelu) {
-                gradientClipping(wGradients);
             }
 
             W = W.minus(wGradients.times(learningRate));
@@ -449,30 +405,6 @@ public class Network {
 
     public double getError() {
         return error;
-    }
-
-    private void gradientClipping(Matrix gradients) {
-
-        boolean clip = false;
-
-        for (int row = 0; !clip && row < gradients.getRowDimension(); row++) {
-            for (int col = 0; !clip && col < gradients.getColumnDimension(); col++) {
-                if (gradients.get(row, col) >= GRADIENT_CLIPPING_TRESHOLD) {
-                    clip = true;
-                    //System.out.println(String.format("Gradient %.2f is too big.", gradients.get(row, col)));
-                }
-            }
-        }
-
-        if(!clip) {
-            return;
-        }
-
-        for (int row = 0; row < gradients.getRowDimension(); row++) {
-            for (int col = 0; col < gradients.getColumnDimension(); col++) {
-                gradients.set(row, col, (gradients.get(row, col) * GRADIENT_CLIPPING_TRESHOLD) / getL2Norm(gradients));
-            }
-        }
     }
 
     private double getL2Norm(Matrix matrix) {
