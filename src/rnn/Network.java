@@ -40,7 +40,13 @@ public class Network {
 
     private String weightFileDir=null;
 
+    private boolean tanh=false;
+
     public Network(String name, int [] layerSizes, int noOfOutputs) {
+        this(name, layerSizes, noOfOutputs, false);
+    }
+
+    public Network(String name, int [] layerSizes, int noOfOutputs, boolean tanh) {
         this.name = name;
         this.noOfOutputs = noOfOutputs;
 
@@ -140,6 +146,13 @@ public class Network {
             return v2;
         }
 
+        if(tanh) {
+            for(int row=0; row < vector.getRowDimension(); row++) {
+                v2.set(row, 0, tanhDeriv(vector.get(row, 0)));
+            }
+            return v2;
+        }
+
         for(int row=0; row < vector.getRowDimension(); row++) {
             v2.set(row, 0, vector.get(row, 0) * (1 - vector.get(row, 0)));
         }
@@ -154,6 +167,15 @@ public class Network {
             for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
                 for (int row = 0; row < vector.getRowDimension(); row++) {
                     transfered.set(row, kol, vector.get(row, kol));
+                }
+            }
+            return transfered;
+        }
+
+        if(tanh) {
+            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
+                for (int row = 0; row < vector.getRowDimension(); row++) {
+                    transfered.set(row, kol, tanh(vector.get(row, kol)));
                 }
             }
             return transfered;
@@ -375,6 +397,16 @@ public class Network {
         return (1/( 1 + Math.pow(Math.E,(-1*x))));
     }
 
+    private double tanh(double x) {
+        return (Math.pow(Math.E, x) - Math.pow(Math.E, -1 * x) ) / (Math.pow(Math.E, x) + Math.pow(Math.E, -1 * x));
+    }
+
+    private double tanhDeriv(double x) {
+        double numerator = Math.pow(Math.E, x) - Math.pow(Math.E, -1 * x);
+        double denominator = Math.pow(Math.E, x) + Math.pow(Math.E, -1 * x);
+        return 1 - (numerator * numerator) / (denominator * denominator);
+    }
+
     public Matrix getOutputVector(int output) {
         return outputsPerTimestamp.get(output).get(outputsPerTimestamp.get(output).size() - 1);
     }
@@ -405,16 +437,6 @@ public class Network {
 
     public double getError() {
         return error;
-    }
-
-    private double getL2Norm(Matrix matrix) {
-        double l2=0;
-        for(int row=0; row < matrix.getRowDimension(); row++) {
-            for(int col=0; col < matrix.getColumnDimension(); col++) {
-                l2 += (matrix.get(row, col) * matrix.get(row, col));
-            }
-        }
-        return Math.sqrt(l2);
     }
 
 

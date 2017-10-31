@@ -75,8 +75,6 @@ public class TestNetwork {
 
         network.learn(inputs, targets, 0.0000001, 1);
 
-        List<Map<Integer, Matrix>> transferDerivativesPerTimeStamp = copyTD(network.getTransferDerivertivesPerTimestamp());
-
         network.read();
 
         Matrix gradients, nummericalGradients;
@@ -199,38 +197,10 @@ public class TestNetwork {
         }
     }
 
-    private boolean equals(Matrix m1, Matrix m2) {
-        if(m1.getRowDimension() != m2.getRowDimension() || m1.getColumnDimension() != m2.getColumnDimension()) {
-            return false;
-        }
-
-        for(int row=0; row < m1.getRowDimension(); row++) {
-            for(int col=0; col < m1.getColumnDimension(); col++)  {
-                if(Math.abs(m1.get(row, col) - m2.get(row, col)) > 0.00001) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    private List<Map<Integer,Matrix>> copyTD(List<Map<Integer, Matrix>> transferDerivertivesPerTimestamp) {
-        List<Map<Integer,Matrix>> tPTS = new ArrayList<>();
-        for(Map<Integer, Matrix> map : transferDerivertivesPerTimestamp) {
-            Map<Integer, Matrix> newMap = new HashMap<>();
-            for(int layer : map.keySet()) {
-                newMap.put(layer, map.get(layer));
-            }
-            tPTS.add(newMap);
-        }
-
-        return tPTS;
-    }
-
     @Test
     public void testLearning() throws Exception {
 
-        Network network = new Network("testRnnLearning", new int []{2, 20, 2}, 5);
+        Network network = new Network("testRnnLearning", new int []{2, 20, 2}, 5, true);
         network.setLearningRate(0.1);
 
         double [][] inputs = new double[][] {
