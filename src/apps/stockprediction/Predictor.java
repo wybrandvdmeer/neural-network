@@ -21,7 +21,7 @@ public class Predictor {
     private static final int BETWEEN_1_AND_2_PERCENT_NEG_POS=4;
     private static final int HIGHER_2_PERCENT_NEG_POS=5;
 
-    public static final int WINDOW_SIZE=5;
+    public static final int WINDOW_SIZE=3;
 
     private static final DateTimeFormatter yyyymmdd = DateTimeFormat.forPattern("yyyy-MM-dd");
     private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("hh:mm:ss");

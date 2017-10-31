@@ -7,6 +7,7 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.io.*;
 import java.util.List;
+import java.util.Locale;
 
 public class AutomaticTradingMachine {
 
@@ -204,6 +205,7 @@ public class AutomaticTradingMachine {
     }
 
     public static void main(String [] args) throws Exception {
+        Locale.setDefault(Locale.US);
         AutomaticTradingMachine atm = new AutomaticTradingMachine();
         atm.getStockPrices(args[0], args[1]);
         atm.trainAndPredict(args[0], args[1]);
