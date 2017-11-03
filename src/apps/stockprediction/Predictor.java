@@ -94,9 +94,10 @@ public class Predictor {
 
             for(int idx2=1; idx2 < WINDOW_SIZE; idx2++) {
 
-                double close = priceRecords.get(idx1 + idx2).close;
                 double previousClose = priceRecords.get(idx1 + idx2 - 1).close;
-                double delta = (close / previousClose - 1) * 100;
+                double close = priceRecords.get(idx1 + idx2).close;
+
+                double delta = (close / previousClose  - 1) * 100;
 
                 if(delta > 1) {
                     targets[idx2][HIGHER_1_PERCENT_POS] = 1;
