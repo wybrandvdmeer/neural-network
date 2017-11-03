@@ -112,6 +112,8 @@ public class TestNetwork {
         Network network = new Network("testGradientChecking", layers);
         network.write();
 
+        network.setSoftmax(true);
+
         double epsilon = 0.001;
 
         double [] input = new double[] {0.05, 0.1};

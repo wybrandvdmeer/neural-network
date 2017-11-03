@@ -55,7 +55,7 @@ public class TestNetwork {
         Network network = new Network("testGradientChecking", layers, 5);
         network.write();
 
-        double epsilon = 0.001;
+        double epsilon = 0.01;
 
         double [][] inputs = new double[][] {
                 new double [] {0.05, 0.1},
@@ -212,11 +212,11 @@ public class TestNetwork {
         };
 
         double [][] targets = new double[][] {
-            new double[]{0.99, 0.99},
-            new double[]{0.01, 0.01},
-            new double[]{0.99, 0.99},
-            new double[]{0.01, 0.01},
-            new double[]{0.99, 0.99}
+            new double[]{0, 1},
+            new double[]{1, 0},
+            new double[]{0, 1},
+            new double[]{1, 0},
+            new double[]{0, 1}
         };
 
         int iterations = network.learn(inputs, targets, 0.0001, 0);
@@ -225,61 +225,19 @@ public class TestNetwork {
 
         network.passForward(inputs);
 
-        assertEquals(0.99, network.getOutputVector(0).get(0, 0), 0.01);
-        assertEquals(0.99, network.getOutputVector(0).get(1, 0), 0.01);
+        assertEquals(0, network.getOutputVector(0).get(0, 0), 0.01);
+        assertEquals(1, network.getOutputVector(0).get(1, 0), 0.01);
 
-        assertEquals(0.01, network.getOutputVector(1).get(0, 0), 0.01);
-        assertEquals(0.01, network.getOutputVector(1).get(1, 0), 0.01);
+        assertEquals(1, network.getOutputVector(1).get(0, 0), 0.01);
+        assertEquals(0, network.getOutputVector(1).get(1, 0), 0.01);
 
-        assertEquals(0.99, network.getOutputVector(2).get(0, 0), 0.01);
-        assertEquals(0.99, network.getOutputVector(2).get(1, 0), 0.01);
+        assertEquals(0, network.getOutputVector(2).get(0, 0), 0.01);
+        assertEquals(1, network.getOutputVector(2).get(1, 0), 0.01);
 
-        assertEquals(0.01, network.getOutputVector(3).get(0, 0), 0.01);
-        assertEquals(0.01, network.getOutputVector(3).get(1, 0), 0.01);
+        assertEquals(1, network.getOutputVector(3).get(0, 0), 0.01);
+        assertEquals(0, network.getOutputVector(3).get(1, 0), 0.01);
 
-        assertEquals(0.99, network.getOutputVector(4).get(0, 0), 0.01);
-        assertEquals(0.99, network.getOutputVector(4).get(1, 0), 0.01);
-    }
-
-    @Test
-    public void testPassForward() throws Exception {
-        Network network = new Network("test", new int []{2, 2, 2}, 2);
-
-        network.getWeights(1).set(0,0,1);
-        network.getWeights(1).set(0,1,2);
-
-        network.getWeights(1).set(1,0,3);
-        network.getWeights(1).set(1,1,4);
-
-        network.getBiasWeights(1).set(0,0,2);
-        network.getBiasWeights(1).set(1,0,2);
-
-        network.getWeights(2).set(0,0,5);
-        network.getWeights(2).set(0,1,6);
-
-        network.getWeights(2).set(1,0,7);
-        network.getWeights(2).set(1,1,8);
-
-        network.getBiasWeights(2).set(0,0,3);
-        network.getBiasWeights(2).set(1,0,3);
-
-        network.getW().set(0,0, 2);
-        network.getW().set(0,1, 2);
-        network.getW().set(1,0, 2);
-        network.getW().set(1,1, 2);
-
-        network.setNoTransfer();
-
-        network.passForward(new double[] {0.5, 1});
-
-        assertEquals(70.5, network.getOutputVector(0).get(0,0));
-        assertEquals(94.5, network.getOutputVector(0).get(1,0));
-
-        network.nextTimestamp();
-
-        network.passForward(new double[] {0.5, 1});
-
-        assertEquals(334.5, network.getOutput(0));
-        assertEquals(454.5, network.getOutput(1));
+        assertEquals(0, network.getOutputVector(4).get(0, 0), 0.01);
+        assertEquals(1, network.getOutputVector(4).get(1, 0), 0.01);
     }
 }

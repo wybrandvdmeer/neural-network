@@ -25,6 +25,7 @@ public class Network {
     private boolean noTransfer=false, leakyRelu=false, gradientClipping=true;
 
     private final double RELU_LEAKAGE = 0.1;
+    private boolean softMax = false;
 
     public Network(String name, int [] layerSizes) {
         this(name, layerSizes, false);
@@ -52,8 +53,8 @@ public class Network {
         }
     }
 
-    public void setGradientClipping(boolean gradientClipping) {
-        this.gradientClipping = gradientClipping;
+    public void setSoftmax(boolean softMax) {
+        this.softMax = softMax;
     }
 
     public void setNoTransfer() {
@@ -103,6 +104,13 @@ public class Network {
             return v2;
         }
 
+        /* This derivative is ignored, because in the case of softmax dE/dOin is calculated
+        instead of dE/dOout * dOout/dOin.
+        */
+        if(softMax && !hidden) {
+            return v2;
+        }
+
         for(int row=0; row < vector.getRowDimension(); row++) {
             v2.set(row, 0, vector.get(row, 0) * (1 - vector.get(row, 0)));
         }
@@ -114,31 +122,38 @@ public class Network {
         Matrix transfered = new Matrix(vector.getRowDimension(), 1);
 
         if(noTransfer) {
-            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
-                for (int row = 0; row < vector.getRowDimension(); row++) {
-                    transfered.set(row, kol, vector.get(row, kol));
-                }
+            for (int row = 0; row < vector.getRowDimension(); row++) {
+                transfered.set(row, 0, vector.get(row, 0));
             }
             return transfered;
         }
 
         if(hidden && leakyRelu) {
-            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
-                for (int row = 0; row < vector.getRowDimension(); row++) {
-                    if(vector.get(row, kol) > 0) {
-                        transfered.set(row, kol, vector.get(row, kol));
-                    } else {
-                        transfered.set(row, kol, RELU_LEAKAGE * vector.get(row, kol));
-                    }
+            for (int row = 0; row < vector.getRowDimension(); row++) {
+                if(vector.get(row, 0) > 0) {
+                    transfered.set(row, 0, vector.get(row, 0));
+                } else {
+                    transfered.set(row, 0, RELU_LEAKAGE * vector.get(row, 0));
                 }
             }
+
             return transfered;
         }
 
-        for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
+        if(softMax && !hidden) {
+            double sum=0;
             for (int row = 0; row < vector.getRowDimension(); row++) {
-                transfered.set(row, kol, sigmoid(vector.get(row, kol)));
+                vector.set(row, 0, Math.pow(Math.E, vector.get(row, 0)));
+                sum += vector.get(row, 0);
             }
+            for (int row = 0; row < vector.getRowDimension(); row++) {
+                vector.set(row, 0, vector.get(row, 0) / sum);
+            }
+            return vector;
+        }
+
+        for (int row = 0; row < vector.getRowDimension(); row++) {
+            transfered.set(row, 0, sigmoid(vector.get(row, 0)));
         }
 
         return transfered;
@@ -164,7 +179,11 @@ public class Network {
 
             for(int layer=weights.values().size(); layer > 0; layer--) {
                 if(theta == null) {
-                    theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
+                    if(softMax) {
+                        theta = errorDeriv.transpose();
+                    } else {
+                        theta = transferDerivertives.get(layer).times(errorDeriv).transpose();
+                    }
                 } else {
                     theta = theta.times(weights.get(layer).times(transferDerivertives.get(layer)));
                 }
@@ -231,6 +250,14 @@ public class Network {
 
     double error(Matrix targets) {
         double error=0;
+
+        if(softMax) {
+            for(int row=0; row < getOutputVector().getRowDimension(); row++) {
+                error += targets.get(row, 0) * Math.log(getOutputVector().get(row, 0));
+            }
+            return -1 * error;
+        }
+
         Matrix m1 = targets.minus(getOutputVector());
         for(int row=0; row < m1.getRowDimension(); row++) {
             error += m1.get(row, 0) * m1.get(row, 0) * 0.5;

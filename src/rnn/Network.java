@@ -36,8 +36,6 @@ public class Network {
     // Var indicates from which output (timestamp) to count the error.
     private int beginErrorOutput=0;
 
-    private boolean noTransfer=false;
-
     private String weightFileDir=null;
 
     private boolean tanh=false;
@@ -94,10 +92,6 @@ public class Network {
         this.learningRate = learningRate;
     }
 
-    public void setNoTransfer() {
-        noTransfer = true;
-    }
-
     public void passForward(double [][] inputs) {
         if(inputs.length != noOfOutputs) {
             throw new RuntimeException("Wrong dimensions.");
@@ -127,22 +121,22 @@ public class Network {
                 inputVector = inputVector.plus(W.times(outputsPerTimestamp.get(timeStamp - 1).get(1)));
             }
 
-            Matrix outputVector = transfer(inputVector);
+            Matrix outputVector = transfer(inputVector, layer == weights.values().size());
 
             storePerTimestamp(layer, outputVector, outputsPerTimestamp);
-            storePerTimestamp(layer, get2Dim(transferDerivative(outputVector)), transferDerivertivesPerTimestamp);
+            storePerTimestamp(layer, get2Dim(transferDerivative(outputVector, layer == weights.values().size())), transferDerivertivesPerTimestamp);
 
             inputVector = outputVector;
         }
     }
 
-    private Matrix transferDerivative(Matrix vector) {
+    private Matrix transferDerivative(Matrix vector, boolean outputLayer) {
         Matrix v2 = vector.copy();
 
-        if(noTransfer) {
-            for(int row=0; row < vector.getRowDimension(); row++) {
-                v2.set(row, 0, 1);
-            }
+        /* This derivative is ignored, because in the case of softmax dE/dOin is calculated
+        instead of dE/dOout * dOout/dOin.
+        */
+        if(outputLayer) {
             return v2;
         }
 
@@ -160,14 +154,17 @@ public class Network {
         return v2;
     }
 
-    private Matrix transfer(Matrix vector) {
+    private Matrix transfer(Matrix vector, boolean outputLayer) {
         Matrix transfered = new Matrix(vector.getRowDimension(), 1);
 
-        if(noTransfer) {
-            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
-                for (int row = 0; row < vector.getRowDimension(); row++) {
-                    transfered.set(row, kol, vector.get(row, kol));
-                }
+        if(outputLayer) {
+            double sum=0;
+            for (int row = 0; row < vector.getRowDimension(); row++) {
+                transfered.set(row, 0, Math.pow(Math.E, vector.get(row, 0)));
+                sum += transfered.get(row, 0);
+            }
+            for (int row = 0; row < transfered.getRowDimension(); row++) {
+                transfered.set(row, 0, transfered.get(row, 0) / sum);
             }
             return transfered;
         }
@@ -178,12 +175,11 @@ public class Network {
                     transfered.set(row, kol, tanh(vector.get(row, kol)));
                 }
             }
-            return transfered;
-        }
-
-        for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
-            for (int row = 0; row < vector.getRowDimension(); row++) {
-                transfered.set(row, kol, sigmoid(vector.get(row, kol)));
+        } else {
+            for (int kol = 0; kol < vector.getColumnDimension(); kol++) {
+                for (int row = 0; row < vector.getRowDimension(); row++) {
+                    transfered.set(row, kol, sigmoid(vector.get(row, kol)));
+                }
             }
         }
 
@@ -264,7 +260,7 @@ public class Network {
                 for (int layer = weights.values().size(); layer > 0; layer--) {
                     Matrix transferDerivatives = transferDerivertivesPerTimestamp.get(output).get(layer);
                     if(theta == null) {
-                        theta = transferDerivatives.times(errorDeriv).transpose();
+                        theta = errorDeriv.transpose();
                     } else {
                         theta = theta.times(weights.get(layer).times(transferDerivatives));
                     }
@@ -349,12 +345,10 @@ public class Network {
 
     double error(int output, Matrix targets) {
         double error=0;
-        Matrix m1 = targets.minus(getOutputVector(output));
-        for(int row=0; row < m1.getRowDimension(); row++) {
-            error += m1.get(row, 0) * m1.get(row, 0) * 0.5;
+        for(int row=0; row < getOutputVector(output).getRowDimension(); row++) {
+            error += targets.get(row, 0) * Math.log(getOutputVector(output).get(row, 0));
         }
-
-        return error;
+        return -1 * error;
     }
 
     private void minus(Matrix m, double minus) {
