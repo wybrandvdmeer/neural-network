@@ -118,13 +118,8 @@ public class AutomaticTradingMachine {
                 upper = priceRecord.close * 1.01;
                 break;
 
-            case BETWEEN_1_AND_2_PERCENT:
-                lower = priceRecord.close * 1.01;
-                upper = priceRecord.close * 1.02;
-                break;
-
-            case HIGHER_2_PERCENT:
-                upper = priceRecord.close * 1.02;
+            case HIGHER_1_PERCENT:
+                upper = priceRecord.close * 1.01;
                 lower = 0;
                 break;
 
@@ -133,12 +128,7 @@ public class AutomaticTradingMachine {
                 lower = priceRecord.close * 0.99;
                 break;
 
-            case BETWEEN_1_AND_2_PERCENT_NEG:
-                upper = priceRecord.close * 0.99;
-                lower = priceRecord.close * 0.98;
-                break;
-
-            case HIGHER_2_PERCENT_NEG:
+            case HIGHER_1_PERCENT_NEG:
                 upper = 0;
                 lower = priceRecord.close * 0.98;
                 break;

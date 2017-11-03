@@ -409,6 +409,10 @@ public class Network {
         return getOutputVector(noOfOutputs - 1).get(index, 0);
     }
 
+    public Matrix getOutputVector() {
+        return outputsPerTimestamp.get(noOfOutputs - 1).get(outputsPerTimestamp.get(noOfOutputs - 1).size() - 1);
+    }
+
     public Matrix getHiddenState(int output) {
         return outputsPerTimestamp.get(output).get(1);
     }
