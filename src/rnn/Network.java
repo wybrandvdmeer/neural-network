@@ -158,9 +158,10 @@ public class Network {
         Matrix transfered = new Matrix(vector.getRowDimension(), 1);
 
         if(outputLayer) {
+            double exponentialConstant = -1 * max(vector);
             double sum=0;
             for (int row = 0; row < vector.getRowDimension(); row++) {
-                transfered.set(row, 0, Math.pow(Math.E, vector.get(row, 0)));
+                transfered.set(row, 0, Math.pow(Math.E, vector.get(row, 0) + exponentialConstant));
                 sum += transfered.get(row, 0);
             }
             for (int row = 0; row < transfered.getRowDimension(); row++) {
@@ -184,6 +185,16 @@ public class Network {
         }
 
         return transfered;
+    }
+
+    private double max(Matrix vector) {
+        double max=0;
+        for(int row=0; row < vector.getRowDimension(); row++) {
+            if(max < vector.get(row, 0)) {
+                max = vector.get(row, 0);
+            }
+        }
+        return max;
     }
 
     public int learn(double [][] inputs, double [][] targets, double errorLimit, int maxIterations) throws Exception {
