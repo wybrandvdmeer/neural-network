@@ -133,7 +133,7 @@ public class Predictor {
     }
 
     private double scalePrice(double price) {
-        return price / 100;
+        return price / 10;
     }
 
     private double scaleVolume(double volume) {
