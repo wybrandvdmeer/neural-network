@@ -75,7 +75,7 @@ public class Predictor {
         }
 
         double [][] inputs = new double[WINDOW_SIZE][4];
-        double [][] targets = new double[WINDOW_SIZE][6];
+        double [][] targets = new double[WINDOW_SIZE][4];
 
         int idx1=0;
 
