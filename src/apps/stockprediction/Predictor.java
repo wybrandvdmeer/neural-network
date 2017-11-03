@@ -29,7 +29,7 @@ public class Predictor {
     private Network network;
 
     public Predictor(String exchange, String stock) throws Exception {
-        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 30, 10, 6}, WINDOW_SIZE, true);
+        network = new Network(exchange + "-" + stock + "-network", new int[] {4, 30, 10, 4}, WINDOW_SIZE, true);
         network.setWeightFileDir(exchange + "-" + stock);
         network.setLearningRate(0.1);
         network.read();
