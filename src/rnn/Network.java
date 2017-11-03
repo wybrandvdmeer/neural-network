@@ -188,13 +188,15 @@ public class Network {
     }
 
     private double max(Matrix vector) {
-        double max=0;
+        double max=0, d;
+        int pos=-1;
         for(int row=0; row < vector.getRowDimension(); row++) {
-            if(max < vector.get(row, 0)) {
-                max = vector.get(row, 0);
+            if(max < (d = Math.abs(vector.get(row, 0)))) {
+                max = d;
+                pos = row;
             }
         }
-        return max;
+        return vector.get(pos, 0);
     }
 
     public int learn(double [][] inputs, double [][] targets, double errorLimit, int maxIterations) throws Exception {
