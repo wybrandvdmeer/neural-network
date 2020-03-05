@@ -12,6 +12,31 @@ import static org.junit.Assert.assertTrue;
 public class TestNetwork {
 
     @Test
+    public void testLearning() throws Exception {
+        double FAULT_TOLERANCE = 0.000000001;
+
+        int [] layers = new int[] {5, 20, 30, 5};
+
+        Network network = new Network("testGradientChecking", layers, true);
+        network.write();
+
+        double [] input = new double[] {0.1, 0.9, 0.9, 0.9, 0.1};
+        double [] target = new double[] {0.9, 0.1, 0.1, 0.1, 0.9};
+
+        int iterations = network.learn(input, target, FAULT_TOLERANCE, 1000000);
+
+        System.out.println("Iterations: " + iterations);
+
+        network.passForward(input);
+
+        assertEquals(0.9, network.getOutput(0), 0.0001);
+        assertEquals(0.1, network.getOutput(1), 0.0001);
+        assertEquals(0.1, network.getOutput(2), 0.0001);
+        assertEquals(0.1, network.getOutput(3), 0.0001);
+        assertEquals(0.9, network.getOutput(4), 0.0001);
+    }
+
+    @Test
     public void testGradientCheckingRelu() throws Exception {
 
         double FAULT_TOLERANCE = 0.0001;
