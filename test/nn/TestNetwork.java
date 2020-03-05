@@ -15,9 +15,9 @@ public class TestNetwork {
     public void testLearning() throws Exception {
         double FAULT_TOLERANCE = 0.000000001;
 
-        int [] layers = new int[] {5, 20, 30, 5};
+        int [] layers = new int[] {5, 50, 60, 50, 5};
 
-        Network network = new Network("testGradientChecking", layers, true);
+        Network network = new Network("testGradientChecking", layers, false);
         network.write();
 
         double [] input = new double[] {0.1, 0.9, 0.9, 0.9, 0.1};
